@@ -530,6 +530,28 @@
     <span style="font-size:.85rem;color:var(--navy);font-weight:600;">👋 <span id="welcome-username">User</span></span>
     <button onclick="handleLogout()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">Log out</button>
   </div>
+
+  <!-- ENGAGEMENT CARD: streak + weakest-topic nudge. Hidden entirely until data loads. -->
+  <div id="engagement-card" style="max-width:760px;width:100%;display:none;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;box-sizing:border-box;">
+    <div id="streak-pill" style="display:none;align-items:center;gap:.5rem;background:linear-gradient(135deg,#fff7ed 0%,#fff 100%);border:2px solid #fb923c;border-radius:12px;padding:.65rem 1rem;font-size:.85rem;font-weight:700;color:#9a3412;">
+      <span id="streak-emoji" style="font-size:1.2rem;">🔥</span>
+      <span id="streak-text">0 day streak</span>
+    </div>
+    <div id="weak-topic-card" style="display:none;flex:1 1 260px;align-items:center;justify-content:space-between;gap:.75rem;background:#eff6ff;border:2px solid #60a5fa;border-radius:12px;padding:.65rem 1rem;">
+      <div>
+        <div style="font-size:.82rem;font-weight:700;color:#1e3a8a;" id="weak-topic-title">Your weakest topic</div>
+        <div style="font-size:.74rem;color:#3b5998;" id="weak-topic-desc">Loading…</div>
+      </div>
+      <button class="start-btn" style="width:auto;white-space:nowrap;padding:.5rem 1rem;margin:0;font-size:.78rem;" onclick="startWeakTopicDrill()" id="weak-topic-btn">Drill it →</button>
+    </div>
+  </div>
+
+  <!-- MILESTONE TOAST: one-time celebratory pop-up, fixed position, self-dismissing -->
+  <div id="milestone-toast" style="display:none;position:fixed;top:1.2rem;left:50%;transform:translateX(-50%);z-index:9999;background:linear-gradient(135deg,#1a3260 0%,#0f1f3d 100%);color:#fff;border-radius:14px;padding:1rem 1.6rem;box-shadow:0 8px 32px rgba(0,0,0,.25);font-size:.9rem;font-weight:700;text-align:center;max-width:90vw;">
+    <div id="milestone-toast-emoji" style="font-size:1.6rem;margin-bottom:.2rem;">🎉</div>
+    <div id="milestone-toast-text">Milestone!</div>
+  </div>
+
   <div class="home-card">
     <div class="home-header">
       <div class="home-eyebrow" style="font-size:1.3rem;letter-spacing:normal;text-transform:none;font-family:'Inter',sans-serif;font-weight:700;color:white;margin-bottom:.35rem;">A Quiz Platform by Sir Mr. 100</div>
@@ -594,6 +616,20 @@
         </div>
         <button class="start-btn" style="width:auto;white-space:nowrap;padding:.55rem 1.1rem;margin:0;" onclick="startMistakesDrill()" id="mistakes-drill-btn">Start Drill →</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MILESTONES DASHBOARD -->
+  <div id="milestones-dashboard-section" class="home-card" style="margin-top:1.5rem;display:none;padding:1.5rem 2rem 1.8rem;">
+    <div style="font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:.2rem;">🏅 Your Milestones</div>
+    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.1rem;">Everything you've earned so far, plus what's within reach.</div>
+    <div id="milestones-earned-wrap" style="margin-bottom:1.1rem;">
+      <div style="font-size:.78rem;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.03em;margin-bottom:.5rem;">✅ Earned</div>
+      <div id="milestones-earned-list" style="display:flex;flex-direction:column;gap:.5rem;"></div>
+    </div>
+    <div id="milestones-close-wrap">
+      <div style="font-size:.78rem;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.03em;margin-bottom:.5rem;">🎯 Almost there</div>
+      <div id="milestones-close-list" style="display:flex;flex-direction:column;gap:.6rem;"></div>
     </div>
   </div>
 
@@ -6999,12 +7035,16 @@ async function renderFacultyCategoryList(){
     const counts={};
     rows.forEach(r=>{ if(r.hidden_by_student) return; const c=r.category||'Sample Mock'; counts[c]=(counts[c]||0)+1; });
     listEl.innerHTML='';
-    // Categories present in real attempt data but not in the static CATEGORIES list
-    // (e.g. the synthetic "🔁 Redo My Mistakes" drill category) still need a card so
-    // faculty can see and review those attempts too — appended after the normal list.
+    // Only show categories that currently have at least 1 attempt. This includes
+    // categories from the static CATEGORIES list (only if counts[name]>0 — so a
+    // category whose attempts were all deleted correctly disappears from this list)
+    // as well as categories present in real attempt data but not in the static list
+    // (e.g. the synthetic "🔁 Redo My Mistakes" drill category).
     const knownNames=new Set(CATEGORIES.map(c=>c.name));
-    const extraNames=Object.keys(counts).filter(name=>!knownNames.has(name)).sort();
-    const allCards=[...CATEGORIES.map(c=>({name:c.name})), ...extraNames.map(name=>({name}))];
+    const staticNamesWithAttempts=CATEGORIES.map(c=>c.name).filter(name=>(counts[name]||0)>0);
+    const extraNames=Object.keys(counts).filter(name=>!knownNames.has(name) && counts[name]>0).sort();
+    const allCards=[...staticNamesWithAttempts.map(name=>({name})), ...extraNames.map(name=>({name}))];
+    if(allCards.length===0){ listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">No attempts recorded yet.</div>'; return; }
     allCards.forEach(cat=>{
       const n=counts[cat.name]||0;
       const card=document.createElement('div');
@@ -7659,6 +7699,12 @@ async function facultyDeleteUser(userId, username, cardEl){
 
 let currentUser = null;   // { id, username }
 let viewingPastAttempt = false; // true when results/review screens are showing a saved attempt, not a live one just finished
+// Holds the in-flight promise from saveAttemptToSupabase for the attempt just
+// finished, so navigation away from the results screen can wait for the save
+// to actually land in Supabase before refreshing dashboard data (streak,
+// milestones, mistakes pool) that reads from the attempts table — otherwise a
+// student clicking "back to home" quickly sees stale, pre-save data.
+let pendingAttemptSavePromise = null;
 let viewingAsFaculty = false; // true when results/review screens were opened from Faculty Mode (controls back-nav + delete button)
 let facultyReviewAttemptId = null; // id of the attempt currently shown, so the faculty delete button can act on it
 
@@ -7763,7 +7809,7 @@ async function completeLogin(userId, username){
   // closed tab, reload) BEFORE loading the past-attempts list, so it shows up.
   await recoverLiveAttemptIfAny();
   loadPastAttempts();
-  loadMistakesCount();
+  loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard();
 }
 
 // ── AUTH: LOGOUT ──────────────────────────────────────────
@@ -7929,6 +7975,348 @@ async function studentDeleteAttempt(attemptId, rowEl){
 // offers to start a fresh Practice session made up of just those questions.
 let mistakesPool=[]; // cached list of question objects the student has gotten wrong at least once
 
+// Re-grades a stored userAnswer against the CURRENT (live) version of a question,
+// rather than trusting the isCorrect flag frozen into answers_json at the time of
+// the original attempt. This makes "Redo My Mistakes" retroactively respect edits
+// made to a question after students already attempted it: if a question's correct
+// answer is fixed later, old attempts get re-evaluated against the fix instead of
+// replaying the old (wrong) grade.
+function regradeAgainstLive(liveQ, userAnswer){
+  if(!liveQ || userAnswer===undefined || userAnswer===null) return null;
+  try{
+    switch(liveQ.type){
+      case 'mcq': case 'mcq-table':
+        return userAnswer===liveQ.correct;
+      case 'checkbox': case 'checkbox-any':
+        return Array.isArray(userAnswer) && checkboxSetsEqual(userAnswer, liveQ.correctSet);
+      case 'true-false-table': case 'match-list': case 'match-pairs': case 'match-dragdrop':
+        return Array.isArray(userAnswer) && liveQ.rows.every((r,i)=>userAnswer[i]===r.correct);
+      case 'number-entry':
+        return userAnswer===liveQ.correct;
+      case 'token-matching':
+        return Array.isArray(userAnswer) && liveQ.fields.every((f,i)=>userAnswer[i]===f.correctToken);
+      case 'multi-part':
+        return Array.isArray(userAnswer) && liveQ.parts.every((p,i)=>p.subtype==='number'?userAnswer[i]===p.correct:Number(userAnswer[i])===p.correct);
+      default:
+        return null; // unknown/unhandled type — don't guess, fall back to stored value upstream
+    }
+  }catch(e){ return null; } // malformed stored answer shape (e.g. question type changed) — fall back upstream
+}
+
+// ── ENGAGEMENT: STREAK + WEAK-TOPIC NUDGE + MILESTONES ──────
+// All three read from data we already have (attempts table) plus one tiny new
+// table (milestones_seen) so a milestone only ever fires once per student.
+// Nothing here needs a leaderboard or cross-student comparison — everything is
+// scoped to the logged-in student only.
+
+let weakTopicPool=null; // cached {name, ids:[...]} for the current weakest-topic nudge
+
+// Computes the student's current daily streak (consecutive calendar days, up to
+// and including today OR yesterday — a day is not "broken" until a full day is
+// skipped) from their own attempts.created_at timestamps.
+function computeStreakFromDates(dateStrings){
+  if(!dateStrings || dateStrings.length===0) return 0;
+  const daySet=new Set(dateStrings); // 'YYYY-MM-DD' strings, one per distinct day the student did ANY attempt
+  const today=new Date(); today.setHours(0,0,0,0);
+  const toKey=(d)=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  // If they haven't practiced today, the streak can still count as "alive" as long
+  // as they practiced yesterday (so logging in today doesn't zero it out before
+  // they've had a chance to practice) — but it does not extend past yesterday.
+  let cursor=new Date(today);
+  if(!daySet.has(toKey(cursor))){
+    cursor.setDate(cursor.getDate()-1);
+    if(!daySet.has(toKey(cursor))) return 0; // missed both today and yesterday — streak is broken
+  }
+  let streak=0;
+  while(daySet.has(toKey(cursor))){
+    streak++;
+    cursor.setDate(cursor.getDate()-1);
+  }
+  return streak;
+}
+
+async function loadEngagementCard(){
+  if(!currentUser) return;
+  const card=document.getElementById('engagement-card');
+  try{
+    const {data,error}=await sb.from('attempts')
+      .select('category,percent,created_at,questions_attempted,questions_json,answers_json')
+      .eq('user_id', currentUser.id)
+      .eq('hidden_by_student', false)
+      .order('created_at',{ascending:true});
+    if(error||!data){ card.style.display='none'; return; }
+
+    // --- Streak ---
+    const dateStrings=data.map(a=>{
+      const d=new Date(a.created_at);
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    });
+    const streak=computeStreakFromDates(dateStrings);
+    const streakPill=document.getElementById('streak-pill');
+    if(streak>0){
+      streakPill.style.display='flex';
+      const emoji = streak>=30?'🏆':streak>=14?'⚡':streak>=7?'🔥':'🔥';
+      document.getElementById('streak-emoji').textContent=emoji;
+      document.getElementById('streak-text').textContent=`${streak} day streak`;
+    } else {
+      streakPill.style.display='none';
+    }
+
+    // --- Weakest-topic nudge ---
+    // Only consider categories with at least 3 attempted sessions worth of
+    // signal (a stricter "at least 3 questions attempted total" guard below),
+    // so a single unlucky question doesn't get flagged as a "weak topic".
+    // seenIdsByCategory tracks the REAL set of unique question ids the student has
+    // actually answered in each category (used for the category-complete milestone
+    // below) — not just a summed attempt count, which was only ever a proxy.
+    const byCategory={};
+    const seenIdsByCategory={};
+    data.forEach(a=>{
+      const cat=a.category||'Sample Mock';
+      if(cat==='🔁 Redo My Mistakes') return; // synthetic category, not a real syllabus topic
+      if(!byCategory[cat]) byCategory[cat]={sumPct:0,n:0,attempted:0};
+      byCategory[cat].sumPct+=(a.percent||0);
+      byCategory[cat].n+=1;
+      byCategory[cat].attempted+=(a.questions_attempted||0);
+      if(!seenIdsByCategory[cat]) seenIdsByCategory[cat]=new Set();
+      const answeredIds=Object.keys(a.answers_json||{});
+      answeredIds.forEach(id=>seenIdsByCategory[cat].add(String(id)));
+    });
+    const candidates=Object.keys(byCategory)
+      .map(name=>({name, avg:byCategory[name].sumPct/byCategory[name].n, attempted:byCategory[name].attempted}))
+      .filter(c=>c.attempted>=3); // need a minimum sample before calling it "weak"
+    const weakCard=document.getElementById('weak-topic-card');
+    if(candidates.length===0){
+      weakCard.style.display='none';
+      weakTopicPool=null;
+    } else {
+      candidates.sort((a,b)=>a.avg-b.avg);
+      const weakest=candidates[0];
+      if(weakest.avg<75){ // only nudge if there's actually room to improve
+        const catDef=CATEGORIES.find(c=>c.name===weakest.name);
+        if(catDef){
+          weakTopicPool={id:catDef.id, name:catDef.name, ids:catDef.ids};
+          weakCard.style.display='flex';
+          document.getElementById('weak-topic-desc').textContent=`${catDef.name} — averaging ${Math.round(weakest.avg)}% · want a focused drill?`;
+        } else { weakCard.style.display='none'; weakTopicPool=null; }
+      } else { weakCard.style.display='none'; weakTopicPool=null; }
+    }
+
+    card.style.display = (streak>0 || weakTopicPool) ? 'flex' : 'none';
+
+    // --- Milestones (fire-once celebratory toasts) ---
+    checkMilestones({streak, totalAttempts:data.length, byCategory, seenIdsByCategory});
+  }catch(err){
+    card.style.display='none';
+  }
+}
+
+function startWeakTopicDrill(){
+  if(!weakTopicPool) return;
+  mode='practice';
+  document.getElementById('card-practice').classList.add('selected');
+  document.getElementById('card-quiz').classList.remove('selected');
+  document.getElementById('card-test').classList.remove('selected');
+  // IMPORTANT: id/name must match the REAL category exactly (see the identical
+  // note in startCategoryRemainingDrill) so this drill's answers count toward
+  // that category's real progress instead of vanishing into a synthetic category.
+  selectedCategory={ id:weakTopicPool.id, name:weakTopicPool.name, displayLabel:'🎯 '+weakTopicPool.name+' (Focused Drill)', ids:weakTopicPool.ids };
+  const qList=weakTopicPool.ids.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean);
+  const shuffled=shuffle([...qList]);
+  beginSessionWithQuestions(shuffled, null);
+}
+
+// ── MILESTONES ────────────────────────────────────────────
+// A milestone fires at most once per student ever, tracked in the
+// milestones_seen Supabase table (columns: user_id, milestone_key, created_at).
+// See the SQL note near the bottom of this file/README for the table definition.
+const MILESTONE_TOAST_MS=5000;
+
+// Cache of {catId: {name, ids}} for the "Practice remaining" button on the
+// milestones dashboard's near-miss category cards — refreshed every time
+// loadMilestonesDashboard runs, read only at click-time.
+let categoryRemainingCache={};
+function startCategoryRemainingDrill(catId){
+  const entry=categoryRemainingCache[catId];
+  if(!entry || !entry.ids || entry.ids.length===0) return;
+  mode='practice';
+  document.getElementById('card-practice').classList.add('selected');
+  document.getElementById('card-quiz').classList.remove('selected');
+  document.getElementById('card-test').classList.remove('selected');
+  // IMPORTANT: name must be the REAL category name (matching CATEGORIES exactly),
+  // not a synthetic "🎯 ... (Remaining Questions)" label — otherwise the saved
+  // attempt's category column won't match the real category, and none of the
+  // answers from this drill will count toward that category's milestone/weak-topic
+  // progress (they'd silently get bucketed under a category that doesn't exist
+  // anywhere else). The 🎯 framing is shown separately via displayLabel, used only
+  // for the on-screen session tag — never saved to Supabase.
+  selectedCategory={ id:catId, name:entry.name, displayLabel:'🎯 '+entry.name+' (Remaining Questions)', ids:entry.ids };
+  const qList=entry.ids.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean);
+  const shuffled=shuffle([...qList]);
+  beginSessionWithQuestions(shuffled, null);
+}
+
+// Single source of truth for every milestone definition, each with current/target
+// progress so the same list can drive (a) which ones just got newly earned (toast),
+// (b) the full "earned so far" list on the dashboard, and (c) the "almost there"
+// near-miss list on the dashboard. Returns ALL milestones regardless of whether
+// they're earned yet — callers filter as needed.
+function buildMilestoneCatalog({streak, totalAttempts, byCategory, seenIdsByCategory}){
+  const list=[];
+  list.push({key:'first_attempt', emoji:'🎉', text:'First session complete — welcome aboard!', label:'First session', current:totalAttempts, target:1});
+  list.push({key:'attempts_100', emoji:'💯', text:'100 sessions completed!', label:'100 sessions completed', current:totalAttempts, target:100});
+  list.push({key:'attempts_500', emoji:'🚀', text:'500 sessions completed — incredible consistency!', label:'500 sessions completed', current:totalAttempts, target:500});
+  list.push({key:'streak_7', emoji:'🔥', text:'7 day streak!', label:'7 day streak', current:streak, target:7});
+  list.push({key:'streak_14', emoji:'⚡', text:'14 day streak — you\'re unstoppable!', label:'14 day streak', current:streak, target:14});
+  list.push({key:'streak_30', emoji:'🏆', text:'30 day streak. Exam-ready discipline right there.', label:'30 day streak', current:streak, target:30});
+  CATEGORIES.forEach(catDef=>{
+    // TRUE completion: every unique question id in this category has been
+    // answered at least once, ever (across any number of sessions) — not just a
+    // summed-attempt-count proxy. seenIdsByCategory holds the real set of
+    // question ids the student has actually submitted an answer for.
+    const seenIds=(seenIdsByCategory&&seenIdsByCategory[catDef.name])||new Set();
+    const seenCount=catDef.ids.filter(id=>seenIds.has(String(id))).length;
+    const remainingIds=catDef.ids.filter(id=>!seenIds.has(String(id)));
+    list.push({
+      key:'category_done_'+catDef.id, emoji:'✅',
+      text:`Category complete: ${catDef.name}! You've now answered every question in it.`,
+      label:`Finish "${catDef.name}"`, current:seenCount, target:catDef.ids.length,
+      catId:catDef.id, catName:catDef.name, remainingIds
+    });
+  });
+  return list;
+}
+
+async function checkMilestones(stats){
+  if(!currentUser) return;
+  const catalog=buildMilestoneCatalog(stats);
+  const candidates=catalog.filter(m=>m.current>=m.target); // earned right now
+  if(candidates.length===0) return;
+  try{
+    const keys=candidates.map(c=>c.key);
+    const {data:seenRows,error}=await sb.from('milestones_seen').select('milestone_key').eq('user_id',currentUser.id).in('milestone_key',keys);
+    if(error){ return; } // table missing or RLS issue — fail silently, never block the home screen over this
+    const seenSet=new Set((seenRows||[]).map(r=>r.milestone_key));
+    const unseen=candidates.filter(c=>!seenSet.has(c.key));
+    if(unseen.length===0) return;
+    // Record all newly-earned milestones immediately so a refresh mid-toast-queue
+    // can't cause the same one to fire twice.
+    await sb.from('milestones_seen').insert(unseen.map(c=>({user_id:currentUser.id, milestone_key:c.key})));
+    queueMilestoneToasts(unseen);
+  }catch(err){ /* non-fatal — milestones are a nice-to-have, never break the app over them */ }
+}
+
+let milestoneToastQueue=[];
+function queueMilestoneToasts(items){
+  milestoneToastQueue.push(...items);
+  if(milestoneToastQueue.length===items.length) showNextMilestoneToast();
+}
+function showNextMilestoneToast(){
+  if(milestoneToastQueue.length===0) return;
+  const item=milestoneToastQueue.shift();
+  const toast=document.getElementById('milestone-toast');
+  document.getElementById('milestone-toast-emoji').textContent=item.emoji;
+  document.getElementById('milestone-toast-text').textContent=item.text;
+  toast.style.display='block';
+  setTimeout(()=>{
+    toast.style.display='none';
+    setTimeout(showNextMilestoneToast, 400); // brief gap before the next one, if any
+  }, MILESTONE_TOAST_MS);
+}
+
+// ── MILESTONES DASHBOARD SECTION ─────────────────────────
+// Shows every milestone the student has ever earned, plus the ones they are
+// closest to reaching next ("almost there"), each with a progress bar. This
+// reads the SAME catalog function used for toast-checking above, so the
+// dashboard and the toasts can never disagree about what counts as earned.
+async function loadMilestonesDashboard(){
+  if(!currentUser) return;
+  const section=document.getElementById('milestones-dashboard-section');
+  const earnedEl=document.getElementById('milestones-earned-list');
+  const closeEl=document.getElementById('milestones-close-list');
+  const closeWrap=document.getElementById('milestones-close-wrap');
+  const earnedWrap=document.getElementById('milestones-earned-wrap');
+  if(!section) return;
+  try{
+    const {data,error}=await sb.from('attempts')
+      .select('category,percent,created_at,questions_attempted,answers_json')
+      .eq('user_id', currentUser.id)
+      .eq('hidden_by_student', false)
+      .order('created_at',{ascending:true});
+    if(error||!data){ section.style.display='none'; return; }
+    const dateStrings=data.map(a=>{
+      const d=new Date(a.created_at);
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    });
+    const streak=computeStreakFromDates(dateStrings);
+    const seenIdsByCategory={};
+    data.forEach(a=>{
+      const cat=a.category||'Sample Mock';
+      if(cat==='🔁 Redo My Mistakes') return;
+      if(!seenIdsByCategory[cat]) seenIdsByCategory[cat]=new Set();
+      Object.keys(a.answers_json||{}).forEach(id=>seenIdsByCategory[cat].add(String(id)));
+    });
+    const catalog=buildMilestoneCatalog({streak, totalAttempts:data.length, seenIdsByCategory});
+
+    const earned=catalog.filter(m=>m.current>=m.target);
+    // "Almost there" = not yet earned, but at least 60% of the way to target
+    // (and not a target-1 milestone like first_attempt, which is trivially
+    // either earned or 0% — no meaningful "close" state for it).
+    const notEarned=catalog.filter(m=>m.current<m.target && m.target>1);
+    const close=notEarned
+      .map(m=>({...m, pct:Math.min(99,Math.round((m.current/m.target)*100))}))
+      .filter(m=>m.pct>=60)
+      .sort((a,b)=>b.pct-a.pct)
+      .slice(0,5); // don't overwhelm — top 5 closest
+
+    section.style.display='block';
+
+    if(earned.length===0){
+      earnedWrap.style.display='none';
+    } else {
+      earnedWrap.style.display='block';
+      earnedEl.innerHTML=earned.map(m=>`
+        <div style="display:flex;align-items:center;gap:.6rem;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:.6rem .9rem;">
+          <span style="font-size:1.3rem;">${m.emoji}</span>
+          <span style="font-size:.82rem;font-weight:600;color:#166534;">${escHTML(m.label)}</span>
+        </div>`).join('');
+    }
+
+    if(close.length===0){
+      closeWrap.style.display='none';
+    } else {
+      closeWrap.style.display='block';
+      // Cache remaining question ids per category so the "Practice remaining"
+      // button can start a session without cramming an array into inline HTML.
+      close.forEach(m=>{ if(m.catId) categoryRemainingCache[m.catId]={name:m.catName, ids:m.remainingIds}; });
+      closeEl.innerHTML=close.map(m=>{
+        const btn = m.catId && m.remainingIds && m.remainingIds.length>0
+          ? `<button class="start-btn" style="width:auto;white-space:nowrap;padding:.4rem .85rem;margin:0;font-size:.74rem;flex-shrink:0;" onclick="startCategoryRemainingDrill('${m.catId}')">Practice remaining (${m.remainingIds.length}) →</button>`
+          : '';
+        return `
+        <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:.65rem .9rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-bottom:.35rem;flex-wrap:wrap;">
+            <span style="font-size:.82rem;font-weight:600;color:#92400e;">${m.emoji} ${escHTML(m.label)}</span>
+            <div style="display:flex;align-items:center;gap:.6rem;">
+              <span style="font-size:.72rem;color:#92400e;font-weight:700;white-space:nowrap;">${m.current}/${m.target}</span>
+              ${btn}
+            </div>
+          </div>
+          <div style="background:#fef3c7;border-radius:20px;height:8px;overflow:hidden;">
+            <div style="background:#f59e0b;height:100%;width:${m.pct}%;border-radius:20px;"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    if(earned.length===0 && close.length===0){
+      section.innerHTML='<div style="font-size:.85rem;color:var(--text-muted);text-align:center;padding:.5rem 0;">Complete a session to start earning milestones!</div>';
+    }
+  }catch(err){
+    section.style.display='none';
+  }
+}
+
 async function loadMistakesCount(){
   const row=document.getElementById('mistakes-drill-row');
   const desc=document.getElementById('mistakes-drill-desc');
@@ -7941,13 +8329,27 @@ async function loadMistakesCount(){
       .eq('hidden_by_student', false)
       .order('created_at',{ascending:true}); // oldest first, so later duplicates overwrite with the freshest question snapshot
     if(error||!data||data.length===0){ row.style.display='none'; return; }
+    // Index the live, current question bank by id so we always use today's
+    // corrected question text/options/correct-answer — never the frozen snapshot
+    // stored in questions_json back when the attempt happened.
+    const liveById={};
+    QUESTIONS.forEach(q=>{ liveById[q.id]=q; });
     const byId={};
     data.forEach(attempt=>{
       const qs=attempt.questions_json||[], ans=attempt.answers_json||{};
-      qs.forEach(q=>{
-        const a=ans[q.id];
-        if(a && a.isCorrect===false) byId[q.id]=q; // wrong answer found — keep/refresh this question
-        else if(a && a.isCorrect===true && byId[q.id]) delete byId[q.id]; // got it right since — no longer a "mistake"
+      qs.forEach(snapshotQ=>{
+        const a=ans[snapshotQ.id];
+        if(!a) return;
+        const liveQ=liveById[snapshotQ.id];
+        if(!liveQ) return; // question was removed entirely since — nothing to drill
+        // Re-grade the student's original answer against the CURRENT question
+        // definition. If the question was fixed after the student answered, this
+        // can flip a stored isCorrect:false into correct (or vice versa), so the
+        // mistake pool always reflects today's answer key, not the old one.
+        const regraded=regradeAgainstLive(liveQ, a.userAnswer);
+        const stillWrong = regraded===null ? (a.isCorrect===false) : (regraded===false);
+        if(stillWrong) byId[snapshotQ.id]=liveQ; // use the LIVE question object, not the stale snapshot
+        else delete byId[snapshotQ.id]; // correct (originally, or after the fix) — no longer a "mistake"
       });
     });
     mistakesPool=Object.values(byId);
@@ -8064,8 +8466,20 @@ async function reviewPastAttempt(attemptId, fromFaculty){
     if(error||!data){ alert('Could not load that attempt.'); return; }
     // Load saved questions/answers into the same state the live quiz uses,
     // so the existing results & review-detail screens work unmodified.
-    shuffledQ = data.questions_json;
-    answers = data.answers_json;
+    // Swap in the LIVE (current) version of each question by id, and re-grade the
+    // student's original answer against it — so if a question was edited/fixed
+    // after this attempt was taken, the review screen reflects the corrected
+    // answer key retroactively instead of replaying the old, possibly-wrong grade.
+    const liveByIdReview={};
+    QUESTIONS.forEach(q=>{ liveByIdReview[q.id]=q; });
+    shuffledQ = (data.questions_json||[]).map(snapshotQ=>liveByIdReview[snapshotQ.id]||snapshotQ);
+    answers = {};
+    Object.keys(data.answers_json||{}).forEach(qid=>{
+      const a=data.answers_json[qid];
+      const liveQ=liveByIdReview[qid] || liveByIdReview[Number(qid)];
+      const regraded=liveQ?regradeAgainstLive(liveQ,a.userAnswer):null;
+      answers[qid] = regraded===null ? a : {...a, isCorrect:regraded};
+    });
     mode = data.mode;
     totalMarksSelected = data.score_total*2;
     secondsLeft = Math.max(0, Math.round(totalMarksSelected*1.2*60) - data.time_taken_seconds);
@@ -8093,7 +8507,7 @@ async function quitSessionEarly(){
     clearLiveAttemptSnapshot();
     if(timerInterval) clearInterval(timerInterval);
     showScreen('home-screen');
-    if(currentUser){ loadPastAttempts(); loadMistakesCount(); }
+    if(currentUser){ loadPastAttempts(); loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard(); }
     return;
   }
   if(!confirm('Quit this session now? Your progress so far ('+attempted+' question'+(attempted===1?'':'s')+' answered) will be saved as an attempt.')) return;
@@ -8106,10 +8520,10 @@ async function quitSessionEarly(){
     clearLiveAttemptSnapshot();
     if(quitBtn){ quitBtn.disabled=false; quitBtn.textContent='✕ Quit'; }
     showScreen('home-screen');
-    if(currentUser){ loadPastAttempts(); loadMistakesCount(); }
+    if(currentUser){ loadPastAttempts(); loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard(); }
   }
 }
-function goHomeFromResults(){
+async function goHomeFromResults(){
   const wasFaculty = viewingAsFaculty;
   const cameFromProfile = viewingFacultyProfile;
   viewingPastAttempt=false;
@@ -8128,7 +8542,14 @@ function goHomeFromResults(){
     return;
   }
   showScreen('home-screen');
-  if(currentUser){ loadPastAttempts(); loadMistakesCount(); }
+  // Wait for the just-finished attempt's save to actually land in Supabase before
+  // reloading streak/milestones/mistakes data — otherwise a fast click here reads
+  // the attempts table before the new row exists and shows stale progress.
+  if(pendingAttemptSavePromise){
+    try{ await pendingAttemptSavePromise; }catch(e){ /* save already reports its own error banner elsewhere */ }
+    pendingAttemptSavePromise=null;
+  }
+  if(currentUser){ loadPastAttempts(); loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard(); }
 }
 function backFromReviewDetail(){
   showScreen('results-screen');
@@ -8532,7 +8953,7 @@ function beginSessionWithQuestions(qList, timerMinutesOverride){
   inLiveAttempt=true;
   showScreen('quiz-screen');
   document.getElementById('mode-label').textContent=mode==='practice'?'PRACTICE':(mode==='test'?'TEST':'QUIZ');
-  document.getElementById('session-category-label').textContent='📂 '+selectedCategory.name;
+  document.getElementById('session-category-label').textContent='📂 '+(selectedCategory.displayLabel||selectedCategory.name);
   // Show both trackers: Score (questions correct out of questions attempted) always,
   // and Marks (marks earned out of marks available) only when this session actually
   // has mark-based questions — Study Hub Activities are noMark, so Marks is hidden then.
@@ -9262,12 +9683,13 @@ function showResults(savedAttempt){
     renderStrip(null);
   }
   if(!viewingPastAttempt){
-    saveAttemptToSupabase(false).then(meta=>{
+    pendingAttemptSavePromise = saveAttemptToSupabase(false).then(meta=>{
       if(meta&&meta.attemptNumber){
         const n=meta.attemptNumber;
         const ord=n===1?'1st':n===2?'2nd':n===3?'3rd':`${n}th`;
         renderStrip(ord);
       }
+      return meta;
     });
   }
   document.getElementById('results-meta').innerHTML=`
