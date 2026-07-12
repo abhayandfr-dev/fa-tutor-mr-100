@@ -444,13 +444,52 @@
   <div style="background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:360px;box-sizing:border-box;">
     <h3 style="margin:0 0 .3rem;font-size:1.1rem;color:#0f1f3d;">Change Username</h3>
     <p style="margin:0 0 .8rem;font-size:.82rem;color:#64748b;">Set a new username for <b id="changeUnameCurrent"></b>.</p>
-    <input type="text" id="changeUnameNew" placeholder="New username (letters, numbers, _)" autocomplete="off"
+    <input type="text" id="changeUnameNew" placeholder="New username (any characters allowed)" autocomplete="off"
       style="width:100%;padding:.7rem .9rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;box-sizing:border-box;">
     <div id="changeUnameError" style="color:#ef4444;font-size:.8rem;margin-top:.5rem;display:none;"></div>
     <div id="changeUnameSuccess" style="color:#166534;font-size:.8rem;margin-top:.5rem;display:none;"></div>
     <div style="display:flex;gap:.6rem;margin-top:1rem;">
       <button onclick="closeChangeUnameDialog()" style="flex:1;padding:.65rem;background:#f1f5f9;color:#334155;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">Cancel</button>
       <button id="changeUnameBtn" onclick="doChangeUsername()" style="flex:1;padding:.65rem;background:#1a3260;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">Change Username</button>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT: REQUEST USERNAME CHANGE DIALOG -->
+<div id="studentChangeUnameOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;align-items:center;justify-content:center;z-index:10000;padding:1rem;box-sizing:border-box;">
+  <div style="background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:360px;box-sizing:border-box;">
+    <h3 style="margin:0 0 .3rem;font-size:1.1rem;color:#0f1f3d;">✏️ Change Username</h3>
+    <p style="margin:0 0 .8rem;font-size:.82rem;color:#64748b;">Your current username is <b id="studentChangeUnameCurrent"></b>. Requesting a new one will send it to your teacher for approval — it won't change until they approve it.</p>
+    <input type="text" id="studentChangeUnameNew" placeholder="New username (any characters allowed)" autocomplete="off"
+      style="width:100%;padding:.7rem .9rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;box-sizing:border-box;">
+    <div id="studentChangeUnameError" style="color:#ef4444;font-size:.8rem;margin-top:.5rem;display:none;"></div>
+    <div id="studentChangeUnameSuccess" style="color:#166534;font-size:.8rem;margin-top:.5rem;display:none;"></div>
+    <div id="studentChangeUnamePending" style="color:#9a3412;background:#fff7ed;border:1px solid #fb923c;border-radius:8px;padding:.6rem .8rem;font-size:.78rem;margin-top:.6rem;display:none;"></div>
+    <div style="display:flex;gap:.6rem;margin-top:1rem;">
+      <button onclick="closeStudentChangeUnameDialog()" style="flex:1;padding:.65rem;background:#f1f5f9;color:#334155;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="studentChangeUnameBtn" onclick="doRequestUsernameChange()" style="flex:1;padding:.65rem;background:#1a3260;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT: CHANGE PASSWORD DIALOG -->
+<div id="studentChangePwOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;align-items:center;justify-content:center;z-index:10000;padding:1rem;box-sizing:border-box;">
+  <div style="background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:360px;box-sizing:border-box;">
+    <h3 style="margin:0 0 .3rem;font-size:1.1rem;color:#0f1f3d;">🔑 Change Password</h3>
+    <p style="margin:0 0 .8rem;font-size:.82rem;color:#64748b;">Confirm your username and current password, then set a new one. This takes effect immediately — no teacher approval needed.</p>
+    <input type="text" id="studentChangePwUsername" placeholder="Username" autocomplete="off"
+      style="width:100%;padding:.7rem .9rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;box-sizing:border-box;margin-bottom:.6rem;">
+    <input type="password" id="studentChangePwCurrent" placeholder="Current password" autocomplete="off"
+      style="width:100%;padding:.7rem .9rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;box-sizing:border-box;margin-bottom:.6rem;">
+    <input type="password" id="studentChangePwNew" placeholder="New password (min 6 characters)" autocomplete="off"
+      style="width:100%;padding:.7rem .9rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;box-sizing:border-box;margin-bottom:.6rem;">
+    <input type="password" id="studentChangePwNewConfirm" placeholder="Confirm new password" autocomplete="off"
+      style="width:100%;padding:.7rem .9rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;box-sizing:border-box;">
+    <div id="studentChangePwError" style="color:#ef4444;font-size:.8rem;margin-top:.5rem;display:none;"></div>
+    <div id="studentChangePwSuccess" style="color:#166534;font-size:.8rem;margin-top:.5rem;display:none;"></div>
+    <div style="display:flex;gap:.6rem;margin-top:1rem;">
+      <button onclick="closeStudentChangePwDialog()" style="flex:1;padding:.65rem;background:#f1f5f9;color:#334155;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="studentChangePwBtn" onclick="doChangeOwnPassword()" style="flex:1;padding:.65rem;background:#1a3260;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">Change Password</button>
     </div>
   </div>
 </div>
@@ -462,9 +501,31 @@
       <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🎓 Faculty Mode — Mock Categories</span>
       <button onclick="exitFacultyMode()" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">Exit Faculty Mode</button>
     </div>
+    <button onclick="openFacultyMock1Search()" style="width:100%;padding:.8rem;background:#0891b2;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:1.5rem;">🔎 Search for Student's Data</button>
     <div id="faculty-category-list" style="display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.5rem;"></div>
     <button onclick="openFacultyDashboard()" style="width:100%;padding:.8rem;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:.7rem;">📊 Progress Dashboard</button>
+    <button onclick="openFacultyUsernameRequests()" style="width:100%;padding:.8rem;background:#00b4a0;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:.7rem;position:relative;">✏️ Username Change Requests <span id="uname-req-badge" style="display:none;background:#ef4444;color:#fff;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:800;margin-left:.4rem;"></span></button>
     <button onclick="openFacultyUserManagement()" style="width:100%;padding:.8rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;">🔑 Manage Users &amp; Reset Passwords</button>
+  </div>
+</div>
+
+<!-- FACULTY MODE: SEARCH FOR STUDENT'S DATA (generic profile first, then mock reports — extensible for future mocks) -->
+<div id="faculty-mock1search-screen" class="screen">
+  <div style="max-width:760px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🔎 Search for Student's Data</span>
+      <button onclick="showScreen('faculty-categories-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="position:relative;margin-bottom:1rem;">
+      <input type="text" id="mock1search-input" placeholder="Type a student's name…" autocomplete="off"
+        oninput="onMock1SearchInput(this.value)"
+        style="width:100%;padding:.75rem .9rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.9rem;box-sizing:border-box;">
+      <div id="mock1search-suggestions" style="display:none;position:absolute;top:calc(100% + .4rem);left:0;right:0;background:#fff;border:2px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:50;max-height:280px;overflow-y:auto;"></div>
+    </div>
+    <!-- Generic student data (profile) shows first -->
+    <div id="faculty-student-generic-body" style="margin-bottom:1.4rem;"></div>
+    <!-- Mock report(s) show below — each mock gets its own labelled section here -->
+    <div id="faculty-mock1-report-body"></div>
   </div>
 </div>
 
@@ -477,6 +538,18 @@
     </div>
     <div id="faculty-attempts-sub" style="font-size:.82rem;color:#64748b;margin-bottom:1rem;"></div>
     <div id="faculty-attempts-list" style="display:flex;flex-direction:column;gap:.7rem;"></div>
+  </div>
+</div>
+
+<!-- FACULTY MODE: USERNAME CHANGE REQUESTS -->
+<div id="faculty-uname-requests-screen" class="screen">
+  <div style="max-width:760px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">✏️ Username Change Requests</span>
+      <button onclick="showScreen('faculty-categories-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div id="faculty-uname-requests-sub" style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Loading requests…</div>
+    <div id="faculty-uname-requests-list" style="display:flex;flex-direction:column;gap:.7rem;"></div>
   </div>
 </div>
 
@@ -524,11 +597,26 @@
   </div>
 </div>
 
+<!-- STUDENT: MOCK-1 REPORT -->
+<div id="student-mock1-report-screen" class="screen">
+  <div style="max-width:760px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">📊 Mock-1 Report</span>
+      <button onclick="showScreen('home-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div id="student-mock1-report-body">Loading…</div>
+  </div>
+</div>
+
 <!-- HOME -->
 <div id="home-screen" class="screen">
-  <div style="max-width:760px;width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;padding:0 .25rem;box-sizing:border-box;">
+  <div style="max-width:760px;width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;padding:0 .25rem;box-sizing:border-box;flex-wrap:wrap;gap:.5rem;">
     <span style="font-size:.85rem;color:var(--navy);font-weight:600;">👋 <span id="welcome-username">User</span></span>
-    <button onclick="handleLogout()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">Log out</button>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <button onclick="openStudentChangeUnameDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">✏️ Change Username</button>
+      <button onclick="openStudentChangePwDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">🔑 Change Password</button>
+      <button onclick="handleLogout()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">Log out</button>
+    </div>
   </div>
 
   <!-- ENGAGEMENT CARD: streak + weakest-topic nudge. Hidden entirely until data loads. -->
@@ -644,6 +732,11 @@
       <div id="past-attempts-empty" style="font-size:.85rem;color:var(--text-muted);text-align:center;padding:1rem 0;display:none;">You haven't completed any attempts yet — finish a session above and it'll show up here.</div>
       <div id="past-attempts-list" style="display:flex;flex-direction:column;gap:.7rem;"></div>
     </div>
+  </div>
+
+  <!-- MOCK-1 REPORT ENTRY POINT -->
+  <div id="mock1-report-entry" style="max-width:760px;width:100%;margin-top:1.2rem;display:none;">
+    <button onclick="openStudentMockReport()" style="width:100%;padding:1rem;background:linear-gradient(135deg,#1a3260 0%,#0f1f3d 100%);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(15,31,61,.25);">📊 View Mock-1 Report</button>
   </div>
 </div>
 
@@ -6806,6 +6899,263 @@ const QUESTIONS = [
   options:["Dr Receivables $700 and Cr Sales $700","Cr Receivables $700 and Dr Sales $700","Dr Payables $700 and Cr Purchases $700","Cr Payables $700 and Dr Purchases $700"],
   correct:0, explanation:"You are recording a transaction in Shobha's books − Shobha is the seller, so the double entry is Dr Receivables and Cr Sales.", calc:null
 },
+  { id:601, type:"mcq",
+    text:"The following information is available for a sole trader, Chetan who keeps no accounting records:\n\nUsing this information, what is the trader's profit for the year ended 30 June 20X7?",
+    req:"Using this information, what is the trader's profit for the year ended 30 June 20X7?",
+    marks:2,
+    dataTable:{
+      columns:["",{v:"$",num:true}],
+      rows:[
+        ["Net business assets at 1 July 20X6",{v:"186,000",num:true}],
+        ["Net business assets at 30 June 20X7",{v:"274,000",num:true}],
+        ["During the year ended 30 June 20X7:",""],
+        ["Cash drawings by Chetan",{v:"68,000",num:true}],
+        ["Additional capital introduced by Chetan",{v:"50,000",num:true}],
+        ["Business cash used to buy a car for Chetan's wife Siya, who takes no part in the business",{v:"20,000",num:true}]
+      ]
+    },
+    options:["$50,000","$86,000","$90,000","$126,000"],
+    correct:3, explanation:"Using the accounting equation: Profit = Change in net assets \u2212 capital introduced + drawings i.e. (274,000 \u2212 186,000) \u2212 50,000 + (68,000 + 20,000) = $126,000", calc:null
+  },
+  { id:602, type:"mcq",
+    text:"Which of the following organisations provides strategic support and guidance to the International Accounting Standards Board on matters such as the implications of proposed IFRS Accounting Standards for users and preparers of financial statements?",
+    req:"Which of the following organisations provides strategic support and guidance to the International Accounting Standards Board on matters such as the implications of proposed IFRS Accounting Standards for users and preparers of financial statements?",
+    marks:2,
+    options:["IFRS Advisory Council","The International Federation of Accountants","IFRS Interpretations Committee","IFRS Foundation"],
+    correct:0, explanation:"The IFRS Advisory Council consults with national standard setters, academics, user groups and a host of other interested parties to advise the International Accounting Standards Board on a range of issues, including giving practical advice on the implications of proposed IFRS Accounting Standards for users and preparers of financial statements.", calc:null
+  },
+  { id:603, type:"mcq",
+    text:"Which of the following statements from the Conceptual Framework for Financial Reporting regarding the qualitative characteristics of financial information is FALSE?",
+    req:"Which of the following statements from the Conceptual Framework for Financial Reporting regarding the qualitative characteristics of financial information is FALSE?",
+    marks:2,
+    options:["If information is timely then its usefulness is enhanced","Understandability means that points that are too complex for non-expert users should be excluded","Information is verifiable if different knowledgeable and independent observers could reach consensus that a particular depiction is a faithful representation","Information will only be useful if it is relevant and faithfully represented"],
+    correct:1, explanation:"Understandability means that financial information should be capable of being understood by users with a reasonable knowledge of business and accounting. This does not mean that useful information should be excluded. If this happened the financial statements would be incomplete and misleading.", calc:null
+  },
+  { id:604, type:"checkbox",
+    text:"Stark Industries Pvt Ltd's general ledger accounts are to be finalised at the period end.\n\nWhich TWO of the following statements illustrate how to finalise general ledger accounts at the period end?",
+    req:"Which TWO of the following statements illustrate how to finalise general ledger accounts at the period end?",
+    marks:2, selectCount:2,
+    options:["Amounts in asset, equity and liability accounts in the general ledger should be carried forward to the next period","Amounts in asset, equity and liability accounts in the general ledger should be transferred to retained earnings at the period end","Amounts in income and expense accounts in the general ledger should be carried forward to the next period","Amounts in income and expense accounts in the general ledger should be transferred to retained earnings at the period end"],
+    correctSet:[0,3], explanation:"Balances represent the position \"as at\" a point in time. The amounts should be carried forward to the next period and then be presented \"as at\" the end of the next period following any movements to those balances.\n\nTransactions represent the performance \"for the period ended\" (e.g., for the financial year); therefore, must be \"reset\" to zero at the start of the next, new accounting period. This is achieved by transferring totals, ultimately, to retained earnings.", calc:null
+  },
+  { id:605, type:"mcq",
+    text:"Select the right order:",
+    req:"Select the right order:",
+    marks:2,
+    options:["Sales Order, Quotation, Goods Received Note, Invoice, Receipt","Quotation, Sales Order, Invoice, Goods Received Note, Receipt","Quotation, Sales Order, Goods Received Note, Invoice, Receipt","Invoice, Sales Order, Goods Received Note, Quotation, Receipt"],
+    correct:2, explanation:"The full generally followed order is Quotation, Purchase requisition, Purchase Order/Sales order, Delivery, Goods Received note, Invoice, Money settlement.\n\nCaution: A document which is a Purchase order for a purchaser is also a Sales order for a supplier. Receipt of money for supplier is payment of money for purchaser.", calc:null
+  },
+  { id:606, type:"mcq",
+    text:"IFRS Advisory Council (IFRS AC) gives advice to the IASB on a range of issues which include:",
+    req:"IFRS Advisory Council (IFRS AC) gives advice to the IASB on a range of issues which include:",
+    marks:2,
+    options:["IASB's project timetable","Practical application and implementation issues in projects","IASB's agenda","All of the above"],
+    correct:3, explanation:"In addition, IFRS AC supports the IASB in the promotion and adoption of IFRSs throughout the world.", calc:null
+  },
+  { id:607, type:"mcq",
+    text:"Victor Von Doom used the following balances to prepare his final accounts as at 30 April 2013.\n\nThe business does not hold inventory. No further adjustments were required.\n\nWhat is Doom's opening capital figure as at 1 May 2013?",
+    req:"What is Doom's opening capital figure as at 1 May 2013?",
+    marks:2,
+    dataTable:{
+      columns:["",{v:"$",num:true},{v:"$",num:true}],
+      rows:[
+        ["Receivables",{v:"6,000",num:true},""],
+        ["Bank loan","",{v:"3,000",num:true}],
+        ["Bank overdraft","",{v:"2,500",num:true}],
+        ["Drawings",{v:"4,100",num:true},""],
+        ["Capital","",{v:"12,500",num:true}],
+        ["Revenue","",{v:"22,000",num:true}],
+        ["Purchases",{v:"19,200",num:true},""],
+        ["Rent",{v:"5,400",num:true},""],
+        ["Bank interest",{v:"825",num:true},""],
+        ["Heat and light",{v:"4,475",num:true},""]
+      ],
+      totalRow:["",{v:"40,000",num:true},{v:"40,000",num:true}]
+    },
+    options:["$12,500","$8,400","$16,300","$500"],
+    correct:3, explanation:"To calculate the opening capital for the next period, the candidate must apply their knowledge of the accounting equation and realise that:\n\nCapital (the figure per the trial balance) plus Profit/less Loss less Drawings = Closing capital, which therefore becomes the opening capital for 1 May 2013.\n\nTherefore closing capital/opening capital for the next accounting period 1 May 2013 = $12,500 \u2212 $7,900 \u2212 $4,100 = $500, answer D.\n\nMany candidates had just taken the figure from the trial balance and assumed this would be opening capital 1 May 2013, rather than understanding that the trial balance would show the opening capital balance brought forward at the start of the current year (1 May 2012). Those candidates who had also incorrectly chosen B, had only taken the capital figure from the trial balance and deducted drawings of $4,100, again ignoring the calculation of the profit and loss items that needed to be taken into account.",
+    calcTable:{
+      columns:["","$"],
+      rows:[
+        ["Revenue","22,000"],
+        ["Purchases","-19,200 (note: the business does not hold inventory)"],
+        ["Rent","-5,400"],
+        ["Bank interest","-825"],
+        ["Heat and light","-4,475"]
+      ],
+      totalRow:["LOSS for the year","-7,900"]
+    }
+  },
+  { id:608, type:"mcq",
+    text:"Which of the following is the best description of the function of the books of prime entry in a standard double entry bookkeeping system?",
+    req:"Which of the following is the best description of the function of the books of prime entry in a standard double entry bookkeeping system?",
+    marks:2,
+    options:["Books of prime entry record amounts owed to/from individual suppliers and customers","Books of prime entry are used to list similar transactions with the totals being posted to the nominal ledger","Books of prime entry are used to record cash transactions","Books of prime entry are used to summarise credit transactions"],
+    correct:1, explanation:"Repetitive transactions may initially be captured in day books (also known as books of prime entry) e.g., all the sales invoices may be listed in the sales day book. These day books are not part of the double-entry system but enable the number of double-entries to be reduced by ascertaining an aggregate.\n\nThe totals from the books of prime entry are posted to the nominal accounts in the nominal ledger through double-entry.", calc:null
+  },
+  { id:609, type:"mcq",
+    text:"An accountant named Peter Parker has inserted all the relevant figures into the trade payables account, but has not yet balanced off the account.\n\nAssuming there are no other entries to be made, other than to balance off the account, what is the closing balance on the trade payables account?",
+    req:"Assuming there are no other entries to be made, other than to balance off the account, what is the closing balance on the trade payables account?",
+    marks:2,
+    dataTable:{
+      columns:["TRADE PAYABLES ACCOUNT",{v:"$",num:true},"",{v:"$",num:true}],
+      rows:[
+        ["Cash at bank",{v:"100,750",num:true},"Balance b/d",{v:"250,225",num:true}],
+        ["","","Purchases",{v:"325,010",num:true}]
+      ]
+    },
+    options:["$474,485 DEBIT","$575,235 DEBIT","$474,485 CREDIT","$575,235 CREDIT"],
+    correct:2, explanation:"Balancing off the account: total credits (250,225 + 325,010 = 575,235) less the debit side (100,750) leaves a balancing figure of $474,485 to carry down, which is a credit balance on the trade payables account.",
+    calcTable:{
+      columns:["TRADE PAYABLES ACCOUNT",{v:"$",num:true},"",{v:"$",num:true}],
+      rows:[
+        ["Cash at bank",{v:"100,750",num:true},"Balance b/d",{v:"250,225",num:true}],
+        ["Balance c/d",{v:"474,485",num:true},"Purchases",{v:"325,010",num:true}]
+      ],
+      totalRow:["",{v:"575,235",num:true},"",{v:"575,235",num:true}]
+    }
+  },
+  { id:610, type:"checkbox",
+    text:"Which two of the following items would 'typically' be identifiable from the financial accounting records of a sole trader named Tony Stark?",
+    req:"Which two of the following items would 'typically' be identifiable from the financial accounting records of a sole trader named Tony Stark?",
+    marks:2, selectCount:2,
+    options:["The value of inventory remaining at the end of the accounting period.","The amount of personal tax owed by sole trader","The projected profitability of the business for the upcoming financial year.","The total outstanding amounts due from credit customers at the reporting date."],
+    correctSet:[0,3], explanation:"Financial accounting records capture transactions and balances that have actually occurred and can be objectively measured \u2014 such as inventory held at the period end and amounts owed by credit customers (receivables). Personal tax owed by the sole trader is a private, non-business matter and does not form part of the business's accounting records, since the sole trader and the business are not separate legal entities for tax purposes but are kept distinct for accounting purposes. Projected (future) profitability is a forecast, not a recorded transaction, and therefore would not appear in the financial accounting records, which only reflect historical, verifiable financial data.", calc:null
+  },
+  { id:611, type:"number-entry",
+    text:"Bruce Banner started a business with $5,000 of capital. In his first month of trading he made a profit of $1,600. At the end of the month Bruce was owed $1,500 from his customers and had $5,400 in the bank. He also owed $1,000 to his suppliers.\n\nWhat are Bruce's drawings for the first month?",
+    req:"What are Bruce's drawings for the first month?",
+    marks:2, prefix:"$", correct:"700", correctDisplay:"$700",
+    explanation:"Capital c/f = Assets c/f \u2212 Liabilities c/f = (Cash in bank + Receivables) \u2212 Payables = 5,400 + 1,500 \u2212 1,000 = 5,900. Capital b/f 5,000 + Profit 1,600 \u2212 Drawings = Capital c/f 5,900, so Drawings = 700.",
+    calc:"Capital b/f = 5,000\nProfit = 1,600\nDrawings = x (say)\n\nCapital c/f = Assets c/f - Liabilities c/f = (Cash in bank + Receivables) - Payables = 5,400 + 1,500 - 1,000 = 5,900\n\nSo, x = 700"
+  },
+  { id:612, type:"mcq",
+    text:"Which of the following are differences between sole traders and limited liability companies?\n1. A sole trader's financial statements are private and never made available to third parties; a company's financial statements are sent to shareholders and may be publicly filed\n2. Only companies have share capital\n3. A sole trader is fully and personally liable for any losses that the business might make\n4. Drawings would only appear in the financial statements of a sole trader",
+    req:"Which of the following are differences between sole traders and limited liability companies?",
+    marks:2,
+    options:["1 and 4 only","2, 3 and 4","2 and 3 only","1, 3 and 4"],
+    correct:1, explanation:"Statement 1 is false because of the word 'never' \u2014 a sole trader's financial statements may be made available to third parties like bank, tax authority, new investor, etc.\n\nRemaining statements are the correct differences between sole traders and limited liability companies.\n\nCaution: don't even think about partnership because the question is specifically asking about difference between sole trader and company so no need to even think about partnership.", calc:null
+  },
+  { id:613, type:"checkbox",
+    text:"Which TWO of the following will a journal be used for?",
+    req:"Which TWO of the following will a journal be used for?",
+    marks:2, selectCount:2,
+    options:["To record non-routine transactions","To check that the trial balance is in balance","To record goods purchased","To record the depreciation charge for the year"],
+    correctSet:[0,3], explanation:"A journal entry is used to record non-routine transactions and double entries that do not arise from the other books of prime entry such as the depreciation charge for the year. Journal entries are also made when errors are discovered and need to be corrected.", calc:null
+  },
+  { id:614, type:"mcq",
+    text:"Natasha Romanoff started a business on 1 January 20X4 with $1,000 cash at bank and entered into the following cash and credit transactions:\n\u2022 Purchased a second hand vehicle for $500 cash\n\u2022 Purchased goods for resale of $500 on credit\n\u2022 Sold half of the goods for $400 on credit\n\u2022 Made cash drawings of $100\n\nWhat is the closing balance on Natasha's capital account at 31 January 20X4?",
+    req:"What is the closing balance on Natasha's capital account at 31 January 20X4?",
+    marks:2,
+    options:["$1,200","$1,050","$400","$1,300"],
+    correct:1, explanation:"Using the full formula method: opening capital $1,000, plus profit of $150 (from the sale of goods at profit), less drawings of $100, gives closing capital of $1,050.",
+    calcTable:{
+      columns:["Transaction","Capital","=","Assets","-","Liabilities"],
+      rows:[
+        ["b/f","1,000","","1,000","",""],
+        ["Vehicle purchase","","","-500 (cash) +500 (vehicle)","",""],
+        ["Goods purchased","","","+500 (inventory)","","+500 (credit purchase to payable)"],
+        ["Goods sold at profit","150 (profit)","","-250 (inventory) +400 (receivable)","",""],
+        ["Drawing","-100","","-100","",""]
+      ],
+      totalRow:["c/f","1,050","=","1,550","-","500"]
+    }
+  },
+  { id:615, type:"mcq",
+    text:"Steve Rogers started a business on 1 January 20X1 selling used cars. During the year to 31 December 20X1, Steve purchased 30 cars and sold 26 cars.\n\nIn the statement of profit or loss for the year to 31 December 20X1, Steve included the cost of 26 cars as part of the cost of sales and treated the remaining 4 cars as closing inventory.\n\nWhat accounting concept is Steve applying in the financial statements to 31 December 20X1?",
+    req:"What accounting concept is Steve applying in the financial statements to 31 December 20X1?",
+    marks:2,
+    options:["Timeliness","Consistency","Accruals","Comparability"],
+    correct:2, explanation:"Income should be matched with expenditure, so only the cost of goods sold should be included under expenses. Goods that were not sold cannot be included as expenses because no income has been generated from those goods. So they will be included as closing inventory and should be carried forward to the next year assuming that it will be sold next year.", calc:null
+  },
+  { id:616, type:"checkbox-any",
+    text:"Which of the following are books of prime entry? (select all that apply)",
+    req:"Which of the following are books of prime entry? (select all that apply)",
+    marks:2,
+    options:["Sales day book (receivables journal)","Purchase day book","Cash book","Supplier statements","Purchase order","Sales invoice","Journal","Receivables ledger"],
+    correctSet:[0,1,2,6], explanation:"Repetitive transactions may initially be captured in day books e.g., all the sales invoices may be listed in the sales day book. These day books are not part of the double-entry system but enable the number of double-entries to be reduced by ascertaining an aggregate. Non-repetitive transactions would be recorded in a separate record called journal.\n\nThe totals from the books of prime entry are posted to the nominal accounts in the nominal ledger through double-entry.", calc:null
+  },
+  { id:617, type:"mcq",
+    text:"At 30 November 20X5 Gwen Stacy had a bank loan of $8,500 and a balance of $678 in hand in her bank account.\n\nHow should these amounts be recorded on Gwen's opening trial balance at 1 December 20X5?",
+    req:"How should these amounts be recorded on Gwen's opening trial balance at 1 December 20X5?",
+    marks:2,
+    options:["DEBIT $7,822","CREDIT $7,822","CREDIT $8,500 and DEBIT $678","DEBIT $8,500 and CREDIT $678"],
+    correct:2, explanation:"The two balances must be separately disclosed. The cash balance is an asset and the loan is a non-current liability.", calc:null
+  },
+  { id:618, type:"mcq",
+    text:"Zendaya Co had a bank ledger account balance of $22,750 (debit) at 1 January 20X1. During the year to 31 December 20X1, Zendaya Co had receipts of $117,500 and received a loan of $11,000. Zendaya Co made payments to suppliers for purchases and expenses of $119,250.\n\nWhat is the balance on Zendaya Co's bank ledger account at 31 December 20X1?",
+    req:"What is the balance on Zendaya Co's bank ledger account at 31 December 20X1?",
+    marks:2,
+    options:["$13,500 Dr","$13,500 Cr","$32,000 Dr","$32,000 Cr"],
+    correct:2, explanation:"The bank ledger account (cash book) balance is built up by starting with the opening balance and adding all amounts received, then deducting all amounts paid out. The receipts and the loan both increase the debit balance on the bank ledger account, since they represent cash coming into the bank. The payments to suppliers reduce it, since they represent cash going out. Netting these off against the opening debit balance gives a closing balance of $32,000, which remains a debit balance because total inflows still exceed total outflows plus the opening balance's exhaustion. A debit balance on the bank ledger account represents an asset (cash at bank), which is why the correct answer is $32,000 Dr.",
+    calcTable:{
+      columns:["","$"],
+      rows:[
+        ["Opening balance (debit)","22,750"],
+        ["Add: Receipts","117,500"],
+        ["Add: Loan received","11,000"],
+        ["Less: Payments to suppliers for purchases and expenses","(119,250)"]
+      ],
+      totalRow:["Closing balance","32,000"]
+    }
+  },
+  { id:619, type:"mcq",
+    text:"If a transaction leads to an increase in assets, what could the other effect be?\n1. A decrease in liabilities\n2. An increase in capital\n3. A decrease in assets\n4. An increase in drawings",
+    req:"If a transaction leads to an increase in assets, what could the other effect be?",
+    marks:2,
+    options:["1 and 4","2, 3 and 4","2 and 3 only","1 and 2"],
+    correct:2, explanation:"We know that, Assets = Capital + Liabilities. If assets increase then there must be a decrease in assets, an increase in liability or an increase in capital to balance the equation. An increase in drawings would rather decrease the capital, so option 4 cannot be the other effect.", calc:null
+  },
+  { id:620, type:"mcq",
+    text:"Which of the following most closely describes the meaning of relevance in the IASB's \"Conceptual Framework for Financial Reporting\"?",
+    req:"Which of the following most closely describes the meaning of relevance in the IASB's \"Conceptual Framework for Financial Reporting\"?",
+    marks:2,
+    options:["It makes information provided in financial statements useful to primary users","It ensures that accounting records and financial statements are free from bias","It provides a predictive or confirmatory value that make difference in decision","It ensures that financial statements comply with all accounting standards"],
+    correct:2, explanation:"Relevant financial information is capable of making a difference in decisions and has a predictive value, confirmatory value or both. Statement 1st describes qualitative characteristics (which include not only relevance). Statement 2nd describes neutrality which is an aspect of faithful representation. Statement 4th is also an aspect of faithful representation.", calc:null
+  },
+  { id:621, type:"mcq",
+    text:"Which of the following information is particularly useful to managers?",
+    req:"Which of the following information is particularly useful to managers?",
+    marks:2,
+    options:["Tax records for the past five years","Financial statements for the past five years","Bank statements","Budgets for the coming financial year"],
+    correct:3, explanation:"Bank statements are particularly useful to suppliers to assess the history and understand whether business has ability to pay bills regularly or not.\n\nTax records are particularly useful for tax authorities.\n\nBudgets for upcoming years are particularly useful for the management of a company.\n\nFinancial statements are particularly useful to the shareholders as they are the primary source of information about the company for the shareholders.", calc:null
+  },
+  { id:622, type:"mcq",
+    text:"Which of the following are characteristics of a limited liability company?\n1. There are two or more owners who work in the business and share the profits between them by agreement\n2. The owner or owners hold shares in the business which entitle them to vote at general meetings\n3. The business is recognised in law as a separate legal entity to its owners",
+    req:"Which of the following are characteristics of a limited liability company?",
+    marks:2,
+    options:["2 and 3 only","1 and 2 only","3 only","1, 2 and 3"],
+    correct:0, explanation:"Statement 1 \u2014 this is the characteristics of a partnership, not a limited liability company.\n\nStatement 2 and 3 \u2014 these are the basic characteristics of a company.", calc:null
+  },
+  { id:623, type:"mcq",
+    text:"The form and content of the accounts of limited liability companies are PRIMARILY regulated by:",
+    req:"The form and content of the accounts of limited liability companies are PRIMARILY regulated by:",
+    marks:2,
+    options:["International Financial Reporting Standards (IFRSs)","National legislation","International Accounting Standards (IASs)","None of the above"],
+    correct:1, explanation:"In addition to complying with National legislation, limited liability companies must also comply with IASs and IFRSs.", calc:null
+  },
+  { id:624, type:"true-false-table",
+    text:"Select whether each of the following statements are True or False?",
+    req:"Select whether each of the following statements are True or False?",
+    marks:2,
+    rows:[
+      {statement:"To comply with the law, the legal form of a transaction must always be reflected in financial statements", correct:"False"},
+      {statement:"Corporate governance is solely about introducing systems of control", correct:"False"},
+      {statement:"A computerised accounting system operates using the principle of double entry accounting", correct:"True"}
+    ],
+    explanation:"The substance over form concept requires the commercial substance of a transaction to be recorded in the financial statements even if it differs from the legal form.\n\nCorporate governance is not solely about introducing systems of control, it is fundamentally linked to directing the organisation in order to achieve objectives. This is critical to the success of the organisation and is a central part of the role of the board of directors.\n\nA computerised accounting system does operate using the principle of double entry accounting.", calc:null
+  },
+  { id:625, type:"true-false-table",
+    text:"Are the following statements true or false?",
+    req:"Are the following statements true or false?",
+    marks:2,
+    rows:[
+      {statement:"Accrual accounting means that the total income earned and expenses incurred are accounted for in the financial year, regardless of invoices issued/received and cash received/paid", correct:"True"},
+      {statement:"The statement of financial position presents the financial performance for an accounting period", correct:"False"},
+      {statement:"Restricted growth and limited sources of finance are among the disadvantages of operating as sole trader", correct:"True"}
+    ],
+    explanation:"Under the accrual basis of accounting, income and expenses are recognised in the financial statements when they are incurred, which often differs from the point at which cash is received or paid.\n\nIt is the statement of profit or loss that presents the performance of an entity for a given accounting period. The statement of financial position, on the other hand, shows the entity's assets, liabilities, and equity at a specific point in time.\n\nA sole trader has limited access to finance as it cannot issue shares.", calc:null
+  },
 ];
 
 // ── CATEGORIES ──────────────────────────────────────────
@@ -6855,7 +7205,8 @@ const CATEGORIES = [
   { id:'ch5_study_hub_questions', name:'Ch 5 study hub questions', ids:[447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477] },
   { id:'ch1_to_3_study_hub_activities', name:'Ch 1 to 3 : Study Hub Activities', ids:[478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495] },
   { id:'ch4_5_study_hub_activities', name:'Ch 4 & 5 : Study Hub Activities', ids:[496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 507, 508, 509, 510, 511, 512, 517, 518] },
-  { id:'ch1_to_3_bkit_and_extra_questions', name:'Ch 1 to 3 - all B-Kit and extra questions including mock-1 residual questions', ids:[519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600] }
+  { id:'ch1_to_3_bkit_and_extra_questions', name:'Ch 1 to 3 - all B-Kit and extra questions including mock-1 residual questions', ids:[519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600] },
+  { id:'fa_mock1_j26', name:'FA Mock-1 J26', ids:[601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625] }
 ];
 let selectedCategory = CATEGORIES[0];
 
@@ -6870,8 +7221,25 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 // Fake internal email domain — users only ever see/type a username.
+// Usernames can now contain ANY characters (letters, numbers, symbols, even
+// something like "name@gmail.com"), but Supabase Auth's `email` field only
+// accepts a standard, single-@ email shape. So instead of concatenating the
+// raw username in front of the domain (which breaks the moment a username
+// itself contains "@" or other email-illegal characters), we percent-encode
+// the exact username into a single email local-part segment. This is
+// deterministic and reversible in spirit (same username -> same email,
+// always), so login/signup/rename all stay consistent, while Supabase only
+// ever sees a clean, valid, single-@ email address.
 const FAKE_EMAIL_DOMAIN = '@quizapp.local';
-function usernameToEmail(u){ return u.trim().toLowerCase()+FAKE_EMAIL_DOMAIN; }
+function usernameToEmail(u){
+  const normalized = u.trim().toLowerCase();
+  // encodeURIComponent turns any character Supabase's email validator would
+  // reject (@, spaces, #, %, unicode, etc.) into safe %XX / literal-safe
+  // sequences; '.' is left alone by encodeURIComponent, which is fine since
+  // '.' is valid in an email local-part.
+  const encoded = encodeURIComponent(normalized).replace(/\./g,'%2E');
+  return encoded+FAKE_EMAIL_DOMAIN;
+}
 
 // ══════════════════════════════════════════════════════════════════
 // FACULTY MODE — two-tier access
@@ -6989,6 +7357,7 @@ function usernameToEmail(u){ return u.trim().toLowerCase()+FAKE_EMAIL_DOMAIN; }
     document.body.style.overflow='';
     renderFacultyCategoryList();
     showScreen('faculty-categories-screen');
+    if(window.refreshUnameReqBadgeNow) window.refreshUnameReqBadgeNow();
   };
 })();
 
@@ -7252,6 +7621,295 @@ async function facultyDeleteAttempt(attemptId, cardEl, deletedRowsArr){
     alert('Network error during delete.');
   }
 }
+
+
+// ── FACULTY: BULK CREATE MOCK-1 STUDENT ACCOUNTS ──────────────
+// One-time tool: creates a Supabase Auth account (gmail-as-username,
+// default password CCAcca123) + matching profiles row for every mock-1
+// student who doesn't already have an account. Students who already have
+// an account (under any old username) are skipped here — they link their
+// existing account via the "Change Username -> Link Account" approval flow,
+// which preserves their attempt history instead of creating a duplicate.
+const MOCK1_STUDENTS = [{"email": "madhuyadav2258@gmail.com", "full_name": "Madhu Yadav", "phone": "9709103937", "section": "203"}, {"email": "das637259@gmail.com", "full_name": "Samir Das", "phone": "9713323323", "section": "203"}, {"email": "aakashpandit4570@gmail.com", "full_name": "Aakash Pandit", "phone": "9705809029", "section": "203"}, {"email": "daskunal5455@gmail.com", "full_name": "Kunal Kumar Das", "phone": "9817642242", "section": "203"}, {"email": "ritikakarn970@gmail.com", "full_name": "Ritika Karn", "phone": "9744225852", "section": "203"}, {"email": "sujityadav77886@gmail.com", "full_name": "Sujit Kumar Yadav", "phone": "9704559785", "section": "203"}, {"email": "rp5802414@gmail.com", "full_name": "Rahul Kumar Pandey", "phone": "9707615689", "section": "203"}, {"email": "yadavsauravkumar564@gmail.com", "full_name": "Saurav Kumar Yadav", "phone": "9702615274", "section": "203"}, {"email": "sah634946@gmail.com", "full_name": "Sushant Sah", "phone": "9816798836", "section": "203"}, {"email": "sumitsah630@gmail.com", "full_name": "Sumit Kumar Mahato", "phone": "9709251732", "section": "203"}, {"email": "aalokbam99@gmail.com", "full_name": "Aalok Bam ( main attend only )", "phone": "9843756136", "section": "203"}, {"email": "rainhafijul123@gmail.com", "full_name": "Hafijul Rain", "phone": "9822309604", "section": "203"}, {"email": "sagarkumar0711@gmail.com", "full_name": "Sagar Kumar Sardar", "phone": "9709052336", "section": "203"}, {"email": "rudrasah9808@gmail.com", "full_name": "Rudra Kumar Sah", "phone": "9705523642", "section": "203"}, {"email": "visamrajsah228@gmail.com", "full_name": "Visam Raj Sah", "phone": "9703279554", "section": "203"}, {"email": "rautaayush125@gmail.com", "full_name": "Aayush Raut", "phone": "9767370150", "section": "203"}, {"email": "sahrajan2002@gmail.com", "full_name": "Rajan Sah", "phone": "9814705939", "section": "203"}, {"email": "sudipshah493@gmail.com", "full_name": "Sudip Kumar Shah", "phone": "9708251765", "section": "203"}, {"email": "akc36321@gmail.com", "full_name": "Amit KC", "phone": "9761961474", "section": "203"}, {"email": "aayushkochila@gmail.com", "full_name": "Aayush Kumar Chaudhary", "phone": "9821201584", "section": "203"}, {"email": "dinaaabch08@gmail.com", "full_name": "Dina Chaudhary", "phone": "9744791478", "section": "203"}, {"email": "bishestach8@gmail.com", "full_name": "Bishesta Chaudhary", "phone": "9700378207", "section": "203"}, {"email": "md.rashidmotivation9211@gmail.com", "full_name": "Mohammad Rashid Musalman", "phone": "9814279532", "section": "203"}, {"email": "anjaliduwadi10@gmail.com", "full_name": "Anjali Duwadi", "phone": "9716500558 9818687542", "section": "203"}, {"email": "prajwals63@gmail.com", "full_name": "Prajwal Sangroula", "phone": "9804972382", "section": "203"}, {"email": "karnshreya10@gmail.com", "full_name": "Shreya Karn", "phone": "9708086190", "section": "203"}, {"email": "jaiswalakash0090@gmail.com", "full_name": "Akash Kalwar", "phone": "9802860535", "section": "203"}, {"email": "chaudharydeepika396@gmail.com", "full_name": "Deepika Chaudhary", "phone": "9819742414", "section": "203"}, {"email": "zhabidhya@gmail.com", "full_name": "Bidhya Jha", "phone": "9807622881", "section": "203"}, {"email": "sujatayadav110022@gmail.com", "full_name": "Sujata Kumari Yadav", "phone": "9706299373", "section": "203"}, {"email": "xtronit2065@gmail.com", "full_name": "Ronit Shah", "phone": "9803766056", "section": "203"}, {"email": "hardik.agrawal.7161@gmail.com", "full_name": "Hardik Agrawal", "phone": "9862361911", "section": "203"}, {"email": "memukeshyadav2080@gmail.com", "full_name": "Mukesh Yadav", "phone": "9762603387", "section": "203"}, {"email": "amitsah10102@gmail.com", "full_name": "Amit Kumar Sah", "phone": "9764831097", "section": "203"}, {"email": "ayushraj2063@gmail.com", "full_name": "Ayush Rajak", "phone": "9829075999", "section": "302"}, {"email": "nikitabohora827@gmail.com", "full_name": "Nikita Bohara", "phone": "9840201525", "section": "302"}, {"email": "jaishikarun8@gmail.com", "full_name": "Karun Jaishi", "phone": "9745898573", "section": "302"}, {"email": "ripablikagurung@gmail.com", "full_name": "Ripablika Gurung", "phone": "9714062498", "section": "302"}, {"email": "pratikbam834@gmail.com", "full_name": "Pratik Bam", "phone": "9848619009", "section": "302"}, {"email": "smritybhattarai84@gmail.com", "full_name": "Smriti Bhattarai", "phone": "9703295865\u202c", "section": "302"}, {"email": "sworuprijal17@gmail.com", "full_name": "Sworup Rijal", "phone": "9768703454", "section": "302"}, {"email": "gaurabirajbanshi4@gmail.com", "full_name": "Gaurabi Rajbansi", "phone": "9815363587", "section": "302"}, {"email": "hyatt206raj@gmail.com", "full_name": "Samyam Humagain", "phone": "9767993300/9851067763", "section": "302"}, {"email": "ejanupreti425@gmail.com", "full_name": "Ejan Upreti", "phone": "9803322257", "section": "302"}, {"email": "ccadipaksah77@gmail.com", "full_name": "Dipak Kumar Sah", "phone": "9801095842", "section": "302"}, {"email": "binitgupta963@gmail.com", "full_name": "Binit Gupta", "phone": "9766488108", "section": "302"}, {"email": "prabeshsapkotaa@gmail.com", "full_name": "Prabesh Sapkota", "phone": "9812385059", "section": "302"}, {"email": "trishnakafle04@gmail.com", "full_name": "Trishna Kafle", "phone": "9708103116", "section": "302"}, {"email": "arsahani31@gmail.com", "full_name": "Manisha Kumari Sahani", "phone": "9706230148", "section": "302"}, {"email": "pchy83626@gmail.com", "full_name": "Prashant Kumar Chaudhary", "phone": "9819743237", "section": "302"}, {"email": "shahsumit478@gmail.com", "full_name": "Sumit Kumar Sah", "phone": "9747899518", "section": "302"}, {"email": "kunwardibya38@gmail.com", "full_name": "Dibya Kunwar", "phone": "9764507032", "section": "302"}, {"email": "safaltabhujel4@gmail.com", "full_name": "Saphalta Bhujel", "phone": "9766130905", "section": "302"}, {"email": "kriti.chauhan022@gmail.com", "full_name": "Kriti Chauhan", "phone": "9822301406", "section": "302"}, {"email": "sarjeshtamang126@gmail.com", "full_name": "Sarjesh Syangtan", "phone": "9714062497", "section": "302"}, {"email": "r95836917@gmail.com", "full_name": "Ravi Bhatt", "phone": "9868913015", "section": "302"}, {"email": "neha970217@gmail.com", "full_name": "Neha Chaudhary", "phone": "9708198948", "section": "302"}, {"email": "poudelsuyog987@gmail.com", "full_name": "Suyog Poudel", "phone": "9827631983", "section": "302"}, {"email": "shibanithakur91@gmail.com", "full_name": "Shibani Thakur", "phone": "9700035024", "section": "302"}, {"email": "sostikakulung1@gmail.com", "full_name": "Swastika Rai", "phone": "9827020170\u202c", "section": "302"}, {"email": "aftabrain1718@gmail.com", "full_name": "MD. Aftab", "phone": "9703729886", "section": "302"}, {"email": "cca.amima@gmail.com", "full_name": "Amima Chaudhary", "phone": "9764231072", "section": "302"}, {"email": "cca.manishaoli@gmail.com", "full_name": "Manisha Oli", "phone": "9769256910", "section": "302"}, {"email": "kb3057233@gmail.com", "full_name": "Mohammad Aarif Reza", "phone": "9804715843", "section": "302"}, {"email": "avikc2210@gmail.com", "full_name": "Avi KC", "phone": "9809459507", "section": "302"}, {"email": "himanshumandal350@gmail.com", "full_name": "Himanshu Mandal", "phone": "9707643907", "section": "302"}, {"email": "subhashthakur.personal@gmail.com", "full_name": "Subhash Thakur", "phone": "9825520560", "section": "302"}, {"email": "ccasalman7@gmail.com", "full_name": "Salman Ahamed", "phone": "9808267333 | 9813440150", "section": "302"}, {"email": "aaratioli568@gmail.com", "full_name": "Aarati Oli", "phone": "9709582146", "section": "302"}, {"email": "cca.rohitkc@gmail.com", "full_name": "Rohit K.C", "phone": "9827117769", "section": "302"}, {"email": "kkrishrajj@gmail.com", "full_name": "Krishraj Mehta", "phone": "9762722990", "section": "302"}];
+const BULK_DEFAULT_PASSWORD = 'CCAcca123';
+
+
+// ── STUDENT: MOCK-1 REPORT ─────────────────────────────────────
+// Reads the student's own row from mock_reports via the anon key — RLS
+// restricts this to user_id = auth.uid(), so a student can only ever see
+// their own report, never another student's.
+const CHAPTER_LABELS_MOCK1 = { '1':'Introduction to financial reporting', '2':'The regulatory framework', '3':'Double-entry bookkeeping' };
+
+async function checkMock1ReportAvailable(){
+  const entry=document.getElementById('mock1-report-entry');
+  if(!currentUser || !entry) return;
+  try{
+    const {data,error}=await sb.from('mock_reports')
+      .select('id').eq('user_id', currentUser.id).eq('mock_id','fa_mock1_j26').maybeSingle();
+    if(!error && data){ entry.style.display='block'; } else { entry.style.display='none'; }
+  }catch(e){ entry.style.display='none'; }
+}
+
+async function openStudentMockReport(){
+  showScreen('student-mock1-report-screen');
+  const bodyEl=document.getElementById('student-mock1-report-body');
+  bodyEl.innerHTML='Loading…';
+  try{
+    const {data,error}=await sb.from('mock_reports')
+      .select('*').eq('user_id', currentUser.id).eq('mock_id','fa_mock1_j26').maybeSingle();
+    if(error || !data){
+      bodyEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">No mock-1 report found for your account yet.</div>';
+      return;
+    }
+    bodyEl.innerHTML = renderMock1ReportHTML(data, {forStudent:true});
+    wireMock1ReportPracticeButtons(data);
+  }catch(err){
+    bodyEl.innerHTML='<div style="font-size:.85rem;color:#ef4444;">Something went wrong loading your report.</div>';
+  }
+}
+
+// Shared renderer used by BOTH the student's own report screen and the
+// teacher's search-result report screen, so the two never drift apart.
+function renderMock1ReportHTML(r, opts){
+  opts = opts || {};
+  const pct = r.score_percent!=null ? r.score_percent+'%' : '—';
+  const passColor = r.pass_fail==='Pass' ? '#166534' : '#991b1b';
+  const passBg = r.pass_fail==='Pass' ? '#f0fdf4' : '#fef2f2';
+  const timeStr = r.time_taken_seconds!=null
+    ? Math.floor(r.time_taken_seconds/60)+'m '+(r.time_taken_seconds%60)+'s'
+    : '—';
+
+  let chapterRows='';
+  if(r.chapter_breakdown){
+    Object.keys(r.chapter_breakdown).sort().forEach(chNum=>{
+      const ch=r.chapter_breakdown[chNum];
+      chapterRows += `<div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f1f5f9;font-size:.84rem;">
+        <span style="color:#334155;">Chapter ${escHTML(chNum)} — ${escHTML(ch.label||'')}</span>
+        <span style="font-weight:700;color:${ch.wrong>0?'#dc2626':'#16a34a'};">${ch.wrong} wrong</span>
+      </div>`;
+    });
+  }
+
+  const bulletize = txt => (txt||'').split('\n').filter(Boolean).map(line=>
+    `<div style="padding:.35rem 0;font-size:.82rem;color:#334155;line-height:1.5;">${escHTML(line)}</div>`
+  ).join('');
+
+  const identityBlock = opts.forStudent ? '' : `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem;margin-bottom:1rem;font-size:.82rem;">
+      <div><span style="color:#94a3b8;">Full name:</span> <b>${escHTML(r.full_name)}</b></div>
+      <div><span style="color:#94a3b8;">Username/gmail:</span> <b>${escHTML(r.student_email)}</b></div>
+      <div><span style="color:#94a3b8;">Section:</span> <b>${escHTML(r.section||'—')}</b></div>
+    </div>`;
+
+  const noAttemptBanner = r.no_attempt ? `
+    <div style="background:#fff7ed;border:1px solid #fb923c;border-radius:10px;padding:.7rem 1rem;font-size:.85rem;color:#9a3412;font-weight:600;margin-bottom:1rem;">
+      ⚠ FA first mock not attempted
+    </div>` : '';
+
+  return `
+    ${noAttemptBanner}
+    ${identityBlock}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin-bottom:1.2rem;">
+      <div style="background:#f8fafc;border-radius:10px;padding:.8rem;text-align:center;">
+        <div style="font-size:1.3rem;font-weight:800;color:#0f1f3d;">${r.score!=null?r.score:'—'}/${r.score_max||50}</div>
+        <div style="font-size:.72rem;color:#94a3b8;font-weight:600;text-transform:uppercase;">Score</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:.8rem;text-align:center;">
+        <div style="font-size:1.3rem;font-weight:800;color:#0f1f3d;">${pct}</div>
+        <div style="font-size:.72rem;color:#94a3b8;font-weight:600;text-transform:uppercase;">Percentage</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:.8rem;text-align:center;">
+        <div style="font-size:1.3rem;font-weight:800;color:#0f1f3d;">${timeStr}</div>
+        <div style="font-size:.72rem;color:#94a3b8;font-weight:600;text-transform:uppercase;">Time Taken</div>
+      </div>
+      <div style="background:${passBg};border-radius:10px;padding:.8rem;text-align:center;">
+        <div style="font-size:1.3rem;font-weight:800;color:${passColor};">${escHTML(r.pass_fail||'—')}</div>
+        <div style="font-size:.72rem;color:#94a3b8;font-weight:600;text-transform:uppercase;">Result</div>
+      </div>
+    </div>
+
+    <div style="font-size:.95rem;font-weight:700;color:#0f1f3d;margin-bottom:.5rem;">📖 Incorrect Questions by Chapter</div>
+    <div style="margin-bottom:1.2rem;">${chapterRows || '<div style="font-size:.82rem;color:#94a3b8;">No chapter data.</div>'}</div>
+
+    <div style="font-size:.95rem;font-weight:700;color:#166534;margin-bottom:.4rem;">✅ Strengths</div>
+    <div style="background:#f0fdf4;border-radius:10px;padding:.6rem .9rem;margin-bottom:1.2rem;">${bulletize(r.strengths) || '<div style="font-size:.82rem;color:#94a3b8;">None recorded.</div>'}</div>
+
+    <div style="font-size:.95rem;font-weight:700;color:#991b1b;margin-bottom:.4rem;">⚠ Weaknesses</div>
+    <div style="background:#fef2f2;border-radius:10px;padding:.6rem .9rem;margin-bottom:1.2rem;">${bulletize(r.weaknesses) || '<div style="font-size:.82rem;color:#94a3b8;">None recorded.</div>'}</div>
+
+    <div style="font-size:.95rem;font-weight:700;color:#0f1f3d;margin-bottom:.4rem;">💡 Recommendations</div>
+    <div id="mock1-reco-block" style="background:#eff6ff;border-radius:10px;padding:.6rem .9rem;margin-bottom:${opts.forStudent?'.6rem':'0'};">${bulletize(r.recommendations) || '<div style="font-size:.82rem;color:#94a3b8;">None recorded.</div>'}</div>
+
+    ${opts.forStudent ? `<div id="practice-weak-topics-btns" style="display:flex;flex-direction:column;gap:.5rem;margin-top:.8rem;"></div>` : ''}
+  `;
+}
+
+// ── PRACTICE WEAK TOPICS ────────────────────────────────────────
+// Parses the chapter numbers mentioned in this report's recommendations
+// (falls back to chapter_breakdown if recommendations text is unavailable),
+// looks up which mock-1 questions belong to each weak chapter via
+// question_topics, and launches a normal practice session with those
+// questions using the platform's existing session engine.
+function extractWeakChapters(report){
+  const chapters=new Set();
+  if(report.chapter_breakdown){
+    Object.keys(report.chapter_breakdown).forEach(chNum=>{
+      const ch=report.chapter_breakdown[chNum];
+      if(ch && ch.wrong>0) chapters.add(parseInt(chNum,10));
+    });
+  }
+  return Array.from(chapters).sort((a,b)=>a-b);
+}
+
+async function wireMock1ReportPracticeButtons(report){
+  const wrap=document.getElementById('practice-weak-topics-btns');
+  if(!wrap) return;
+  const weakChapters=extractWeakChapters(report);
+  if(weakChapters.length===0){
+    wrap.innerHTML='<div style="font-size:.82rem;color:#94a3b8;">No weak chapters to drill — nice work!</div>';
+    return;
+  }
+  try{
+    const {data,error}=await sb.from('question_topics').select('*').eq('mock_id','fa_mock1_j26');
+    if(error || !data){ wrap.innerHTML=''; return; }
+    weakChapters.forEach(chNum=>{
+      const qIds=data.filter(t=>t.chapter===chNum).map(t=>t.question_id);
+      if(qIds.length===0) return;
+      const label=CHAPTER_LABELS_MOCK1[String(chNum)]||('Chapter '+chNum);
+      const btn=document.createElement('button');
+      btn.className='start-btn';
+      btn.style.cssText='width:100%;margin:0;';
+      btn.textContent='🎯 Practice: '+label+' ('+qIds.length+' questions)';
+      btn.onclick=()=>startTopicPracticeDrill(qIds, label);
+      wrap.appendChild(btn);
+    });
+  }catch(err){ wrap.innerHTML=''; }
+}
+
+function startTopicPracticeDrill(questionIds, label){
+  mode='practice';
+  document.getElementById('card-practice').classList.add('selected');
+  document.getElementById('card-quiz').classList.remove('selected');
+  document.getElementById('card-test').classList.remove('selected');
+  selectedCategory={ id:'mock1_weak_'+label.replace(/\s+/g,'_'), name:label, displayLabel:'🎯 '+label+' (Mock-1 Weak Topic)', ids:questionIds };
+  const qList=questionIds.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean);
+  const shuffled=shuffle([...qList]);
+  beginSessionWithQuestions(shuffled, null);
+}
+
+// ── FACULTY: SEARCH FOR STUDENT'S DATA (generic profile first, then each mock's data) ──
+// To add a future mock (e.g. mock-2), just add its mock_id + a short label here —
+// loadFacultyStudentData() will automatically fetch and render a section for it.
+const KNOWN_MOCKS = [
+  { mock_id:'fa_mock1_j26', label:'Mock-1' }
+  // { mock_id:'fa_mock2_xx', label:'Mock-2' }  // <- future mocks go here
+];
+
+let mock1SearchCache=null; // cache of ALL mock rows across all KNOWN_MOCKS, keyed together
+let mock1SearchDebounce=null;
+
+async function openFacultyMock1Search(){
+  if(!requireFacultyKey()) return;
+  showScreen('faculty-mock1search-screen');
+  document.getElementById('mock1search-input').value='';
+  document.getElementById('mock1search-suggestions').style.display='none';
+  document.getElementById('faculty-student-generic-body').innerHTML='';
+  document.getElementById('faculty-mock1-report-body').innerHTML='';
+  if(!mock1SearchCache){
+    try{
+      const ids = KNOWN_MOCKS.map(m=>'"'+m.mock_id+'"').join(',');
+      const res=await fetch(SUPABASE_URL+'/rest/v1/mock_reports?select=*&mock_id=in.('+ids+')',{headers:facultyAuthHeaders()});
+      const rows=await res.json();
+      mock1SearchCache=Array.isArray(rows)?rows:[];
+    }catch(e){ mock1SearchCache=[]; }
+  }
+}
+
+function onMock1SearchInput(val){
+  clearTimeout(mock1SearchDebounce);
+  mock1SearchDebounce=setTimeout(()=>renderMock1SearchSuggestions(val), 120);
+}
+
+function renderMock1SearchSuggestions(val){
+  const box=document.getElementById('mock1search-suggestions');
+  const q=val.trim().toLowerCase();
+  if(!q || !mock1SearchCache){ box.style.display='none'; return; }
+  // De-dupe by student_email since a student can have rows across multiple mocks
+  const seen=new Set(); const matches=[];
+  for(const r of mock1SearchCache){
+    if(!r.full_name.toLowerCase().includes(q)) continue;
+    if(seen.has(r.student_email)) continue;
+    seen.add(r.student_email); matches.push(r);
+    if(matches.length>=8) break;
+  }
+  if(matches.length===0){ box.style.display='none'; return; }
+  box.innerHTML=matches.map(r=>`
+    <div class="mock1-suggestion-row" data-email="${escHTML(r.student_email)}" style="padding:.65rem .9rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid #f1f5f9;">
+      <b>${escHTML(r.full_name)}</b> <span style="color:#94a3b8;">— ${escHTML(r.section||'')}</span>
+    </div>
+  `).join('');
+  box.style.display='block';
+  box.querySelectorAll('.mock1-suggestion-row').forEach(row=>{
+    row.onclick=()=>{
+      document.getElementById('mock1search-input').value = row.querySelector('b').textContent;
+      box.style.display='none';
+      loadFacultyStudentData(row.dataset.email);
+    };
+  });
+}
+
+// Renders generic student data first (profile), then loops through every mock
+// this student has a report for (currently just Mock-1; future mocks appear
+// automatically once added to KNOWN_MOCKS above).
+async function loadFacultyStudentData(studentEmail){
+  const genericEl=document.getElementById('faculty-student-generic-body');
+  const mocksEl=document.getElementById('faculty-mock1-report-body');
+  genericEl.innerHTML='Loading…';
+  mocksEl.innerHTML='';
+
+  const studentReports = mock1SearchCache.filter(r=>r.student_email===studentEmail);
+  const anyReport = studentReports[0];
+  const fullName = anyReport ? anyReport.full_name : studentEmail;
+
+  // Find the matching profile (for phone, background, username, and the "View Profile" link)
+  let profile=null;
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/profiles?select=*&username=eq.'+encodeURIComponent(studentEmail),{headers:facultyAuthHeaders()});
+    const rows=await res.json();
+    if(Array.isArray(rows) && rows.length) profile=rows[0];
+  }catch(e){}
+
+  // ── 1) GENERIC STUDENT DATA ──
+  genericEl.innerHTML = `
+    <div style="font-size:1rem;font-weight:700;color:#0f1f3d;margin-bottom:.6rem;">👤 ${escHTML(fullName)}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.6rem;font-size:.82rem;padding:.8rem;background:#f8fafc;border-radius:10px;">
+      <div><span style="color:#94a3b8;">Phone:</span> <b>${escHTML((profile&&profile.phone)||(anyReport&&anyReport.phone)||'—')}</b></div>
+      <div><span style="color:#94a3b8;">Section:</span> <b>${escHTML((profile&&profile.section)||(anyReport&&anyReport.section)||'—')}</b></div>
+      <div><span style="color:#94a3b8;">Background:</span> <b>${escHTML((profile&&profile.background)||'—')}</b></div>
+      <div><span style="color:#94a3b8;">Current username:</span> <b>${escHTML((profile&&profile.username)||studentEmail)}</b></div>
+    </div>
+    ${profile ? `
+      <button onclick="openFacultyStudentProfile('${profile.id}','${escHTML(profile.username)}')" style="width:100%;padding:.7rem;border:2px solid #6366f1;color:#6366f1;background:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;margin-top:.7rem;">👁 View Full Profile</button>
+    ` : `
+      <div style="font-size:.8rem;color:#94a3b8;margin-top:.6rem;">No linked account yet — this student hasn't logged in or been created.</div>
+    `}
+  `;
+
+  // ── 2) MOCK DATA (one section per known mock, in order) ──
+  let mocksHtml='';
+  for(const mockDef of KNOWN_MOCKS){
+    const report = studentReports.find(r=>r.mock_id===mockDef.mock_id);
+    mocksHtml += `<div style="font-size:.95rem;font-weight:700;color:#0f1f3d;margin:1.2rem 0 .6rem;">📊 ${escHTML(mockDef.label)} Report</div>`;
+    if(report){
+      mocksHtml += renderMock1ReportHTML(report, {forStudent:false});
+    }else{
+      mocksHtml += `<div style="font-size:.82rem;color:#94a3b8;padding:.7rem .8rem;background:#f8fafc;border-radius:10px;">No ${escHTML(mockDef.label)} data on file for this student.</div>`;
+    }
+  }
+  mocksEl.innerHTML = mocksHtml;
+}
+
+
 
 // ── FACULTY: user management ─────────────────────────────────
 function openFacultyUserManagement(){
@@ -7606,7 +8264,6 @@ async function doChangeUsername(){
   const btn=document.getElementById('changeUnameBtn');
   errEl.style.display='none'; okEl.style.display='none';
   if(!newUname||newUname.length<3){ errEl.textContent='Username must be at least 3 characters.'; errEl.style.display='block'; return; }
-  if(!/^[a-zA-Z0-9_]+$/.test(newUname)){ errEl.textContent='Username can only contain letters, numbers, and underscores.'; errEl.style.display='block'; return; }
   if(!changeUnameTargetUserId||!window.facultyServiceRoleKey){ errEl.textContent='Missing user or key. Please try again.'; errEl.style.display='block'; return; }
   if(newUname.toLowerCase()===String(changeUnameTargetOld||'').toLowerCase()){ errEl.textContent='That is already this user\'s username.'; errEl.style.display='block'; return; }
   btn.disabled=true; btn.textContent='Checking…';
@@ -7697,6 +8354,409 @@ async function facultyDeleteUser(userId, username, cardEl){
   }
 }
 
+// ── STUDENT: REQUEST A USERNAME CHANGE (needs teacher approval) ──────────
+// Students only have the anon key, so they can't rename themselves directly —
+// they insert a row into `username_change_requests` (RLS: a user may only
+// insert/select rows where user_id = auth.uid()) and a teacher approves it
+// from Faculty Mode using the service_role key, which performs the actual
+// rename (same logic as doChangeUsername for teacher-initiated renames).
+function openStudentChangeUnameDialog(){
+  if(!currentUser) return;
+  document.getElementById('studentChangeUnameCurrent').textContent=currentUser.username;
+  document.getElementById('studentChangeUnameNew').value='';
+  document.getElementById('studentChangeUnameError').style.display='none';
+  document.getElementById('studentChangeUnameSuccess').style.display='none';
+  document.getElementById('studentChangeUnamePending').style.display='none';
+  document.getElementById('studentChangeUnameBtn').disabled=false;
+  document.getElementById('studentChangeUnameBtn').textContent='Send Request';
+  document.getElementById('studentChangeUnameOverlay').style.display='flex';
+  setTimeout(()=>document.getElementById('studentChangeUnameNew').focus(),50);
+  checkExistingUsernameRequest();
+}
+function closeStudentChangeUnameDialog(){
+  document.getElementById('studentChangeUnameOverlay').style.display='none';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const el=document.getElementById('studentChangeUnameNew');
+  if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') doRequestUsernameChange(); });
+});
+
+// If this student already has a pending request, show it and disable sending
+// another one, so the same student can't queue up multiple conflicting asks.
+async function checkExistingUsernameRequest(){
+  if(!currentUser) return;
+  const pendEl=document.getElementById('studentChangeUnamePending');
+  const btn=document.getElementById('studentChangeUnameBtn');
+  try{
+    const {data,error}=await sb.from('username_change_requests')
+      .select('requested_username,status,created_at')
+      .eq('user_id', currentUser.id).eq('status','pending')
+      .order('created_at',{ascending:false}).limit(1).maybeSingle();
+    if(error) return;
+    if(data){
+      pendEl.textContent='You already have a pending request to become "'+data.requested_username+'". Your teacher hasn\'t approved it yet.';
+      pendEl.style.display='block';
+      btn.disabled=true; btn.textContent='Request pending';
+    }
+  }catch(e){ /* non-fatal — student can still try to submit */ }
+}
+
+async function doRequestUsernameChange(){
+  if(!currentUser) return;
+  const newUname=document.getElementById('studentChangeUnameNew').value.trim();
+  const errEl=document.getElementById('studentChangeUnameError');
+  const okEl=document.getElementById('studentChangeUnameSuccess');
+  const btn=document.getElementById('studentChangeUnameBtn');
+  errEl.style.display='none'; okEl.style.display='none';
+  if(!newUname||newUname.length<3){ errEl.textContent='Username must be at least 3 characters.'; errEl.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='Sending…';
+  try{
+    const {error}=await sb.from('username_change_requests').insert({
+      user_id: currentUser.id,
+      current_username: currentUser.username,
+      requested_username: newUname,
+      status: 'pending'
+    });
+    if(error){
+      errEl.textContent='Could not send request: '+error.message;
+      errEl.style.display='block'; btn.disabled=false; btn.textContent='Send Request'; return;
+    }
+    okEl.textContent='Your request has been forwarded to your teacher. You\'ll keep logging in with your current username until it\'s approved.';
+    okEl.style.display='block';
+    btn.textContent='Request sent';
+    setTimeout(closeStudentChangeUnameDialog,2200);
+  }catch(err){
+    errEl.textContent='Network error. Please try again.';
+    errEl.style.display='block'; btn.disabled=false; btn.textContent='Send Request';
+  }
+}
+
+// ── FACULTY: USERNAME CHANGE REQUESTS (student-initiated, teacher-approved) ─
+// Students submit rows into `username_change_requests` via the anon key.
+// Teachers (service_role key) list pending ones here and can approve with one
+// click — approval performs the SAME rename actually used by the teacher's
+// own "Change Username" tool (auth email + user_metadata + profiles row +
+// backfill on past attempts), then marks the request approved. From that
+// point on the student must log in with the new username.
+async function openFacultyUsernameRequests(){
+  if(!requireFacultyKey()) return;
+  showScreen('faculty-uname-requests-screen');
+  loadFacultyUsernameRequests();
+}
+
+async function loadFacultyUsernameRequests(){
+  const subEl=document.getElementById('faculty-uname-requests-sub');
+  const listEl=document.getElementById('faculty-uname-requests-list');
+  subEl.textContent='Loading requests…';
+  listEl.innerHTML='';
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/username_change_requests?select=*&status=eq.pending&order=created_at.asc',{headers:facultyAuthHeaders()});
+    const rows=await res.json();
+    if(!Array.isArray(rows)){ subEl.textContent='Could not load requests. Check your service_role key.'; updateUnameReqBadge(0); return; }
+    updateUnameReqBadge(rows.length);
+    if(!rows.length){ subEl.textContent='No pending username change requests.'; return; }
+    subEl.textContent=rows.length+' pending request'+(rows.length!==1?'s':'')+'.';
+    rows.forEach(r=>{
+      const card=document.createElement('div');
+      card.style.cssText='border:2px solid #e2e8f0;border-radius:12px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem;background:#fff;';
+      const requested=new Date(r.created_at).toLocaleString();
+      card.innerHTML=`
+        <div>
+          <div style="font-weight:700;color:#0f1f3d;font-size:.9rem;">${escHTML(r.current_username)} <span style="color:#94a3b8;font-weight:600;">→</span> ${escHTML(r.requested_username)}</div>
+          <div style="font-size:.76rem;color:#64748b;margin-top:.15rem;">Requested: ${requested}</div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button class="uname-req-approve-btn" style="padding:.5rem .8rem;border:none;color:#fff;background:#00b4a0;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">✅ Approve</button>
+          <button class="uname-req-reject-btn" style="padding:.5rem .8rem;border:2px solid #ef4444;color:#ef4444;background:none;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;">✕ Reject</button>
+        </div>
+      `;
+      card.querySelector('.uname-req-approve-btn').onclick=()=>approveUsernameRequest(r, card);
+      card.querySelector('.uname-req-reject-btn').onclick=()=>rejectUsernameRequest(r, card);
+      listEl.appendChild(card);
+    });
+  }catch(err){
+    subEl.textContent='Network error loading requests.';
+  }
+}
+
+function updateUnameReqBadge(n){
+  const badge=document.getElementById('uname-req-badge');
+  if(!badge) return;
+  if(n>0){ badge.textContent=n; badge.style.display='inline-block'; }
+  else { badge.style.display='none'; }
+}
+
+// Determines whether a profile id is a "shell" account: one of the accounts
+// bulk-created ahead of time (gmail-as-username, CCAcca123 password) that
+// the real student hasn't logged into or used yet. We check live attempt
+// history rather than trusting a static flag, since that's the actual thing
+// we care about losing — a shell account by definition has none.
+async function isShellAccount(userId){
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?select=id&user_id=eq.'+encodeURIComponent(userId)+'&limit=1',{headers:facultyAuthHeaders()});
+    const rows=await res.json().catch(()=>[]);
+    return Array.isArray(rows) && rows.length===0;
+  }catch(e){
+    return false; // if we can't verify, treat as NOT a shell — safer to block than to risk deleting real history
+  }
+}
+
+async function approveUsernameRequest(req, cardEl){
+  if(!requireFacultyKey()) return;
+  const approveBtn=cardEl.querySelector('.uname-req-approve-btn');
+  const rejectBtn=cardEl.querySelector('.uname-req-reject-btn');
+  approveBtn.disabled=true; rejectBtn.disabled=true;
+  approveBtn.textContent='Checking…';
+  try{
+    // Does the requested username already belong to someone else?
+    const checkRes=await fetch(SUPABASE_URL+'/rest/v1/profiles?select=id,username&username=eq.'+encodeURIComponent(req.requested_username),{headers:facultyAuthHeaders()});
+    const checkData=await checkRes.json().catch(()=>[]);
+    const collision = Array.isArray(checkData) ? checkData.find(r=>r.id!==req.user_id) : null;
+
+    if(collision){
+      // Is the colliding account a shell (no attempts) that we can safely
+      // absorb, or a genuine other student's account?
+      const shell = await isShellAccount(collision.id);
+      if(shell){
+        cardEl.dataset.collisionId = collision.id;
+        renderLinkAccountOffer(req, cardEl, collision.id);
+      }else{
+        alert('Cannot approve: "'+req.requested_username+'" is already taken by another student with existing history. This needs manual review.');
+        approveBtn.disabled=false; rejectBtn.disabled=false; approveBtn.textContent='✅ Approve';
+      }
+      return;
+    }
+
+    // No collision — plain rename, same as before.
+    await performUsernameRename(req.user_id, req.requested_username);
+    await markUnameRequestApproved(req);
+    cardEl.style.opacity='0.5';
+    cardEl.innerHTML=`<div style="font-weight:700;color:#166534;font-size:.86rem;">✅ Approved — ${escHTML(req.current_username)} → ${escHTML(req.requested_username)}. They'll log in with the new username next time.</div>`;
+    setTimeout(()=>loadFacultyUsernameRequests(),900);
+  }catch(err){
+    alert('Network error while approving. Please try again.');
+    approveBtn.disabled=false; rejectBtn.disabled=false; approveBtn.textContent='✅ Approve';
+  }
+}
+
+// Swaps the request card into a "link account" confirmation state: the
+// requested gmail already has an empty shell account sitting on it, so
+// approving here means deleting that shell and moving the gmail onto the
+// student's real (history-having) account instead of a plain rename.
+function renderLinkAccountOffer(req, cardEl, shellUserId){
+  cardEl.innerHTML=`
+    <div style="width:100%;">
+      <div style="font-weight:700;color:#0f1f3d;font-size:.9rem;">${escHTML(req.current_username)} <span style="color:#94a3b8;font-weight:600;">→</span> ${escHTML(req.requested_username)}</div>
+      <div style="font-size:.78rem;color:#9a3412;background:#fff7ed;border:1px solid #fb923c;border-radius:8px;padding:.55rem .7rem;margin-top:.5rem;line-height:1.5;">
+        <b>"${escHTML(req.requested_username)}"</b> already exists on the platform as a pre-created account with no attempt history —
+        this is expected if that account was bulk-created ahead of the student logging in.
+        <br><br>
+        Approving as a <b>link</b> will delete that empty account and move the gmail onto
+        <b>${escHTML(req.current_username)}</b>'s existing account, keeping all of their past attempts and mock reports intact.
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem;">
+        <button class="uname-req-link-btn" style="padding:.5rem .8rem;border:none;color:#fff;background:#8b5cf6;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">🔗 Approve &amp; Link Account</button>
+        <button class="uname-req-reject-btn2" style="padding:.5rem .8rem;border:2px solid #ef4444;color:#ef4444;background:none;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;">✕ Reject</button>
+      </div>
+    </div>
+  `;
+  cardEl.querySelector('.uname-req-link-btn').onclick=()=>approveLinkAccount(req, cardEl, shellUserId);
+  cardEl.querySelector('.uname-req-reject-btn2').onclick=()=>rejectUsernameRequest(req, cardEl);
+}
+
+// Performs the actual link: delete the shell auth user + shell profile row,
+// then rename the student's real account onto the freed-up gmail. Order
+// matters — the shell must be gone (freeing the username) before the real
+// account can take it, since usernames/emails must stay unique.
+async function approveLinkAccount(req, cardEl, shellUserId){
+  if(!requireFacultyKey()) return;
+  const linkBtn=cardEl.querySelector('.uname-req-link-btn');
+  linkBtn.disabled=true; linkBtn.textContent='Linking…';
+  try{
+    // 1) Delete the shell account's profile row first (FK safety), then its auth user.
+    await fetch(SUPABASE_URL+'/rest/v1/profiles?id=eq.'+encodeURIComponent(shellUserId),{
+      method:'DELETE', headers:facultyAuthHeaders()
+    });
+    const delAuthRes=await fetch(SUPABASE_URL+'/auth/v1/admin/users/'+shellUserId,{
+      method:'DELETE', headers:facultyAuthHeaders()
+    });
+    if(!(delAuthRes.status===200||delAuthRes.status===204)){
+      const d=await delAuthRes.json().catch(()=>({}));
+      alert('Could not delete the shell account, so linking was aborted to avoid a duplicate username: '+(d.message||JSON.stringify(d)));
+      linkBtn.disabled=false; linkBtn.textContent='🔗 Approve & Link Account';
+      return;
+    }
+
+    // 2) Now the gmail is free — rename the student's real account onto it.
+    await performUsernameRename(req.user_id, req.requested_username);
+    await markUnameRequestApproved(req);
+
+    cardEl.style.opacity='0.5';
+    cardEl.innerHTML=`<div style="font-weight:700;color:#166534;font-size:.86rem;">🔗 Linked — ${escHTML(req.current_username)} is now "${escHTML(req.requested_username)}", with all past attempts and mock reports preserved.</div>`;
+    setTimeout(()=>loadFacultyUsernameRequests(),1100);
+  }catch(err){
+    alert('Network error while linking. Please try again — no changes were made if the shell account still exists.');
+    linkBtn.disabled=false; linkBtn.textContent='🔗 Approve & Link Account';
+  }
+}
+
+// Shared rename logic used by both the plain-approve and link-account paths:
+// updates auth email/metadata, syncs the profiles row, and backfills the
+// snapshotted username on past attempts so history displays correctly.
+async function performUsernameRename(userId, newUname){
+  const newEmail=usernameToEmail(newUname);
+  const authRes=await fetch(SUPABASE_URL+'/auth/v1/admin/users/'+userId,{
+    method:'PUT',
+    headers:{...facultyAuthHeaders(),'Content-Type':'application/json'},
+    body:JSON.stringify({ email:newEmail, email_confirm:true, user_metadata:{ username:newUname } })
+  });
+  const authData=await authRes.json();
+  if(!authData.id){
+    throw new Error(authData.message||authData.msg||'Auth rename failed');
+  }
+  await fetch(SUPABASE_URL+'/rest/v1/profiles?id=eq.'+encodeURIComponent(userId),{
+    method:'PATCH',
+    headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({ username:newUname })
+  });
+  await fetch(SUPABASE_URL+'/rest/v1/attempts?user_id=eq.'+encodeURIComponent(userId),{
+    method:'PATCH',
+    headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({ username:newUname })
+  });
+  // Also attach this user_id onto their mock_reports row now that the gmail
+  // matches, in case it wasn't linked at import time.
+  await fetch(SUPABASE_URL+'/rest/v1/mock_reports?student_email=eq.'+encodeURIComponent(newUname)+'&user_id=is.null',{
+    method:'PATCH',
+    headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({ user_id:userId })
+  });
+}
+
+// Marks a request approved, and auto-supersedes any other pending requests
+// from the same student (their old ask is now moot).
+async function markUnameRequestApproved(req){
+  await fetch(SUPABASE_URL+'/rest/v1/username_change_requests?id=eq.'+encodeURIComponent(req.id),{
+    method:'PATCH',
+    headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({ status:'approved', resolved_at:new Date().toISOString() })
+  });
+  await fetch(SUPABASE_URL+'/rest/v1/username_change_requests?user_id=eq.'+encodeURIComponent(req.user_id)+'&status=eq.pending',{
+    method:'PATCH',
+    headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({ status:'superseded', resolved_at:new Date().toISOString() })
+  });
+}
+
+async function rejectUsernameRequest(req, cardEl){
+  if(!requireFacultyKey()) return;
+  if(!confirm('Reject the request to rename "'+req.current_username+'" to "'+req.requested_username+'"?')) return;
+  try{
+    await fetch(SUPABASE_URL+'/rest/v1/username_change_requests?id=eq.'+encodeURIComponent(req.id),{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({ status:'rejected', resolved_at:new Date().toISOString() })
+    });
+    cardEl.style.opacity='0.5';
+    cardEl.innerHTML=`<div style="font-weight:700;color:#991b1b;font-size:.86rem;">✕ Rejected — ${escHTML(req.current_username)} → ${escHTML(req.requested_username)}</div>`;
+    setTimeout(()=>loadFacultyUsernameRequests(),900);
+  }catch(err){
+    alert('Network error while rejecting. Please try again.');
+  }
+}
+
+// Refresh the pending-count badge whenever Faculty Mode is entered, so the
+// teacher notices new requests without having to open the screen first.
+window.refreshUnameReqBadgeNow = async function(){
+  if(!window.facultyServiceRoleKey) return;
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/username_change_requests?select=id&status=eq.pending',{headers:facultyAuthHeaders()});
+    const rows=await res.json();
+    if(Array.isArray(rows)) updateUnameReqBadge(rows.length);
+  }catch(e){}
+};
+document.addEventListener('DOMContentLoaded',()=>{
+  setInterval(window.refreshUnameReqBadgeNow, 15000);
+});
+
+// ── STUDENT: SELF-SERVICE PASSWORD CHANGE (no approval needed) ───────────
+// Unlike username changes, a student already has full control over their own
+// password via Supabase Auth (anon key + their own session), so this is
+// immediate: re-verify username+current password by signing in again (this
+// both confirms the current password is correct AND refreshes the session
+// token used for the update below), then call auth.updateUser to set the
+// new password. From then on only the new password will work at login.
+function openStudentChangePwDialog(){
+  if(!currentUser) return;
+  document.getElementById('studentChangePwUsername').value=currentUser.username;
+  document.getElementById('studentChangePwCurrent').value='';
+  document.getElementById('studentChangePwNew').value='';
+  document.getElementById('studentChangePwNewConfirm').value='';
+  document.getElementById('studentChangePwError').style.display='none';
+  document.getElementById('studentChangePwSuccess').style.display='none';
+  document.getElementById('studentChangePwBtn').disabled=false;
+  document.getElementById('studentChangePwBtn').textContent='Change Password';
+  document.getElementById('studentChangePwOverlay').style.display='flex';
+  setTimeout(()=>document.getElementById('studentChangePwCurrent').focus(),50);
+}
+function closeStudentChangePwDialog(){
+  document.getElementById('studentChangePwOverlay').style.display='none';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  ['studentChangePwCurrent','studentChangePwNew','studentChangePwNewConfirm'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') doChangeOwnPassword(); });
+  });
+});
+
+async function doChangeOwnPassword(){
+  if(!currentUser) return;
+  const typedUsername=document.getElementById('studentChangePwUsername').value.trim();
+  const currentPw=document.getElementById('studentChangePwCurrent').value;
+  const newPw=document.getElementById('studentChangePwNew').value;
+  const newPwConfirm=document.getElementById('studentChangePwNewConfirm').value;
+  const errEl=document.getElementById('studentChangePwError');
+  const okEl=document.getElementById('studentChangePwSuccess');
+  const btn=document.getElementById('studentChangePwBtn');
+  errEl.style.display='none'; okEl.style.display='none';
+
+  if(!typedUsername){ errEl.textContent='Please enter your username.'; errEl.style.display='block'; return; }
+  if(typedUsername.toLowerCase()!==String(currentUser.username||'').toLowerCase()){
+    errEl.textContent='That username doesn\'t match your logged-in account.'; errEl.style.display='block'; return;
+  }
+  if(!currentPw){ errEl.textContent='Please enter your current password.'; errEl.style.display='block'; return; }
+  if(!newPw||newPw.length<6){ errEl.textContent='New password must be at least 6 characters.'; errEl.style.display='block'; return; }
+  if(newPw!==newPwConfirm){ errEl.textContent='New passwords do not match.'; errEl.style.display='block'; return; }
+  if(newPw===currentPw){ errEl.textContent='New password must be different from your current password.'; errEl.style.display='block'; return; }
+
+  btn.disabled=true; btn.textContent='Verifying…';
+  try{
+    // Re-verify the current password is correct (and refresh the session).
+    const email=usernameToEmail(typedUsername);
+    const {data:signInData,error:signInErr}=await sb.auth.signInWithPassword({ email, password: currentPw });
+    if(signInErr||!signInData||!signInData.user){
+      errEl.textContent='Current password is incorrect.'; errEl.style.display='block';
+      btn.disabled=false; btn.textContent='Change Password'; return;
+    }
+    btn.textContent='Updating…';
+    const {error:updateErr}=await sb.auth.updateUser({ password: newPw });
+    if(updateErr){
+      errEl.textContent='Could not update password: '+updateErr.message;
+      errEl.style.display='block'; btn.disabled=false; btn.textContent='Change Password'; return;
+    }
+    okEl.textContent='Password changed successfully. Use your new password next time you log in.';
+    okEl.style.display='block';
+    btn.textContent='Changed';
+    document.getElementById('studentChangePwCurrent').value='';
+    document.getElementById('studentChangePwNew').value='';
+    document.getElementById('studentChangePwNewConfirm').value='';
+    setTimeout(closeStudentChangePwDialog,2200);
+  }catch(err){
+    errEl.textContent='Network error. Please try again.';
+    errEl.style.display='block'; btn.disabled=false; btn.textContent='Change Password';
+  }
+}
+
 let currentUser = null;   // { id, username }
 let viewingPastAttempt = false; // true when results/review screens are showing a saved attempt, not a live one just finished
 // Holds the in-flight promise from saveAttemptToSupabase for the attempt just
@@ -7732,7 +8792,6 @@ async function handleSignup(){
   errEl.style.display='none'; okEl.style.display='none';
 
   if(!username||username.length<3){errEl.textContent='Username must be at least 3 characters.';errEl.style.display='block';return}
-  if(!/^[a-zA-Z0-9_]+$/.test(username)){errEl.textContent='Username can only contain letters, numbers, and underscores.';errEl.style.display='block';return}
   if(!pw||pw.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.style.display='block';return}
   if(pw!==pwConfirm){errEl.textContent='Passwords do not match.';errEl.style.display='block';return}
 
@@ -7802,7 +8861,7 @@ async function completeLogin(userId, username){
   currentUser = { id: userId, username: username };
   document.getElementById('authOverlay').style.display='none';
   document.body.style.overflow='';
-  document.getElementById('welcome-username').textContent=username;
+  document.getElementById('welcome-username').textContent=username; // fallback until profile loads
   showScreen('home-screen');
   document.getElementById('home-screen').classList.add('active');
   // Recover any attempt that was left mid-progress from a previous session (crash,
@@ -7810,6 +8869,22 @@ async function completeLogin(userId, username){
   await recoverLiveAttemptIfAny();
   loadPastAttempts();
   loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard();
+  // Prefer greeting by full name if this student's profile has one on file
+  // (populated from mock-1 data); falls back to username otherwise.
+  try{
+    let {data,error}=await sb.from('profiles').select('full_name').eq('id', userId).maybeSingle();
+    if(error) console.warn('profile lookup by id failed:', error.message);
+    // Fallback: if the id-based lookup didn't return a full_name, retry by
+    // username — covers any case where the id linkage doesn't match but the
+    // stored username does, so the student still gets greeted by full name.
+    if((!data || !data.full_name) && username){
+      const byUname = await sb.from('profiles').select('full_name').eq('username', username).maybeSingle();
+      if(byUname.error) console.warn('profile lookup by username failed:', byUname.error.message);
+      if(byUname.data && byUname.data.full_name) data = byUname.data;
+    }
+    if(data && data.full_name) document.getElementById('welcome-username').textContent=data.full_name;
+  }catch(e){ console.warn('greeting lookup error:', e.message); }
+  checkMock1ReportAvailable();
 }
 
 // ── AUTH: LOGOUT ──────────────────────────────────────────
@@ -9042,7 +10117,7 @@ function renderQuestion(idx){
   const saved=answers[q.id];
   const isTest=mode==='test';
   const submitted=saved!==undefined&&!isTest; // in test mode nothing is "locked" until final submit
-  const letters=['A','B','C','D','E','F'];
+  const letters=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
 
   let html=`<div class="q-header">
     <span class="q-num">Question ${idx+1} of ${shuffledQ.length}</span>
@@ -9723,7 +10798,7 @@ function reviewNav(dir){reviewDetailIdx=Math.max(0,Math.min(shuffledQ.length-1,r
 
 function renderReviewDetail(){
   const idx=reviewDetailIdx, q=shuffledQ[idx], s=answers[q.id], ok=s&&s.isCorrect;
-  const letters=['A','B','C','D','E','F'];
+  const letters=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
   document.getElementById('review-nav-label').innerHTML=`<strong>Q${idx+1}</strong> of ${shuffledQ.length} &nbsp;·&nbsp; ${ok?'✅ Correct':(s?'❌ Incorrect':'⚠️ Not Attempted')}`;
   document.getElementById('review-prev-btn').disabled=idx===0;
   document.getElementById('review-next-btn').disabled=idx===shuffledQ.length-1;
