@@ -350,7 +350,21 @@
     .attempt-stat .stat-lbl{font-size:.56rem}
   }
 </style>
+<script>
+  // Registers the service worker that caches this page's shell so it can be
+  // reopened/reloaded while offline. Only activates on http(s) origins (a
+  // plain file:// open — e.g. local testing — has no service worker support,
+  // and skipping it there avoids console noise for no benefit).
+  if('serviceWorker' in navigator && (location.protocol==='https:'||location.protocol==='http:')){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('./sw.js').catch(err=>{
+        console.warn('Service worker registration failed (offline reload support will be unavailable):', err);
+      });
+    });
+  }
+</script>
 </head>
+
 <body>
 
 <!-- AUTH OVERLAY -->
@@ -612,8 +626,11 @@
 <div id="home-screen" class="screen">
   <div style="max-width:760px;width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;padding:0 .25rem;box-sizing:border-box;flex-wrap:wrap;gap:.5rem;">
     <span style="font-size:.85rem;color:var(--navy);font-weight:600;">👋 <span id="welcome-username">User</span></span>
+    <span id="offline-mode-status-pill" style="display:none;align-items:center;gap:.35rem;font-size:.72rem;font-weight:700;color:#0369a1;background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:20px;padding:.25rem .7rem;white-space:nowrap;">📴 Offline Mode is ON</span>
+    <span id="offline-pending-badge" style="display:none;font-size:.72rem;font-weight:700;color:#92400e;background:var(--amber-light,#fef3c7);border:1.5px solid var(--amber,#f59e0b);border-radius:20px;padding:.25rem .7rem;white-space:nowrap;">📴 0 attempts waiting to sync</span>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-      <button onclick="openStudentChangeUnameDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">✏️ Change Username</button>
+      <button id="offline-mode-toggle-btn" onclick="toggleOfflineMode()" title="Prime the app for offline use, then stop trying to reach the server until you turn this back off." style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">📴 Go offline</button>
+      <button id="changeUnameHomeBtn" onclick="openStudentChangeUnameDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">✏️ Change Username</button>
       <button onclick="openStudentChangePwDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">🔑 Change Password</button>
       <button onclick="handleLogout()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">Log out</button>
     </div>
@@ -697,13 +714,20 @@
         <p id="custom-timer-error" style="color:var(--red);font-size:.78rem;margin-top:.3rem;display:none;width:100%;">Please enter a number of minutes between 1 and 600.</p>
       </div>
       <button class="start-btn" onclick="startExam()">Start Session →</button>
-      <div id="mistakes-drill-row" style="margin-top:.9rem;display:none;align-items:center;justify-content:space-between;gap:.75rem;background:var(--amber-light,#fef3c7);border:2px solid var(--amber,#f59e0b);border-radius:10px;padding:.7rem 1rem;">
-        <div>
-          <div style="font-size:.85rem;font-weight:700;color:var(--navy);">🔁 Redo My Mistakes</div>
-          <div style="font-size:.76rem;color:var(--text-muted);" id="mistakes-drill-desc">Loading…</div>
-        </div>
-        <button class="start-btn" style="width:auto;white-space:nowrap;padding:.55rem 1.1rem;margin:0;" onclick="startMistakesDrill()" id="mistakes-drill-btn">Start Drill →</button>
+    </div>
+  </div>
+
+  <!-- REDO MY MISTAKES (per-category breakdown) -->
+  <div id="mistakes-breakdown-section" class="home-card" style="margin-top:1.5rem;display:none;padding:1.5rem 2rem 1.8rem;">
+    <div style="font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:.2rem;">🔁 Redo My Mistakes</div>
+    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.1rem;">Questions you've previously gotten wrong, not yet corrected — grouped by category, worst first.</div>
+    <div id="mistakes-breakdown-list" style="display:flex;flex-direction:column;gap:.55rem;"></div>
+    <div id="mistakes-breakdown-all-row" style="margin-top:1rem;padding-top:1rem;border-top:2px dashed var(--border);display:none;align-items:center;justify-content:space-between;gap:.75rem;background:var(--amber-light,#fef3c7);border-radius:10px;padding:.8rem 1rem;">
+      <div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--navy);">All categories combined</div>
+        <div style="font-size:.76rem;color:var(--text-muted);" id="mistakes-breakdown-all-desc">Loading…</div>
       </div>
+      <button class="start-btn" style="width:auto;white-space:nowrap;padding:.55rem 1.1rem;margin:0;" onclick="startMistakesDrill('all')" id="mistakes-breakdown-all-btn">Drill All →</button>
     </div>
   </div>
 
@@ -2499,6 +2523,7 @@ const QUESTIONS = [
       ["D","Assets, expenses and capital","Liabilities and revenues"]
     ]
   },
+    tableAnchor:"The double-entry system of bookkeeping normally results in which of the following balances on the general ledger accounts?",
   options:["A","B","C","D"],
   correct:2, explanation:"Assets and expenses are normally debit balances, while liabilities, capital and revenues are normally credit balances.", calc:null
 },
@@ -2526,6 +2551,7 @@ const QUESTIONS = [
       ["Operating profit","",{v:"36,600",num:true}]
     ]
   },
+    tableAnchor:"Sam prepared a draft statement of profit or loss for the business as follows:",
   options:["Gross profit $108,350 | Operating profit $36,250","Gross profit $108,350 | Operating profit $28,450","Gross profit $114,200 | Operating profit $28,450","Gross profit $114,200 | Operating profit $36,250"],
   correct:3, explanation:"Discount received reduces cost of sales, and carriage in is added to cost of sales; carriage out is an operating expense.",
   calcTable:{
@@ -2573,6 +2599,7 @@ const QUESTIONS = [
     ],
     totalRow:["",{v:"5,785",num:true},"",{v:"5,785",num:true}]
   },
+    tableAnchor:"After corrections, what should be the balance on the following account?",
   req:"After corrections, what should be the balance on the following account?",
   marks:2, prefix:"$", correct:"2675", correctDisplay:"$2,675",
   explanation:"Rental income and returns of goods purchased for cash were on the wrong side; correcting these gives the revised balance.",
@@ -2709,6 +2736,7 @@ const QUESTIONS = [
     ],
     totalRow:["",{v:"40,000",num:true},{v:"40,000",num:true}]
   },
+    tableAnchor:"Tao used the following balances to prepare the financial statements as at 30 April 20X3.",
   req:"The business does not hold inventory. No further adjustments were required.\n\nWhat was Tao's closing capital as at 30 April 20X3?",
   marks:2, prefix:"$", correct:"500", correctDisplay:"$500",
   explanation:"Closing capital = opening capital minus the loss for the year minus drawings.",
@@ -2871,6 +2899,7 @@ const QUESTIONS = [
       ["Irrecoverable debts written off",{v:"1,697",num:true},""]
     ]
   },
+    tableAnchor:"You are given the following figures for revenue and receivables:",
   req:"What was the value of sales returns during 20X7?",
   marks:2, prefix:"$", correct:"3004", correctDisplay:"$3,004",
   explanation:"Use the receivables control account, balancing for sales returns.",
@@ -3021,6 +3050,7 @@ const QUESTIONS = [
       ["Purchases - Mar",{v:"5,471",num:true},"",""]
     ]
   },
+    tableAnchor:"The following account was extracted from the general ledger of Ali:",
   req:"What is the balance carried down on this ledger account?",
   marks:2, prefix:"$", correct:"12231", correctDisplay:"$12,231 credit",
   explanation:"Total debits exceed total credits, so the account carries down as a credit balance of $12,231.",
@@ -3048,6 +3078,7 @@ const QUESTIONS = [
       ["","","Sales - Aug",{v:"7,935",num:true}]
     ]
   },
+    tableAnchor:"The following account was extracted from the general ledger of Ali:",
   req:"What was the balance brought down on this ledger account?",
   marks:2, prefix:"$", correct:"35139", correctDisplay:"$35,139 credit",
   explanation:"Total credits exceed total debits, so the balance brought down is a credit balance of $35,139.",
@@ -3234,6 +3265,7 @@ const QUESTIONS = [
       ["Closing payables",{v:"137,800",num:true}]
     ]
   },
+    tableAnchor:"Based upon the following information, what was the cost of purchases?",
   req:"Based upon the following information, what was the cost of purchases?",
   marks:2, prefix:"$", correct:"578200", correctDisplay:"$578,200",
   explanation:"Use the payables control account, balancing for purchases.",
@@ -3259,6 +3291,7 @@ const QUESTIONS = [
       ["Total receipts during 20X3 (including cash sales of $5,000)",{v:"85,000",num:true}]
     ]
   },
+    tableAnchor:"The following information related to Abbey Co's transactions with credit customers:",
   req:"What figure should appear for revenue in Abbey Co's statement of profit or loss for the year ended 31 December 20X3?",
   marks:2, prefix:"$", correct:"84000", correctDisplay:"$84,000",
   explanation:"Revenue = cash sales $5,000 + credit sales $79,000 = $84,000.",
@@ -3408,6 +3441,7 @@ const QUESTIONS = [
       ["Sundry sales receipts",{v:"47.00",num:true}]
     ]
   },
+    tableAnchor:"There were also the following petty cash vouchers:",
   req:"What is Sarin's imprest amount?",
   marks:2, prefix:"$", correct:"70", correctDisplay:"$70.00",
   explanation:"The imprest balance is the cash in hand, plus vouchers representing money paid out, less any receipts (sundry sales receipts) taken into petty cash.",
@@ -3434,6 +3468,7 @@ const QUESTIONS = [
       ["Cash repaid by employee for personal expense",{v:"3",num:true}]
     ]
   },
+    tableAnchor:"During the current month, Hanna had the following petty cash transactions:",
   req:"How much cash should be paid into petty cash at the end of the month?",
   marks:2, prefix:"$", correct:"32", correctDisplay:"$32",
   explanation:"A total of $35 ($20 + $5 + $10) has been paid out of petty cash and $3 has been received into petty cash. Therefore, the amount required to replenish petty cash to the imprest amount is $32."
@@ -3522,6 +3557,7 @@ const QUESTIONS = [
       ["Net assets at 31 October 20X7",{v:"123,750",num:true}]
     ]
   },
+    tableAnchor:"does not keep accounting records but the following information is available:",
   req:"What profit was made in the year to 31 October 20X7?",
   marks:2,
   options:["$55,750","$78,250","$9,250","$33,250"],
@@ -3538,6 +3574,7 @@ const QUESTIONS = [
       ["Cash drawings by the owner",{v:"16,500",num:true}]
     ]
   },
+    tableAnchor:"The following information relates to a business:",
   req:"What loss was made by the business during 20X7?",
   marks:2, prefix:"$", correct:"31950", correctDisplay:"$31,950",
   explanation:"Closing net assets = Opening net assets + Capital introduced − Drawings + Profit (or − Loss). Increase in net assets = 67,950 − 48,900 = 19,050. So 19,050 = 67,500 − 16,500 + Profit, giving 19,050 = 51,000 + Profit, so Profit = 19,050 − 51,000 = −31,950 — a loss of $31,950. Check: 48,900 + 67,500 − 16,500 − 31,950 = 67,950, which matches closing net assets.",
@@ -3652,6 +3689,7 @@ const QUESTIONS = [
       ["20 August","Sales",{v:"180",num:true},""]
     ]
   },
+    tableAnchor:"Appleby buys and sells inventory during the month of August as follows:",
   req:"Which of the following statements is true?",
   marks:2,
   options:["Closing inventory is $19.50 higher when using the FIFO method instead of the periodic weighted average.","Closing inventory is $19.50 lower when using the FIFO method instead of the periodic weighted average.","Closing inventory is $17.50 higher when using the FIFO method instead of the periodic weighted average.","Closing inventory is $17.50 lower when using the FIFO method instead of the periodic weighted average."],
@@ -3729,6 +3767,7 @@ const QUESTIONS = [
       ["Purchases",{v:"4,250",num:true}]
     ]
   },
+    tableAnchor:"During the period from 30 June 20X6 to 7 July 20X6, the following took place:",
   req:"The mark up is 25% on cost. What is Jay's inventory valuation at 30 June 20X6?",
   marks:2, prefix:"$", correct:"39900", correctDisplay:"$39,900",
   explanation:"Take the inventory value at the count date and work backwards to the year end: add back the cost of goods sold in the intervening period (sales at cost, i.e. 100/125 × sales value since mark-up is 25% on cost) and deduct purchases made in that period.",
@@ -3753,6 +3792,7 @@ const QUESTIONS = [
       ["","Sales","5 items at $30 each"]
     ]
   },
+    tableAnchor:"Inventory movements for product X during the last quarter were as follows:\nOpening inventory at 1 January was 6 items valued at $15 each.",
   req:"What was gross profit for the quarter, if inventory is valued using the continuous weighted average cost method?",
   marks:2, prefix:"$", correct:"155", correctDisplay:"$155",
   explanation:"Recalculate the weighted average cost per unit after each purchase, apply it to the units sold at each sale, and deduct total cost of sales from total sales revenue to arrive at gross profit.",
@@ -3799,6 +3839,7 @@ const QUESTIONS = [
       ["Pilgrim's Painful Progress — John Bunion",{v:"1,280",num:true},{v:"1,300",num:true}]
     ]
   },
+    tableAnchor:"The following information is available in respect of total inventories of three of the most popular titles at Wei's financial year-end:",
   req:"What is the value of these inventories in Wei's statement of financial position?",
   marks:2,
   options:["$7,368","$7,400","$7,560","$7,640"],
@@ -3823,6 +3864,7 @@ const QUESTIONS = [
       ["12 July 20X4","8 units sold at $4.00 each"]
     ]
   },
+    tableAnchor:"The following inventory movements occurred in July:",
   req:"What was the value of closing inventory at 31 July, if the FIFO method of inventory valuation is used?",
   marks:2,
   options:["$31.50","$36.00","$39.00","$41.00"],
@@ -3846,6 +3888,7 @@ const QUESTIONS = [
       ["Units in inventory",{v:"200 units",num:true},{v:"250 units",num:true},{v:"150 units",num:true}]
     ]
   },
+    tableAnchor:"The following information was available at the year-end:",
   req:"What was the value of inventory at the year-end?",
   marks:2, prefix:"$", correct:"4700", correctDisplay:"$4,700",
   explanation:"Each product is valued at the lower of cost and net realisable value (selling price less selling expenses), multiplied by units in inventory.",
@@ -3890,6 +3933,7 @@ const QUESTIONS = [
       ["7 Feb","Purchased 10 units at a cost of $6.50 per unit"]
     ]
   },
+    tableAnchor:"what is the value of closing inventory based upon the following information?",
   req:"If an entity uses the continuous weighted average cost method to value closing inventory, what is the value of closing inventory based upon the following information?",
   marks:2, prefix:"$", correct:"85", correctDisplay:"$85.00",
   explanation:"Recalculate the weighted average unit cost after each purchase and apply the latest average to the units remaining.",
@@ -3914,6 +3958,7 @@ const QUESTIONS = [
       ["17 Apr","Purchased 10 units at a cost of $6.50 per unit"]
     ]
   },
+    tableAnchor:"what is the value of closing inventory based upon the following information?",
   req:"If an entity uses the periodic weighted average cost method to value closing inventory, what is the value of closing inventory based upon the following information?",
   marks:2, prefix:"$", correct:"80.50", correctDisplay:"$80.50",
   explanation:"Total cost of purchases/total units = ((10 × $5.00) + (10 × $6.50))/20 units = $5.75 per unit. Closing inventory valuation is therefore 14 units × $5.75 = $80.50."
@@ -3930,6 +3975,7 @@ const QUESTIONS = [
       ["25 Apr","Sold 8 units at a price of $8.50 per unit"]
     ]
   },
+    tableAnchor:"what is the value of cost of sales for April based upon the following information?",
   req:"Using the periodic weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information?",
   marks:2, prefix:"$", correct:"73.50", correctDisplay:"$73.50",
   explanation:"Total cost of purchases (including opening inventory)/total units = ((4 × $4.00) + (10 × $5.00) + (10 × $6.00))/24 units = $5.25 per unit. Cost of sales is therefore 14 units × $5.25 = $73.50."
@@ -3946,6 +3992,7 @@ const QUESTIONS = [
       ["25 Apr","Sold 8 units at a price of $8.50 per unit"]
     ]
   },
+    tableAnchor:"what is the value of cost of sales for April based upon the following information?",
   req:"Using the continuous weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information?",
   marks:2, prefix:"$", correct:"71.70", correctDisplay:"$71.70",
   explanation:"Cost of sales = $28.26 + $43.44 = $71.70, based on the recalculated weighted average unit cost after each purchase.",
@@ -4951,6 +4998,7 @@ const QUESTIONS = [
     ],
     totalRow:["","Total",{v:"2,800",num:true},{v:"2,000",num:true},{v:"800",num:true}]
   },
+    tableAnchor:"Jai had the following cash transactions:",
   req:"What journal entries will be made in the ledger accounts for these cash transactions?",
   marks:2,
   options:["DR Sales $800, DR Trade Receivables $2,000, CR Bank $2,800","DR Bank $2,000, CR Trade Receivables $2,000","DR Bank $2,800, CR Trade Receivables $2,000, CR Sales $800","DR Bank $800, CR Sales $800"],
@@ -5027,6 +5075,7 @@ const QUESTIONS = [
     ],
     totalRow:["","Total",{v:"13,980",num:true},{v:"1,540",num:true},{v:"240",num:true},{v:"12,200",num:true}]
   },
+    tableAnchor:"Hussan made the following payments during May:",
   req:"State whether each of the following ledgers is debited or credited because of Hussan's payments.",
   marks:2,
   customHeaders:["Ledger","Debit","Credit"],
@@ -5247,6 +5296,7 @@ const QUESTIONS = [
       ["22 January 20X5","Purchase",{v:"3,000",num:true},{v:"210,000",num:true}]
     ]
   },
+    tableAnchor:"Malik had the following inventory movements in his business during the first quarter of 20X5.",
   req:"On 1 January 20X5 Malik had 3,000 units in inventory valued at $150,000. Assuming Malik uses a cumulative weighted average approach to inventory valuation, what value would be included for inventory in the statement of financial position at 31 January 20X5?",
   marks:2,
   options:["$758,571","$978,000","$774,000","$603,273"],
@@ -5318,6 +5368,7 @@ const QUESTIONS = [
       ["April",{v:"240",num:true},{v:"672",num:true},"",""]
     ]
   },
+    tableAnchor:"Yin purchased the following inventory during the current accounting period.",
   req:"The business had no inventory on 1 January 20X2. Assuming that Yin uses the FIFO approach to stock valuation what amount should be shown for inventory in the statement of financial position at 30 April 20X2 (to two decimal places)?",
   marks:2, prefix:"$", correct:"684.50", correctDisplay:"$684.50",
   explanation:"The 90 units of inventory sold in February would have been purchased in January leaving 55 units. The March sales would have come from 55 left in January plus 265 units from February, leaving 5 units at the end of March. Therefore the closing inventory would be all of the April purchases valued at $672 plus the 5 units remaining from the February purchases costed at $2.50 each.\n\nValue of inventory = $672 + ( 5 units × $675 ÷ 270 units) = $684.50",
@@ -5345,6 +5396,7 @@ const QUESTIONS = [
       ["Sales price",{v:"38.00",num:true}]
     ]
   },
+    tableAnchor:"A product called a zed has the following attributes:",
   req:"Trade discount of 10% of the purchase cost has been agreed with the supplier. According to IAS 2 Inventories, what value should be included in inventories for a unit of zed?",
   marks:2,
   options:["$36.00","$39.50","$35.90","$38.00"],
@@ -5370,6 +5422,7 @@ const QUESTIONS = [
     ],
     totalRow:["","","",{v:"2,300",num:true},"",{v:"2,346",num:true}]
   },
+    tableAnchor:"Xin had the following inventory at 31 March 20X8.",
   req:"To sell all of product X, Xin will have to make minor modifications costing $67.20. What value should be included for inventory in the statement of financial position at 31 March 20X8?",
   marks:2,
   options:["$2,300.00","$2,346.00","$2,154.00","$2,170.80"],
@@ -5385,6 +5438,7 @@ const QUESTIONS = [
       ["C32",{v:"63",num:true},{v:"4.80",num:true},{v:"5.00",num:true}]
     ]
   },
+    tableAnchor:"Tan has the following inventory records at the year-end:",
   req:"What amount should Tan include under current assets for inventory (to two decimal places)?",
   marks:2, prefix:"$", correct:"1778.40", correctDisplay:"$1,778.40",
   explanation:"The correct answer is $1778.40.",
@@ -5408,6 +5462,7 @@ const QUESTIONS = [
       ["Delivery cost",{v:"2.60",num:true}]
     ]
   },
+    tableAnchor:"Shadi has purchased an item of inventory, incurring the following costs:",
   req:"A trade discount of 10% on the purchase price was given to Shadi. The item has a selling price of $51 and costs to sell of $1. What amount should Shadi include in closing inventory to represent the value of this item of inventory?",
   marks:2,
   options:["$43.10","$46.50","$48.40","$50.00"],
@@ -5457,6 +5512,7 @@ const QUESTIONS = [
       ["Further costs before sale",{v:"2,000",num:true},{v:"3,000",num:true},{v:"1,000",num:true}]
     ]
   },
+    tableAnchor:"there were three items in inventory as follows:",
   req:"What was the total value of Silur's inventory at 31 May 20X7?",
   marks:2, prefix:"$", correct:"100000", correctDisplay:"$100,000",
   explanation:"Total inventory value = $100,000",
@@ -5483,6 +5539,7 @@ const QUESTIONS = [
       ["Selling price",{v:"$17",num:true},{v:"$20",num:true}]
     ]
   },
+    tableAnchor:"The following figures relate to inventory held at 31 March 20X6:",
   req:"Modifications costing $5 per unit would need to be made to product A to achieve the selling price of $17. What is the value of inventory held at 31 March 20X6 in accordance with IAS 2 Inventories?",
   marks:2,
   options:["$108,000","$124,000","$134,000","$104,000"],
@@ -5520,6 +5577,7 @@ const QUESTIONS = [
       ["Trade discount offered to customers","5%","10%"]
     ]
   },
+    tableAnchor:"The following values relate to each item of inventory.",
   req:"What is the total value of inventory held by Hanna?",
   marks:2, prefix:"$", correct:"3500000", correctDisplay:"$3,500,000",
   explanation:"Applying IAS 2 guidance, all items should be valued at the lower of cost or net realisable value.\n\nWashing machines should be valued at $200 each because this is less than the net realisable value of $500 − $75 − (500 × 5%) = $400. The total inventory value of the washing machines is 10,000 × $200 = $2,000,000.\n\nThe computers are valued at $100 because this is less than the net realisable value of $150 − $25 − (150 × 10%) = $110. The total inventory value of the computers is 15,000 × $100 = $1,500,000. Therefore, the total inventory value for both items is $3,500,000.",
@@ -5570,6 +5628,7 @@ const QUESTIONS = [
       ["Selling costs ($ per unit)",{v:"3",num:true},{v:"5",num:true},{v:"2",num:true}]
     ]
   },
+    tableAnchor:"The following information about inventory is available at the year end:",
   req:"What is the value of inventory at the year end?",
   marks:2,
   options:["$7,320","$9,480","$9,720","$10,980"],
@@ -6092,6 +6151,7 @@ const QUESTIONS = [
         ["30 June Closing inventory",{v:"700",num:true},{v:"(c)",num:true},{v:"623.00",num:true}]
       ]
     },
+    tableAnchor:"His inventory schedule of issues and purchases of pens for June 20X3 is:",
     marks:0,
     parts:[
       {label:"(a) Unit cost for the 20 June issue of 1,300 units, to the nearest cent",subtype:"number",prefix:"$",correct:"0.76",correctDisplay:"$0.76"},
@@ -6150,6 +6210,7 @@ const QUESTIONS = [
         ["7 June Closing inventory",{v:"350",num:true},"",{v:"(c)",num:true}]
       ]
     },
+    tableAnchor:"Kavita's jewellery inventory schedule for a period is:",
     marks:0,
     parts:[
       {label:"Should Kavita use the FIFO or AVCO system to calculate the inventory value?",subtype:"mcq",options:["FIFO","AVCO"],correct:0},
@@ -6583,6 +6644,7 @@ const QUESTIONS = [
       ["Capital",{v:"12,525",num:true}]
     ]
   },
+    tableAnchor:"Bert has extracted the following list of balances from his general ledger at 31 October 20X5:",
   explanation:"Add together all the balances that represent debit-balance items in the trial balance (assets and expenses).",
   calcTable:{
     columns:["",{v:"$",num:true}],
@@ -6914,6 +6976,7 @@ const QUESTIONS = [
         ["Business cash used to buy a car for Chetan's wife Siya, who takes no part in the business",{v:"20,000",num:true}]
       ]
     },
+    tableAnchor:"The following information is available for a sole trader, Chetan who keeps no accounting records:",
     options:["$50,000","$86,000","$90,000","$126,000"],
     correct:3, explanation:"Using the accounting equation: Profit = Change in net assets \u2212 capital introduced + drawings i.e. (274,000 \u2212 186,000) \u2212 50,000 + (68,000 + 20,000) = $126,000", calc:null
   },
@@ -6972,6 +7035,7 @@ const QUESTIONS = [
       ],
       totalRow:["",{v:"40,000",num:true},{v:"40,000",num:true}]
     },
+    tableAnchor:"Victor Von Doom used the following balances to prepare his final accounts as at 30 April 2013.",
     options:["$12,500","$8,400","$16,300","$500"],
     correct:3, explanation:"To calculate the opening capital for the next period, the candidate must apply their knowledge of the accounting equation and realise that:\n\nCapital (the figure per the trial balance) plus Profit/less Loss less Drawings = Closing capital, which therefore becomes the opening capital for 1 May 2013.\n\nTherefore closing capital/opening capital for the next accounting period 1 May 2013 = $12,500 \u2212 $7,900 \u2212 $4,100 = $500, answer D.\n\nMany candidates had just taken the figure from the trial balance and assumed this would be opening capital 1 May 2013, rather than understanding that the trial balance would show the opening capital balance brought forward at the start of the current year (1 May 2012). Those candidates who had also incorrectly chosen B, had only taken the capital figure from the trial balance and deducted drawings of $4,100, again ignoring the calculation of the profit and loss items that needed to be taken into account.",
     calcTable:{
@@ -7004,6 +7068,7 @@ const QUESTIONS = [
         ["","","Purchases",{v:"325,010",num:true}]
       ]
     },
+    tableAnchor:"has inserted all the relevant figures into the trade payables account, but has not yet balanced off the account.",
     options:["$474,485 DEBIT","$575,235 DEBIT","$474,485 CREDIT","$575,235 CREDIT"],
     correct:2, explanation:"Balancing off the account: total credits (250,225 + 325,010 = 575,235) less the debit side (100,750) leaves a balancing figure of $474,485 to carry down, which is a credit balance on the trade payables account.",
     calcTable:{
@@ -7209,6 +7274,10 @@ const CATEGORIES = [
   { id:'fa_mock1_j26', name:'FA Mock-1 J26', ids:[601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625] }
 ];
 let selectedCategory = CATEGORIES[0];
+// Reverse lookup: question id -> owning category id. Built once; used to bucket
+// the "Redo My Mistakes" pool by category without re-scanning CATEGORIES each time.
+const QUESTION_ID_TO_CATEGORY = {};
+CATEGORIES.forEach(cat => cat.ids.forEach(id => { QUESTION_ID_TO_CATEGORY[id] = cat.id; }));
 
 // ── SUPABASE SETUP ───────────────────────────────────────
 const SUPABASE_URL = 'https://vriermetzisuwwzvbtcq.supabase.co';
@@ -7640,14 +7709,71 @@ const BULK_DEFAULT_PASSWORD = 'CCAcca123';
 // their own report, never another student's.
 const CHAPTER_LABELS_MOCK1 = { '1':'Introduction to financial reporting', '2':'The regulatory framework', '3':'Double-entry bookkeeping' };
 
+// Maps each Mock-1 question number (1-25) to its topic/chapter and the exact
+// correct/wrong bullet sentence used when this report's Strengths/Weaknesses
+// text was generated. Lets us reverse-engineer, from a student's own
+// weaknesses text, exactly WHICH questions they personally got wrong —
+// rather than only knowing the wrong-count per chapter. question_id in the
+// question_topics table = 600 + this number (verified against the table).
+const MOCK1_BULLET_LIBRARY = {"1": {"topic": "Sole trader profit from net asset movement", "ch": 3, "correct_bullet": "Correctly derived profit from the net asset movement, adjusting for capital introduced and drawings including a non-cash 'car purchased with business cash' drawing.", "wrong_bullet": "Made an error adjusting the net asset movement for capital introduced and drawings (including the non-cash car-purchase drawing) when deriving profit for the year."}, "2": {"topic": "IFRS Advisory Council's role", "ch": 2, "correct_bullet": "Correctly identified the IFRS Advisory Council as providing strategic support and guidance to the IASB.", "wrong_bullet": "Misidentified the body that gives strategic support and guidance to the IASB (confused the IFRS Advisory Council with the IFRS Foundation, IFRS IC, or IFAC)."}, "3": {"topic": "Qualitative characteristics \u2014 identifying the FALSE statement", "ch": 1, "correct_bullet": "Correctly identified the false statement among the qualitative characteristics (understandability does not mean excluding complex information).", "wrong_bullet": "Did not correctly identify the false statement among the qualitative-characteristics options, mistakenly treating the exclusion of complex information as consistent with understandability."}, "4": {"topic": "General ledger closing rules at period end", "ch": 3, "correct_bullet": "Correctly identified that asset/equity/liability balances carry forward while income/expense accounts transfer to retained earnings at the period end.", "wrong_bullet": "Reversed the general ledger closing rule \u2014 thought asset/equity/liability balances transfer to retained earnings rather than carrying forward (it is income/expense accounts that close to retained earnings)."}, "5": {"topic": "Order of business documents", "ch": 3, "correct_bullet": "Correctly sequenced business documents (quotation, sales order, goods received note, invoice, receipt).", "wrong_bullet": "Sequenced business documents incorrectly, misplacing the goods received note relative to the invoice in the sales cycle."}, "6": {"topic": "IFRS Advisory Council's advisory scope", "ch": 2, "correct_bullet": "Correctly identified the full scope of matters the IFRS Advisory Council advises the IASB on (project timetable, agenda, practical implementation issues).", "wrong_bullet": "Did not correctly identify the full scope of matters the IFRS Advisory Council advises the IASB on."}, "7": {"topic": "Opening capital from trial balance and derived loss", "ch": 3, "correct_bullet": "Correctly derived the year's loss from the trial balance and rolled forward closing capital to determine the next period's opening capital (Bob scenario).", "wrong_bullet": "Made an error deriving opening capital from the trial balance (Bob scenario) \u2014 likely used the trial balance capital figure directly as opening capital instead of first calculating the period's profit/loss and adjusting for drawings."}, "8": {"topic": "Function of books of prime entry", "ch": 3, "correct_bullet": "Correctly identified that books of prime entry list similar transactions before their totals are posted to the nominal ledger.", "wrong_bullet": "Misidentified the function of books of prime entry \u2014 confused their role (listing/aggregating transactions) with individual customer/supplier ledger accounts or the recording of cash transactions specifically."}, "9": {"topic": "Balancing off a ledger account (trade payables)", "ch": 3, "correct_bullet": "Correctly balanced off the trade payables account, identifying the closing balance as a credit given payables is a liability account.", "wrong_bullet": "Made an error balancing off the trade payables account \u2014 likely miscalculated the closing figure or misjudged whether the balancing figure sits on the debit or credit side."}, "10": {"topic": "Content of a sole trader's accounting records", "ch": 1, "correct_bullet": "Correctly identified which items are typically captured within a sole trader's financial accounting records (inventory value, trade receivables) versus items that are not (personal tax, forecasts).", "wrong_bullet": "Confused items that form part of a sole trader's financial accounting records with non-business or forward-looking items (personal tax owed, projected future profitability)."}, "11": {"topic": "Drawings calculation (Wing)", "ch": 3, "correct_bullet": "Correctly reconstructed drawings from opening capital, profit, and closing net assets (Wing scenario).", "wrong_bullet": "Made an error reconstructing drawings from the accounting equation (Wing scenario) \u2014 a numerical slip in the capital roll-forward (opening capital + profit - drawings = closing net assets)."}, "12": {"topic": "Sole trader vs limited company differences", "ch": 1, "correct_bullet": "Correctly distinguished sole traders from limited companies (share capital, personal liability, drawings only in sole trader accounts), while rejecting the overstated 'never available to third parties' claim.", "wrong_bullet": "Confused the true differences between sole traders and limited companies \u2014 mixed up which statements about privacy of accounts, personal liability, and drawings actually distinguish the two forms."}, "13": {"topic": "Uses of the journal", "ch": 3, "correct_bullet": "Correctly identified that the journal records non-routine transactions and adjustments such as the annual depreciation charge.", "wrong_bullet": "Confused the journal's purpose with other books of prime entry or the trial balance \u2014 did not identify that non-routine entries and depreciation charges are recorded via journal."}, "14": {"topic": "Capital account roll-forward from transactions (Martha)", "ch": 3, "correct_bullet": "Correctly rolled forward the capital account by tracking profit on credit sales and drawings through a sequence of cash and credit transactions (Martha scenario).", "wrong_bullet": "Made an error rolling forward Martha's capital account \u2014 likely used the full selling price rather than the profit margin on goods sold, or mishandled the vehicle purchase as an expense rather than an asset swap."}, "15": {"topic": "Accruals concept \u2014 matching cost of sales to inventory", "ch": 1, "correct_bullet": "Correctly identified the accruals concept as requiring only the cost of goods actually sold to be expensed, with unsold goods carried forward as closing inventory.", "wrong_bullet": "Confused the accruals concept with consistency or comparability when explaining why unsold inventory is excluded from cost of sales."}, "16": {"topic": "Identifying books of prime entry", "ch": 3, "correct_bullet": "Correctly identified the sales day book, purchase day book, cash book, and journal as books of prime entry, excluding source documents and ledgers.", "wrong_bullet": "Incorrectly included source documents (supplier statements, purchase orders, sales invoices) or ledger accounts among the books of prime entry, rather than the day books and journal."}, "17": {"topic": "Recording a loan and bank balance on opening trial balance", "ch": 1, "correct_bullet": "Correctly recorded a bank loan as a credit balance and a positive bank balance as a debit on the opening trial balance (Jenny scenario).", "wrong_bullet": "Reversed the debit/credit treatment of the bank loan and bank balance on the opening trial balance (Jenny scenario)."}, "18": {"topic": "Bank ledger account balance roll-forward (Kalla Co)", "ch": 3, "correct_bullet": "Correctly built up the bank ledger account balance from the opening debit balance, adding receipts and loan proceeds and deducting payments (Kalla Co scenario).", "wrong_bullet": "Made an error rolling forward Kalla Co's bank ledger balance \u2014 likely mishandled the direction of the opening balance or omitted the loan receipt when calculating the closing figure."}, "19": {"topic": "Accounting equation \u2014 effect of an asset increase", "ch": 3, "correct_bullet": "Correctly applied the accounting equation (Assets = Capital + Liabilities) to identify that an increase in assets must be offset by an increase in capital or liabilities, or a decrease in another asset.", "wrong_bullet": "Misapplied the accounting equation when identifying the offsetting effect of an asset increase \u2014 incorrectly included an increase in drawings, which decreases rather than increases capital."}, "20": {"topic": "Meaning of relevance in the Conceptual Framework", "ch": 1, "correct_bullet": "Correctly identified relevance as information with predictive or confirmatory value that makes a difference to decisions.", "wrong_bullet": "Misidentified the meaning of 'relevance' in the Conceptual Framework, confusing it with faithful representation, neutrality, or compliance-related characteristics."}, "21": {"topic": "Users of financial information \u2014 management needs", "ch": 1, "correct_bullet": "Correctly identified budgets as the information particularly useful to management, distinguishing management's forward-looking needs from those of other user groups.", "wrong_bullet": "Confused the information needs of different user groups \u2014 attributed information particularly useful to management (budgets) to another stakeholder such as shareholders or tax authorities."}, "22": {"topic": "Characteristics of a limited liability company", "ch": 1, "correct_bullet": "Correctly identified the defining characteristics of a limited liability company (shareholding with voting rights, separate legal personality).", "wrong_bullet": "Misidentified the characteristics of a limited liability company \u2014 confused general partnership traits (shared profits by agreement) with company-specific features (shareholding, separate legal personality)."}, "23": {"topic": "Regulation of company accounts", "ch": 2, "correct_bullet": "Correctly identified that the form and content of limited company accounts are primarily regulated by national legislation.", "wrong_bullet": "Misidentified what primarily regulates the form and content of limited company accounts (confused national legislation with IFRS/IAS standards)."}, "24": {"topic": "True/false: substance over form, corporate governance, computerised accounting", "ch": 1, "correct_bullet": "Correctly evaluated true/false statements on substance over form, the scope of corporate governance, and the double-entry basis of computerised accounting systems.", "wrong_bullet": "Misjudged one or more true/false statements \u2014 incorrectly treated legal form as always overriding commercial substance, or corporate governance as solely about control systems."}, "25": {"topic": "True/false: accrual accounting, statement purposes, sole trader financing", "ch": 3, "correct_bullet": "Correctly evaluated true/false statements distinguishing accrual accounting, the purpose of the statement of financial position versus profit or loss, and sole trader financing constraints.", "wrong_bullet": "Misjudged one or more true/false statements \u2014 incorrectly attributed financial performance reporting to the statement of financial position rather than the statement of profit or loss."}};
+
+// Reverse lookup built once: exact wrong_bullet text -> question number (1-25).
+const MOCK1_WRONG_BULLET_TO_NUM = {};
+Object.keys(MOCK1_BULLET_LIBRARY).forEach(num=>{
+  MOCK1_WRONG_BULLET_TO_NUM[MOCK1_BULLET_LIBRARY[num].wrong_bullet.trim()] = parseInt(num,10);
+});
+
+// The mock_reports export had its em-dashes/quotes double-mojibake'd during
+// a prior CSV round-trip (â€” instead of —, etc). Fixing this is required for
+// exact-string bullet matching to succeed; verified against real data before
+// shipping this — 998/998 bullets matched cleanly across all 71 students
+// once this normalization was applied.
+function fixMock1Mojibake(s){
+  if(!s) return s;
+  return s.replace(/â€”/g,'\u2014').replace(/â€™/g,'\u2019').replace(/â€œ/g,'\u201c').replace(/â€\x9d/g,'\u201d');
+}
+
+// Parses a report's weaknesses text (bullet lines starting with "•", one per
+// line) back into the specific Mock-1 question numbers the student got
+// wrong, by exact-matching each line against MOCK1_WRONG_BULLET_TO_NUM.
+// Returns [] if the text doesn't parse as expected (e.g. no_attempt reports,
+// or a future mock that hasn't got a bullet library yet) — callers should
+// treat an empty result as "fall back to chapter-level practice" rather than
+// assuming zero wrong answers.
+function extractWrongQuestionNums(report){
+  const text = fixMock1Mojibake(report.weaknesses);
+  if(!text) return [];
+  const nums = [];
+  text.split(/[\r\n]+/).forEach(line=>{
+    line = line.trim();
+    if(line.startsWith('•')) line = line.slice(1).trim();
+    if(!line) return;
+    const num = MOCK1_WRONG_BULLET_TO_NUM[line];
+    if(num) nums.push(num);
+  });
+  return nums;
+}
+
 async function checkMock1ReportAvailable(){
   const entry=document.getElementById('mock1-report-entry');
-  if(!currentUser || !entry) return;
+  const changeUnameBtn=document.getElementById('changeUnameHomeBtn');
+  if(!currentUser){ return; }
+  let hasReport=false;
   try{
     const {data,error}=await sb.from('mock_reports')
       .select('id').eq('user_id', currentUser.id).eq('mock_id','fa_mock1_j26').maybeSingle();
-    if(!error && data){ entry.style.display='block'; } else { entry.style.display='none'; }
-  }catch(e){ entry.style.display='none'; }
+    hasReport = !error && !!data;
+  }catch(e){ hasReport=false; }
+  if(entry) entry.style.display = hasReport ? 'block' : 'none';
+  // Once a student has a mock report actually linked to their account (i.e.
+  // their gmail-based username matches an existing mock_reports row), the
+  // "change username" flow no longer applies to them — they're already on
+  // the gmail identity that owns their report, with nowhere further to go.
+  // This is NOT about whether the username merely looks like an email; it's
+  // about whether it's the specific gmail that this student's mock report
+  // data is keyed to.
+  currentUser.hasLinkedMockReport = hasReport;
+  if(changeUnameBtn) changeUnameBtn.style.display = hasReport ? 'none' : '';
 }
 
 async function openStudentMockReport(){
@@ -7745,11 +7871,16 @@ function renderMock1ReportHTML(r, opts){
 }
 
 // ── PRACTICE WEAK TOPICS ────────────────────────────────────────
-// Parses the chapter numbers mentioned in this report's recommendations
-// (falls back to chapter_breakdown if recommendations text is unavailable),
-// looks up which mock-1 questions belong to each weak chapter via
-// question_topics, and launches a normal practice session with those
-// questions using the platform's existing session engine.
+// Builds practice buttons scoped to the SPECIFIC questions a student got
+// wrong on Mock-1 — not every question in a weak chapter. We know exactly
+// which questions those are by reverse-matching this student's own
+// weaknesses bullets against MOCK1_BULLET_LIBRARY (see
+// extractWrongQuestionNums above); question_id in question_topics = 600 +
+// that number. Falls back to the previous "whole weak chapter" behavior
+// only if bullet-matching comes up empty (e.g. no_attempt reports, or any
+// future mock added before it has its own bullet library wired up) — this
+// keeps the feature from silently breaking rather than silently doing the
+// old, less-precise thing without anyone noticing.
 function extractWeakChapters(report){
   const chapters=new Set();
   if(report.chapter_breakdown){
@@ -7764,14 +7895,47 @@ function extractWeakChapters(report){
 async function wireMock1ReportPracticeButtons(report){
   const wrap=document.getElementById('practice-weak-topics-btns');
   if(!wrap) return;
+
+  const wrongNums = report.mock_id==='fa_mock1_j26' ? extractWrongQuestionNums(report) : [];
+
+  if(wrongNums.length>0){
+    // Precise path: one button per chapter, but only the questions this
+    // student actually got wrong within it.
+    const byChapter={};
+    wrongNums.forEach(num=>{
+      const ch = MOCK1_BULLET_LIBRARY[String(num)].ch;
+      (byChapter[ch] = byChapter[ch]||[]).push(600+num);
+    });
+    const chNums = Object.keys(byChapter).map(Number).sort((a,b)=>a-b);
+    if(chNums.length===0){
+      wrap.innerHTML='<div style="font-size:.82rem;color:#94a3b8;">No weak chapters to drill — nice work!</div>';
+      return;
+    }
+    wrap.innerHTML='';
+    chNums.forEach(chNum=>{
+      const qIds=byChapter[chNum];
+      const label=CHAPTER_LABELS_MOCK1[String(chNum)]||('Chapter '+chNum);
+      const btn=document.createElement('button');
+      btn.className='start-btn';
+      btn.style.cssText='width:100%;margin:0;';
+      btn.textContent='🎯 Practice: '+label+' — questions you got wrong ('+qIds.length+')';
+      btn.onclick=()=>startTopicPracticeDrill(qIds, label);
+      wrap.appendChild(btn);
+    });
+    return;
+  }
+
+  // Fallback: old chapter-wide behavior (all questions in a weak chapter),
+  // used only when we couldn't reverse-engineer specific wrong questions.
   const weakChapters=extractWeakChapters(report);
   if(weakChapters.length===0){
     wrap.innerHTML='<div style="font-size:.82rem;color:#94a3b8;">No weak chapters to drill — nice work!</div>';
     return;
   }
   try{
-    const {data,error}=await sb.from('question_topics').select('*').eq('mock_id','fa_mock1_j26');
+    const {data,error}=await sb.from('question_topics').select('*').eq('mock_id',report.mock_id||'fa_mock1_j26');
     if(error || !data){ wrap.innerHTML=''; return; }
+    wrap.innerHTML='';
     weakChapters.forEach(chNum=>{
       const qIds=data.filter(t=>t.chapter===chNum).map(t=>t.question_id);
       if(qIds.length===0) return;
@@ -8362,6 +8526,10 @@ async function facultyDeleteUser(userId, username, cardEl){
 // rename (same logic as doChangeUsername for teacher-initiated renames).
 function openStudentChangeUnameDialog(){
   if(!currentUser) return;
+  if(currentUser.hasLinkedMockReport){
+    alert('Your account is already linked to your mock report, so there\'s no further username change available.');
+    return;
+  }
   document.getElementById('studentChangeUnameCurrent').textContent=currentUser.username;
   document.getElementById('studentChangeUnameNew').value='';
   document.getElementById('studentChangeUnameError').style.display='none';
@@ -8403,6 +8571,12 @@ async function checkExistingUsernameRequest(){
 
 async function doRequestUsernameChange(){
   if(!currentUser) return;
+  if(currentUser.hasLinkedMockReport){
+    const errEl=document.getElementById('studentChangeUnameError');
+    errEl.textContent='Your account is already linked to your mock report — no further username change is available.';
+    errEl.style.display='block';
+    return;
+  }
   const newUname=document.getElementById('studentChangeUnameNew').value.trim();
   const errEl=document.getElementById('studentChangeUnameError');
   const okEl=document.getElementById('studentChangeUnameSuccess');
@@ -8514,16 +8688,11 @@ async function approveUsernameRequest(req, cardEl){
     const collision = Array.isArray(checkData) ? checkData.find(r=>r.id!==req.user_id) : null;
 
     if(collision){
-      // Is the colliding account a shell (no attempts) that we can safely
-      // absorb, or a genuine other student's account?
+      // Always show faculty both usernames plus the actual attempt-history
+      // status of the gmail-based account — never assume it's empty.
       const shell = await isShellAccount(collision.id);
-      if(shell){
-        cardEl.dataset.collisionId = collision.id;
-        renderLinkAccountOffer(req, cardEl, collision.id);
-      }else{
-        alert('Cannot approve: "'+req.requested_username+'" is already taken by another student with existing history. This needs manual review.');
-        approveBtn.disabled=false; rejectBtn.disabled=false; approveBtn.textContent='✅ Approve';
-      }
+      cardEl.dataset.collisionId = collision.id;
+      renderLinkAccountOffer(req, cardEl, collision.id, shell);
       return;
     }
 
@@ -8539,28 +8708,48 @@ async function approveUsernameRequest(req, cardEl){
   }
 }
 
-// Swaps the request card into a "link account" confirmation state: the
-// requested gmail already has an empty shell account sitting on it, so
-// approving here means deleting that shell and moving the gmail onto the
-// student's real (history-having) account instead of a plain rename.
-function renderLinkAccountOffer(req, cardEl, shellUserId){
+// Swaps the request card into a "link account" review state. Always shows
+// BOTH usernames (old username -> requested gmail) plus the ACTUAL checked
+// attempt-history status of the gmail-based account — never assumed.
+// Two cases:
+//  - shell===true:  gmail account is empty (expected case) -> safe one-click link.
+//  - shell===false: gmail account already has attempts of its own (student
+//    apparently used the platform under that gmail directly before) ->
+//    faculty must manually decide since a plain link would risk losing history.
+function renderLinkAccountOffer(req, cardEl, shellUserId, shell){
+  const statusBox = shell
+    ? `<div style="font-size:.78rem;color:#9a3412;background:#fff7ed;border:1px solid #fb923c;border-radius:8px;padding:.55rem .7rem;margin-top:.5rem;line-height:1.5;">
+        <b>"${escHTML(req.requested_username)}"</b> already exists on the platform, but it has <b>no past attempts</b> —
+        this is the expected case (a pre-created shell account the student never logged into).
+        <br><br>
+        Approving as a <b>link</b> will delete that empty shell and move the gmail onto
+        <b>${escHTML(req.current_username)}</b>'s existing account, keeping all of their past attempts and mock reports intact.
+      </div>`
+    : `<div style="font-size:.78rem;color:#991b1b;background:#fee2e2;border:1px solid #ef4444;border-radius:8px;padding:.55rem .7rem;margin-top:.5rem;line-height:1.5;">
+        ⚠️ <b>"${escHTML(req.requested_username)}"</b> already exists on the platform and it <b>already has past attempts</b> —
+        this student appears to have used the platform under this gmail before, separately from <b>${escHTML(req.current_username)}</b>.
+        <br><br>
+        Linking would delete that account and its attempts to make room for <b>${escHTML(req.current_username)}</b>'s history instead.
+        This needs your manual judgment before proceeding — check both accounts if unsure.
+      </div>`;
+
   cardEl.innerHTML=`
     <div style="width:100%;">
       <div style="font-weight:700;color:#0f1f3d;font-size:.9rem;">${escHTML(req.current_username)} <span style="color:#94a3b8;font-weight:600;">→</span> ${escHTML(req.requested_username)}</div>
-      <div style="font-size:.78rem;color:#9a3412;background:#fff7ed;border:1px solid #fb923c;border-radius:8px;padding:.55rem .7rem;margin-top:.5rem;line-height:1.5;">
-        <b>"${escHTML(req.requested_username)}"</b> already exists on the platform as a pre-created account with no attempt history —
-        this is expected if that account was bulk-created ahead of the student logging in.
-        <br><br>
-        Approving as a <b>link</b> will delete that empty account and move the gmail onto
-        <b>${escHTML(req.current_username)}</b>'s existing account, keeping all of their past attempts and mock reports intact.
-      </div>
+      ${statusBox}
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem;">
-        <button class="uname-req-link-btn" style="padding:.5rem .8rem;border:none;color:#fff;background:#8b5cf6;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">🔗 Approve &amp; Link Account</button>
+        <button class="uname-req-link-btn" style="padding:.5rem .8rem;border:none;color:#fff;background:#8b5cf6;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">🔗 ${shell?'Approve & Link Account':'Link Anyway (overrides gmail history)'}</button>
         <button class="uname-req-reject-btn2" style="padding:.5rem .8rem;border:2px solid #ef4444;color:#ef4444;background:none;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;">✕ Reject</button>
       </div>
     </div>
   `;
-  cardEl.querySelector('.uname-req-link-btn').onclick=()=>approveLinkAccount(req, cardEl, shellUserId);
+  cardEl.querySelector('.uname-req-link-btn').onclick=()=>{
+    if(shell){
+      approveLinkAccount(req, cardEl, shellUserId);
+    }else if(confirm('This gmail account already has its own attempt history. Linking will permanently delete that account and its attempts, replacing it with "'+req.current_username+'"\'s history instead. Continue?')){
+      approveLinkAccount(req, cardEl, shellUserId);
+    }
+  };
   cardEl.querySelector('.uname-req-reject-btn2').onclick=()=>rejectUsernameRequest(req, cardEl);
 }
 
@@ -8625,8 +8814,11 @@ async function performUsernameRename(userId, newUname){
     body:JSON.stringify({ username:newUname })
   });
   // Also attach this user_id onto their mock_reports row now that the gmail
-  // matches, in case it wasn't linked at import time.
-  await fetch(SUPABASE_URL+'/rest/v1/mock_reports?student_email=eq.'+encodeURIComponent(newUname)+'&user_id=is.null',{
+  // matches, in case it wasn't linked at import time. Normalize the same way
+  // usernameToEmail() does — mock_reports.student_email is stored lowercase,
+  // so a raw match against newUname could silently miss on case/whitespace.
+  const normalizedNewUname=newUname.trim().toLowerCase();
+  await fetch(SUPABASE_URL+'/rest/v1/mock_reports?student_email=eq.'+encodeURIComponent(normalizedNewUname)+'&user_id=is.null',{
     method:'PATCH',
     headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify({ user_id:userId })
@@ -8820,6 +9012,8 @@ async function handleSignup(){
         }
         errEl.style.display='block'; btn.disabled=false; btn.textContent='Create Account →'; return;
       }
+      // (mock_reports link now happens in completeLogin(), on every login —
+      // see there for why signup-time alone isn't enough.)
     }
     okEl.textContent='Account created! Logging you in…';
     okEl.style.display='block';
@@ -8859,16 +9053,29 @@ async function handleLogin(){
 // Shared final step for both signup and login
 async function completeLogin(userId, username){
   currentUser = { id: userId, username: username };
+  // Self-heal: link this student's mock_reports row (matched by gmail) to
+  // their auth account, in case it was never linked before — covers BOTH
+  // a fresh gmail signup that just happened, AND any older account that got
+  // stuck before this fix existed. Runs every login so nobody stays stuck;
+  // it's a no-op (0 rows touched) once already linked, so it's cheap and
+  // safe to call unconditionally. Must go through the RPC, not a raw
+  // client-side update — see link_my_mock_report() for why.
+  try{
+    await sb.rpc('link_my_mock_report', { p_email: username.trim().toLowerCase() });
+  }catch(linkErr){ /* non-fatal: never block login over this */ }
   document.getElementById('authOverlay').style.display='none';
   document.body.style.overflow='';
   document.getElementById('welcome-username').textContent=username; // fallback until profile loads
   showScreen('home-screen');
   document.getElementById('home-screen').classList.add('active');
+  updateOfflineModeUI(); // reflect any previously-set Offline Mode toggle immediately
   // Recover any attempt that was left mid-progress from a previous session (crash,
   // closed tab, reload) BEFORE loading the past-attempts list, so it shows up.
   await recoverLiveAttemptIfAny();
+  await flushPendingAttemptQueue();
+  updateOfflinePendingBadge();
   loadPastAttempts();
-  loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard();
+  loadMistakesBreakdown(); loadEngagementCard(); loadMilestonesDashboard();
   // Prefer greeting by full name if this student's profile has one on file
   // (populated from mock-1 data); falls back to username otherwise.
   try{
@@ -8913,6 +9120,12 @@ async function loadPastAttempts(){
   const emptyEl=document.getElementById('past-attempts-empty');
   const listEl=document.getElementById('past-attempts-list');
   loadingEl.style.display='block'; emptyEl.style.display='none'; listEl.innerHTML='';
+  if(shouldSkipNetwork()){
+    loadingEl.style.display='none';
+    emptyEl.textContent='📴 Offline — past attempts will show once you\'re back online.';
+    emptyEl.style.display='block';
+    return;
+  }
   try{
     const {data,error}=await sb.from('attempts')
       .select('id,mode,category,questions_attempted,score_correct,score_total,marks,marks_attempted,percent,time_taken_seconds,created_at')
@@ -9113,6 +9326,7 @@ function computeStreakFromDates(dateStrings){
 async function loadEngagementCard(){
   if(!currentUser) return;
   const card=document.getElementById('engagement-card');
+  if(shouldSkipNetwork()){ card.style.display='none'; return; }
   try{
     const {data,error}=await sb.from('attempts')
       .select('category,percent,created_at,questions_attempted,questions_json,answers_json')
@@ -9312,6 +9526,7 @@ async function loadMilestonesDashboard(){
   const closeWrap=document.getElementById('milestones-close-wrap');
   const earnedWrap=document.getElementById('milestones-earned-wrap');
   if(!section) return;
+  if(shouldSkipNetwork()){ section.style.display='none'; return; }
   try{
     const {data,error}=await sb.from('attempts')
       .select('category,percent,created_at,questions_attempted,answers_json')
@@ -9392,18 +9607,24 @@ async function loadMilestonesDashboard(){
   }
 }
 
-async function loadMistakesCount(){
-  const row=document.getElementById('mistakes-drill-row');
-  const desc=document.getElementById('mistakes-drill-desc');
-  const btn=document.getElementById('mistakes-drill-btn');
-  if(!currentUser){ row.style.display='none'; return; }
+// mistakesByCategory: catId -> array of live question objects still wrong.
+// mistakesPool: flattened union across all categories (kept for the "Drill All" option).
+let mistakesByCategory={};
+
+async function loadMistakesBreakdown(){
+  const section=document.getElementById('mistakes-breakdown-section');
+  const list=document.getElementById('mistakes-breakdown-list');
+  const allRow=document.getElementById('mistakes-breakdown-all-row');
+  const allDesc=document.getElementById('mistakes-breakdown-all-desc');
+  if(!currentUser){ section.style.display='none'; return; }
+  if(shouldSkipNetwork()){ section.style.display='none'; return; }
   try{
     const {data,error}=await sb.from('attempts')
       .select('questions_json,answers_json,created_at')
       .eq('user_id', currentUser.id)
       .eq('hidden_by_student', false)
       .order('created_at',{ascending:true}); // oldest first, so later duplicates overwrite with the freshest question snapshot
-    if(error||!data||data.length===0){ row.style.display='none'; return; }
+    if(error||!data||data.length===0){ section.style.display='none'; return; }
     // Index the live, current question bank by id so we always use today's
     // corrected question text/options/correct-answer — never the frozen snapshot
     // stored in questions_json back when the attempt happened.
@@ -9428,29 +9649,87 @@ async function loadMistakesCount(){
       });
     });
     mistakesPool=Object.values(byId);
-    if(mistakesPool.length===0){ row.style.display='none'; return; }
-    row.style.display='flex';
-    desc.textContent=`${mistakesPool.length} question${mistakesPool.length===1?'':'s'} you've previously gotten wrong, not yet corrected.`;
-    btn.disabled=false;
+    if(mistakesPool.length===0){ section.style.display='none'; return; }
+
+    // Bucket by owning category using the reverse index built from CATEGORIES.
+    mistakesByCategory={};
+    mistakesPool.forEach(q=>{
+      const catId=QUESTION_ID_TO_CATEGORY[q.id];
+      if(!catId) return; // question not found in any current category — skip
+      (mistakesByCategory[catId]=mistakesByCategory[catId]||[]).push(q);
+    });
+
+    // Build rows, worst (highest count) first.
+    const rows=Object.keys(mistakesByCategory).map(catId=>{
+      const cat=CATEGORIES.find(c=>c.id===catId);
+      return { catId, name:cat?cat.name:catId, count:mistakesByCategory[catId].length };
+    }).sort((a,b)=>b.count-a.count);
+
+    if(rows.length===0){ section.style.display='none'; return; }
+    section.style.display='block';
+
+    list.innerHTML=rows.map(r=>{
+      const isCurrent=selectedCategory && selectedCategory.id===r.catId;
+      return `<div class="mistakes-cat-row" data-cat-id="${escHTML(r.catId)}" style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem .9rem;border-radius:9px;border:2px solid ${isCurrent?'var(--amber,#f59e0b)':'var(--border)'};background:${isCurrent?'var(--amber-light,#fef3c7)':'transparent'};">
+        <div style="min-width:0;">
+          <div style="font-size:.86rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHTML(r.name)}</div>
+          <div style="font-size:.74rem;color:var(--text-muted);">${r.count} question${r.count===1?'':'s'} to redo</div>
+        </div>
+        <button class="start-btn" style="width:auto;white-space:nowrap;padding:.5rem 1rem;margin:0;font-size:.82rem;" onclick="startMistakesDrill('${escHTML(r.catId)}')">Drill →</button>
+      </div>`;
+    }).join('');
+
+    // Combined "all categories" row.
+    allRow.style.display='flex';
+    allDesc.textContent=`${mistakesPool.length} question${mistakesPool.length===1?'':'s'} across ${rows.length} categor${rows.length===1?'y':'ies'}.`;
+
+    // Auto-highlight/scroll to whichever category is currently selected in the
+    // main dropdown, if it has outstanding mistakes.
+    if(selectedCategory){
+      const currentRow=list.querySelector(`[data-cat-id="${CSS.escape(selectedCategory.id)}"]`);
+      if(currentRow) currentRow.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
   }catch(err){
-    row.style.display='none';
+    section.style.display='none';
   }
 }
 
-function startMistakesDrill(){
-  if(!mistakesPool||mistakesPool.length===0) return;
+// catId: a real CATEGORIES id to drill just that category's mistakes, or 'all'
+// to drill the full combined pool across every category.
+function startMistakesDrill(catId){
+  let pool, label;
+  if(catId==='all'){
+    pool=mistakesPool;
+    label='🔁 Redo My Mistakes — All Categories';
+  }else{
+    pool=mistakesByCategory[catId]||[];
+    const cat=CATEGORIES.find(c=>c.id===catId);
+    label=`🔁 Redo My Mistakes — ${cat?cat.name:catId}`;
+  }
+  if(!pool||pool.length===0) return;
   mode='practice'; // always Practice mode — the point is to see the explanation immediately and re-learn
   document.getElementById('card-practice').classList.add('selected');
   document.getElementById('card-quiz').classList.remove('selected');
   document.getElementById('card-test').classList.remove('selected');
-  selectedCategory={ id:'redo_my_mistakes', name:'🔁 Redo My Mistakes', ids:mistakesPool.map(q=>q.id) };
-  const shuffled=shuffle([...mistakesPool]);
+  selectedCategory={ id:'redo_my_mistakes_'+catId, name:label, ids:pool.map(q=>q.id) };
+  const shuffled=shuffle([...pool]);
   beginSessionWithQuestions(shuffled, null);
 }
 
 // ── PAST ATTEMPTS: SAVE ON FINISH ───────────────────────────
 // wasPartial=true when this save comes from the crash-recovery path (user quit mid-
 // attempt) rather than a normal finish/submit.
+// A failed fetch/insert is "offline-shaped" if the browser reports itself as
+// offline, or if the error looks like a network-level failure (TypeError from
+// fetch, or Supabase's generic "Failed to fetch") rather than a real Supabase
+// error (RLS policy, bad column, etc). We treat these as "queue and retry
+// later" instead of surfacing the scary red banner meant for genuine bugs.
+function looksLikeOfflineError(err){
+  if(!navigator.onLine) return true;
+  const msg=(err&&err.message)||'';
+  return /Failed to fetch|NetworkError|network request failed|ERR_INTERNET_DISCONNECTED/i.test(msg);
+}
+
 async function saveAttemptToSupabase(wasPartial){
   if(!currentUser){ console.warn('saveAttemptToSupabase: no currentUser, skipping save'); return null; }
   const total=shuffledQ.length;
@@ -9464,6 +9743,31 @@ async function saveAttemptToSupabase(wasPartial){
   const marksAttempted=shuffledQ.reduce((s,q)=>s+(q.noMark?0:(q.marks||2)),0);
   const timeTaken=Math.max(0,Math.round(totalMarksSelected*1.2*60)-secondsLeft);
   const categoryName=selectedCategory.name;
+  const insertPayload={
+    user_id: currentUser.id,
+    username: currentUser.username,
+    mode: mode,
+    category: categoryName,
+    questions_attempted: attempted,
+    score_correct: correct,
+    score_total: total,
+    marks: marks,
+    marks_attempted: marksAttempted,
+    percent: pct,
+    time_taken_seconds: timeTaken,
+    questions_json: shuffledQ,
+    answers_json: answers,
+    was_partial: !!wasPartial
+  };
+  // If we're offline (either really disconnected, or the student has
+  // deliberately switched on Offline Mode), don't even attempt the round-trip
+  // — go straight to queueing locally so the results screen doesn't hang
+  // waiting on a fetch that's guaranteed to fail or time out.
+  if(shouldSkipNetwork()){
+    queuePendingAttempt(insertPayload);
+    showOfflineSaveNotice();
+    return null;
+  }
   try{
     // Determine this attempt's frequency number for this category (any mode),
     // so it can be shown immediately on the results screen too.
@@ -9473,24 +9777,13 @@ async function saveAttemptToSupabase(wasPartial){
         .eq('user_id', currentUser.id).eq('category', categoryName);
       attemptNumber=(count||0)+1;
     }catch(cErr){ /* non-fatal — fall back to 1 */ }
-    const {data,error}=await sb.from('attempts').insert({
-      user_id: currentUser.id,
-      username: currentUser.username,
-      mode: mode,
-      category: categoryName,
-      questions_attempted: attempted,
-      score_correct: correct,
-      score_total: total,
-      marks: marks,
-      marks_attempted: marksAttempted,
-      percent: pct,
-      time_taken_seconds: timeTaken,
-      questions_json: shuffledQ,
-      answers_json: answers,
-      was_partial: !!wasPartial,
-      attempt_number: attemptNumber
-    }).select();
+    const {data,error}=await sb.from('attempts').insert({...insertPayload, attempt_number: attemptNumber}).select();
     if(error){
+      if(looksLikeOfflineError(error)){
+        queuePendingAttempt(insertPayload);
+        showOfflineSaveNotice();
+        return null;
+      }
       console.error('Failed to save attempt (Supabase error):', error.message, error);
       showSaveAttemptError(error.message||'Unknown Supabase error');
       return null;
@@ -9498,6 +9791,11 @@ async function saveAttemptToSupabase(wasPartial){
     console.log('Attempt saved successfully:', data);
     return {attemptNumber, categoryName};
   }catch(err){
+    if(looksLikeOfflineError(err)){
+      queuePendingAttempt(insertPayload);
+      showOfflineSaveNotice();
+      return null;
+    }
     console.error('Failed to save attempt (exception):', err);
     showSaveAttemptError(err.message||'Unknown error');
     return null;
@@ -9517,6 +9815,153 @@ function showSaveAttemptError(msg){
   banner.innerHTML=`⚠️ <strong>This attempt could not be saved to your account.</strong><br>Error: ${escHTML(msg)}<br><span style="font-size:.78rem;">This usually means a Supabase table/policy issue — copy this exact message to fix it.</span>`;
   banner.style.display='block';
 }
+// Calm, non-alarming notice for the expected/routine case: no internet right
+// now, so the attempt is safe on this device and will sync automatically.
+function showOfflineSaveNotice(){
+  let banner=document.getElementById('offline-save-notice-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='offline-save-notice-banner';
+    banner.style.cssText='background:var(--amber-light,#fef3c7);color:#92400e;border:2px solid var(--amber,#f59e0b);border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1rem;font-size:.85rem;line-height:1.5;';
+    const inner=document.querySelector('#results-screen .inner');
+    inner.insertBefore(banner, inner.firstChild);
+  }
+  banner.innerHTML=`📴 <strong>You're offline.</strong> This attempt is saved on this device and will sync to your account automatically once you're back online.`;
+  banner.style.display='block';
+}
+
+// ── OFFLINE MODE (explicit student-controlled toggle) ────
+// Distinct from "the network happens to be down" (handled reactively
+// elsewhere): this is a deliberate opt-in the student flips BEFORE they
+// expect to lose signal (e.g. before a commute). While ON, the app doesn't
+// even attempt Supabase calls — it goes straight to local fallbacks, so
+// there's no fetch-timeout lag. Practicing, marking, and reviewing answers
+// all keep working exactly as normal; only server reads/writes are skipped.
+function offlineModeKey(){
+  return currentUser ? `offlineModeEnabled_${currentUser.id}` : 'offlineModeEnabled_anon';
+}
+function isOfflineModeOn(){
+  try{ return localStorage.getItem(offlineModeKey())==='true'; }catch(e){ return false; }
+}
+// Central guard: every network read/write path that should respect the
+// toggle checks this first (in addition to the existing navigator.onLine
+// checks, which still catch a REAL disconnection even if the student forgot
+// to flip the toggle off).
+function shouldSkipNetwork(){
+  return isOfflineModeOn() || !navigator.onLine;
+}
+
+async function enableOfflineMode(){
+  const btn=document.getElementById('offline-mode-toggle-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Priming for offline…'; }
+  // Prime the service worker's cache with a fresh copy of the shell RIGHT NOW,
+  // while we still have a connection, so the app can be reopened later with
+  // no signal at all.
+  try{
+    if('serviceWorker' in navigator){
+      const reg=await navigator.serviceWorker.getRegistration();
+      if(reg && reg.active) reg.active.postMessage({type:'PRIME_CACHE'});
+    }
+  }catch(e){ console.warn('Could not prime offline cache:', e); }
+  try{ localStorage.setItem(offlineModeKey(), 'true'); }catch(e){}
+  updateOfflineModeUI();
+}
+function disableOfflineMode(){
+  try{ localStorage.setItem(offlineModeKey(), 'false'); }catch(e){}
+  updateOfflineModeUI();
+  // Coming back online (by choice) — try to sync anything queued while we
+  // were in offline mode, and refresh everything derived from server data.
+  flushPendingAttemptQueue();
+  loadPastAttempts(); loadMistakesBreakdown(); loadEngagementCard(); loadMilestonesDashboard();
+}
+function updateOfflineModeUI(){
+  const on=isOfflineModeOn();
+  const btn=document.getElementById('offline-mode-toggle-btn');
+  const statusPill=document.getElementById('offline-mode-status-pill');
+  if(btn){
+    btn.disabled=false;
+    btn.textContent = on ? '📶 Go back online' : '📴 Go offline';
+  }
+  if(statusPill){
+    statusPill.style.display = on ? 'inline-flex' : 'none';
+  }
+  updateOfflinePendingBadge();
+}
+function toggleOfflineMode(){
+  if(isOfflineModeOn()) disableOfflineMode(); else enableOfflineMode();
+}
+
+// Pending attempts made while offline are stored under this key (a JSON array)
+// until connectivity returns, at which point flushPendingAttemptQueue() uploads
+// them one by one, oldest first, same as any other attempt.
+function pendingAttemptQueueKey(){
+  return currentUser ? `pendingAttempts_${currentUser.id}` : null;
+}
+function queuePendingAttempt(payload){
+  const key=pendingAttemptQueueKey(); if(!key) return;
+  try{
+    const raw=localStorage.getItem(key);
+    const queue=raw?JSON.parse(raw):[];
+    queue.push({...payload, queuedAt:new Date().toISOString()});
+    localStorage.setItem(key, JSON.stringify(queue));
+  }catch(e){ console.warn('Could not queue offline attempt:', e); }
+  updateOfflinePendingBadge();
+}
+async function flushPendingAttemptQueue(){
+  const key=pendingAttemptQueueKey(); if(!key||!currentUser) return;
+  if(!navigator.onLine) return; // don't even try — avoid a burst of failed requests
+  if(isOfflineModeOn()) return; // student deliberately left Offline Mode on — respect it, don't sync behind their back
+  let queue=[];
+  try{ const raw=localStorage.getItem(key); queue=raw?JSON.parse(raw):[]; }catch(e){ return; }
+  if(!queue.length) return;
+  const stillPending=[];
+  for(const payload of queue){
+    try{
+      let attemptNumber=1;
+      try{
+        const {count}=await sb.from('attempts').select('id',{count:'exact',head:true})
+          .eq('user_id', currentUser.id).eq('category', payload.category);
+        attemptNumber=(count||0)+1;
+      }catch(cErr){ /* non-fatal */ }
+      const {queuedAt, ...cleanPayload}=payload; // don't upload our own bookkeeping field
+      const {error}=await sb.from('attempts').insert({...cleanPayload, attempt_number: attemptNumber});
+      if(error){
+        if(looksLikeOfflineError(error)){ stillPending.push(payload); continue; } // still offline — keep for next try
+        console.error('Failed to sync queued attempt (Supabase error):', error.message);
+        stillPending.push(payload); // real error — keep it queued rather than silently drop the student's work
+      }
+    }catch(err){
+      stillPending.push(payload); // network or other failure — retry later
+    }
+  }
+  try{ localStorage.setItem(key, JSON.stringify(stillPending)); }catch(e){}
+  updateOfflinePendingBadge();
+  if(stillPending.length<queue.length){
+    // At least one attempt synced — refresh anything derived from attempts history.
+    loadMistakesBreakdown(); loadPastAttempts(); loadEngagementCard(); loadMilestonesDashboard();
+    if(stillPending.length===0) hideOfflineSyncedNotice();
+  }
+}
+function pendingAttemptCount(){
+  const key=pendingAttemptQueueKey(); if(!key) return 0;
+  try{ const raw=localStorage.getItem(key); return raw?JSON.parse(raw).length:0; }catch(e){ return 0; }
+}
+function updateOfflinePendingBadge(){
+  const badge=document.getElementById('offline-pending-badge');
+  if(!badge) return;
+  const n=pendingAttemptCount();
+  if(n>0){
+    badge.style.display='inline-block';
+    badge.textContent=`📴 ${n} attempt${n===1?'':'s'} waiting to sync`;
+  }else{
+    badge.style.display='none';
+  }
+}
+function hideOfflineSyncedNotice(){
+  const b=document.getElementById('offline-save-notice-banner');
+  if(b) b.style.display='none';
+}
+window.addEventListener('online', ()=>{ flushPendingAttemptQueue(); });
 
 // ── PAST ATTEMPTS: REVIEW A SAVED ATTEMPT ───────────────────
 async function reviewPastAttempt(attemptId, fromFaculty){
@@ -9582,7 +10027,7 @@ async function quitSessionEarly(){
     clearLiveAttemptSnapshot();
     if(timerInterval) clearInterval(timerInterval);
     showScreen('home-screen');
-    if(currentUser){ loadPastAttempts(); loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard(); }
+    if(currentUser){ loadPastAttempts(); loadMistakesBreakdown(); loadEngagementCard(); loadMilestonesDashboard(); }
     return;
   }
   if(!confirm('Quit this session now? Your progress so far ('+attempted+' question'+(attempted===1?'':'s')+' answered) will be saved as an attempt.')) return;
@@ -9595,7 +10040,7 @@ async function quitSessionEarly(){
     clearLiveAttemptSnapshot();
     if(quitBtn){ quitBtn.disabled=false; quitBtn.textContent='✕ Quit'; }
     showScreen('home-screen');
-    if(currentUser){ loadPastAttempts(); loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard(); }
+    if(currentUser){ loadPastAttempts(); loadMistakesBreakdown(); loadEngagementCard(); loadMilestonesDashboard(); }
   }
 }
 async function goHomeFromResults(){
@@ -9624,7 +10069,7 @@ async function goHomeFromResults(){
     try{ await pendingAttemptSavePromise; }catch(e){ /* save already reports its own error banner elsewhere */ }
     pendingAttemptSavePromise=null;
   }
-  if(currentUser){ loadPastAttempts(); loadMistakesCount(); loadEngagementCard(); loadMilestonesDashboard(); }
+  if(currentUser){ loadPastAttempts(); loadMistakesBreakdown(); loadEngagementCard(); loadMilestonesDashboard(); }
 }
 function backFromReviewDetail(){
   showScreen('results-screen');
@@ -9827,32 +10272,57 @@ function renderTextWithScenarioList(text){
 // since a scenario stem should not be presented as if it were the ask.
 //
 // q.dataTable: if present, a genuine data table (trial balance, ledger, etc.)
-// from the source material is rendered as a real bordered HTML table instead
-// of flattened text lines, appended directly after the question text.
+// from the source material is rendered as a real bordered HTML table.
+//
+// q.tableAnchor: OPTIONAL exact substring of q.text. When present, the table is
+// inserted immediately after this substring — i.e. wherever that question's own
+// scenario actually places it (which may be mid-paragraph, before the requirement,
+// after it, or anywhere else). This is authored individually per question, not
+// inferred by a generic rule, because table position genuinely varies scenario to
+// scenario. When q.tableAnchor is absent, the table falls back to appending
+// directly after the full question text (end of stem).
 function renderQText(q){
   const hasScenarioList=q.text.split('\n').some(l=>SCENARIO_LINE_RE.test(l));
   const hasRealReq=q.req && q.req!==q.text && q.text.includes(q.req);
   const tableHtml=q.dataTable?renderDataTable(q.dataTable):'';
+  const hasAnchor=q.dataTable && q.tableAnchor && q.text.includes(q.tableAnchor);
+
   if(hasScenarioList){
     if(!hasRealReq) return renderTextWithScenarioList(q.text)+tableHtml;
     const idx=q.text.indexOf(q.req);
     const marked=q.text.slice(0,idx)+'\u0001'+q.req+'\u0002'+q.text.slice(idx+q.req.length);
     let out=renderTextWithScenarioList(marked);
     out=out.replace('\u0001','<strong class="req">').replace('\u0002','</strong>');
-    return out+tableHtml;
+    return hasAnchor ? insertAfterAnchor(out, q.tableAnchor, tableHtml) : out+tableHtml;
   }
   if(!hasRealReq){
     // No distinct requirement identified — this covers the common case of a
     // short question where the entire stem IS the requirement (q.req===q.text),
     // which is intentionally bolded in full, matching source-document style.
     if(q.req===q.text) return `<strong class="req">${escHTML(q.text).replace(/\n/g,'<br>')}</strong>`+tableHtml;
-    return escHTML(q.text).replace(/\n/g,'<br>')+tableHtml;
+    const plain=escHTML(q.text).replace(/\n/g,'<br>');
+    return hasAnchor ? insertAfterAnchor(plain, q.tableAnchor, tableHtml) : plain+tableHtml;
   }
   const escaped=escHTML(q.text);
   const escapedReq=escHTML(q.req);
   const idx=escaped.indexOf(escapedReq);
   if(idx===-1) return escaped.replace(/\n/g,'<br>')+tableHtml;
-  return (escaped.slice(0,idx)+`<strong class="req">${escapedReq}</strong>`+escaped.slice(idx+escapedReq.length)).replace(/\n/g,'<br>')+tableHtml;
+  const before=escaped.slice(0,idx).replace(/\n/g,'<br>');
+  const after=escaped.slice(idx+escapedReq.length).replace(/\n/g,'<br>');
+  const full=before+`<strong class="req">${escapedReq}</strong>`+after;
+  return hasAnchor ? insertAfterAnchor(full, q.tableAnchor, tableHtml) : full+tableHtml;
+}
+
+// Inserts tableHtml immediately after the (HTML-escaped, <br>-converted) anchor
+// substring within an already-rendered HTML string. Falls back to appending at
+// the end if the anchor can't be located post-escaping (should not normally happen
+// since anchors are authored as exact q.text substrings).
+function insertAfterAnchor(renderedHtml, anchor, tableHtml){
+  const escapedAnchor=escHTML(anchor).replace(/\n/g,'<br>');
+  const idx=renderedHtml.indexOf(escapedAnchor);
+  if(idx===-1) return renderedHtml+tableHtml;
+  const cut=idx+escapedAnchor.length;
+  return renderedHtml.slice(0,cut)+tableHtml+renderedHtml.slice(cut);
 }
 
 // Renders a structured data table embedded in a question's scenario/stem.
@@ -9951,6 +10421,20 @@ function populateCategories(){
 function selectCategory(catId){
   selectedCategory=CATEGORIES.find(c=>c.id===catId)||CATEGORIES[0];
   updateHomeMeta();
+  highlightCurrentMistakesCategoryRow();
+}
+// Re-applies the highlight/scroll on the existing "Redo My Mistakes" breakdown
+// list to match whichever category is now selected — cheap DOM-only update,
+// no need to re-fetch or re-group the mistakes data.
+function highlightCurrentMistakesCategoryRow(){
+  const list=document.getElementById('mistakes-breakdown-list');
+  if(!list) return;
+  list.querySelectorAll('.mistakes-cat-row').forEach(row=>{
+    const isCurrent=selectedCategory && row.getAttribute('data-cat-id')===selectedCategory.id;
+    row.style.border=`2px solid ${isCurrent?'var(--amber,#f59e0b)':'var(--border)'}`;
+    row.style.background=isCurrent?'var(--amber-light,#fef3c7)':'transparent';
+    if(isCurrent) row.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
 }
 // Time allowed = 1.2 minutes per mark.
 function updateHomeMeta(){
@@ -10764,6 +11248,11 @@ function showResults(savedAttempt){
         const ord=n===1?'1st':n===2?'2nd':n===3?'3rd':`${n}th`;
         renderStrip(ord);
       }
+      // Recompute the mistake pool right away so a question just answered
+      // correctly (in ANY mode, including inside a drill itself) stops showing
+      // up in "Redo My Mistakes" — both its own category row and the combined
+      // "All categories" drill — without waiting for a page reload.
+      loadMistakesBreakdown();
       return meta;
     });
   }
