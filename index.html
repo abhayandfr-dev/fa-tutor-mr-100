@@ -24,6 +24,23 @@
   .home-meta-item .lbl{font-size:.72rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em}
   .home-body{padding:2rem 2.5rem 2.5rem}
   .mode-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+  .cat-dd{position:relative;width:100%}
+  .cat-dd-trigger{width:100%;padding:.65rem .8rem;border:2px solid var(--border);border-radius:10px;font-size:.9rem;font-weight:600;color:var(--navy);background:var(--slate-light);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-family:inherit;text-align:left}
+  .cat-dd-trigger:hover{border-color:var(--navy-mid)}
+  .cat-dd-chevron{transition:transform .15s;color:var(--slate);flex-shrink:0}
+  .cat-dd.open .cat-dd-chevron{transform:rotate(180deg)}
+  .cat-dd-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:white;border:2px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:50;max-height:360px;overflow-y:auto;padding:.4rem}
+  .cat-dd.open .cat-dd-panel{display:block}
+  .cat-dd-group{margin-bottom:.2rem}
+  .cat-dd-group-header{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.55rem .7rem;background:var(--slate-light);border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:.85rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.03em}
+  .cat-dd-group-header:hover{background:var(--border)}
+  .cat-dd-group-chevron{transition:transform .15s;font-size:.75rem}
+  .cat-dd-group.expanded .cat-dd-group-chevron{transform:rotate(180deg)}
+  .cat-dd-group-items{display:none;padding:.3rem .2rem .3rem .5rem}
+  .cat-dd-group.expanded .cat-dd-group-items{display:block}
+  .cat-dd-item{width:100%;text-align:left;padding:.5rem .7rem;border:none;background:transparent;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.85rem;color:var(--text);display:block}
+  .cat-dd-item:hover{background:var(--teal-light);color:var(--navy)}
+  .cat-dd-item.selected{background:var(--navy);color:white;font-weight:600}
   .mode-card{border:2px solid var(--border);border-radius:14px;padding:1.4rem 1.2rem;cursor:pointer;transition:all .2s;background:var(--slate-light);text-align:left}
   .mode-card:hover,.mode-card.selected{border-color:var(--teal);background:var(--teal-light)}
   .mode-icon{font-size:1.6rem;margin-bottom:.6rem;display:block}
@@ -526,7 +543,8 @@
     <div id="faculty-category-list" style="display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.5rem;"></div>
     <button onclick="openFacultyDashboard()" style="width:100%;padding:.8rem;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:.7rem;">📊 Progress Dashboard</button>
     <button onclick="openFacultyUsernameRequests()" style="width:100%;padding:.8rem;background:#00b4a0;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:.7rem;position:relative;">✏️ Username Change Requests <span id="uname-req-badge" style="display:none;background:#ef4444;color:#fff;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:800;margin-left:.4rem;"></span></button>
-    <button onclick="openFacultyUserManagement()" style="width:100%;padding:.8rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;">🔑 Manage Users &amp; Reset Passwords</button>
+    <button onclick="openFacultyUserManagement()" style="width:100%;padding:.8rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:.7rem;">🔑 Manage Users &amp; Reset Passwords</button>
+    <button onclick="openFacultyRecentlyDeleted()" style="width:100%;padding:.8rem;background:#b45309;color:#fff;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;position:relative;">🕓 Recently Deleted <span id="recently-deleted-badge" style="display:none;background:#fff;color:#b45309;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:800;margin-left:.4rem;"></span></button>
   </div>
 </div>
 
@@ -597,6 +615,19 @@
     <div id="faculty-profile-list" style="display:flex;flex-direction:column;gap:.7rem;"></div>
   </div>
 </div>
+
+<!-- FACULTY MODE: RECENTLY DELETED (attempts temporarily deleted by a teacher, across ALL categories) -->
+<div id="faculty-recently-deleted-screen" class="screen">
+  <div style="max-width:760px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🕓 Recently Deleted</span>
+      <button onclick="showScreen('faculty-categories-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div id="faculty-recently-deleted-sub" style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Loading…</div>
+    <div id="faculty-recently-deleted-list" style="display:flex;flex-direction:column;gap:.7rem;"></div>
+  </div>
+</div>
+
 
 <!-- FACULTY MODE: PROGRESS DASHBOARD (donut-based, two levels: class overview -> per-student) -->
 <div id="faculty-dashboard-screen" class="screen">
@@ -677,7 +708,13 @@
     <div class="home-body">
       <div style="margin-bottom:1.2rem;">
         <label style="font-size:.82rem;font-weight:600;color:var(--navy);display:block;margin-bottom:.4rem;">Select a category:</label>
-        <select id="category-select" onchange="selectCategory(this.value)" style="width:100%;padding:.65rem .8rem;border:2px solid var(--border);border-radius:10px;font-size:.9rem;font-weight:600;color:var(--navy);background:var(--slate-light);cursor:pointer;"></select>
+        <div id="category-dropdown" class="cat-dd">
+          <button type="button" id="cat-dd-trigger" class="cat-dd-trigger" onclick="toggleCategoryDropdown()">
+            <span id="cat-dd-trigger-label">Select a category</span>
+            <span class="cat-dd-chevron">▾</span>
+          </button>
+          <div id="cat-dd-panel" class="cat-dd-panel"></div>
+        </div>
       </div>
       <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">Select your study mode:</p>
       <div class="mode-grid">
@@ -2510,13 +2547,6 @@ const QUESTIONS = [
   options:["Dr Drawings Cr Cost of sales","Dr Non-current assets Cr Cost of sales","Dr Cost of sales Cr Drawings","Dr Cost of sales Cr Non-current assets"],
   correct:1, explanation:"The computer does not qualify as inventory drawings as it is for the use of Nicky's family member in their role as administrator to the business.\n\nThe computer is being transferred from inventory to non-current assets by debiting the non-current assets account. It is no longer part of cost of sales and is removed from cost of sales by a credit.", calc:null
 },
-{ id:208, type:"mcq",
-  text:"Which of the following pairs of items would appear on the same side of the trial balance?",
-  req:"Which of the following pairs of items would appear on the same side of the trial balance?",
-  marks:2,
-  options:["Drawings and accruals","Carriage outwards and prepayments","Carriage inwards and rental income","Opening inventory and purchase returns"],
-  correct:1, explanation:"Drawings, carriage inwards (an expense), prepayments, carriage outwards (expense) and opening inventory are all debit balances. Accruals, rental income and purchase returns are all credit balances.", calc:null
-},
 { id:209, type:"mcq",
   text:"The double-entry system of bookkeeping normally results in which of the following balances on the general ledger accounts?",
   req:"The double-entry system of bookkeeping normally results in which of the following balances on the general ledger accounts?",
@@ -2641,62 +2671,6 @@ const QUESTIONS = [
     {statement:"The journal records all credit sales transactions", correct:"False"}
   ],
   explanation:"The journal is used to record correction of errors and year-end adjustments made in the general ledger. It does not record all bank and cash transactions, all accounting transactions, or all credit sales transactions, which are recorded in other books of prime entry or ledger accounts.", calc:null
-},
-{ id:216, type:"mcq",
-  text:"During the year, Jiva made the following accounting entries to account for the depreciation charge relating to motor vehicles:\nDebit Accumulated depreciation - motor vehicles $5,000\nCredit Depreciation expense - motor vehicles $5,000\n\nWhat journal entry is required to account correctly for the depreciation charge for motor vehicles for the year?",
-  req:"What journal entry is required to account correctly for the depreciation charge for motor vehicles for the year?",
-  marks:2,
-  options:["Debit Motor vehicles $5,000, and Credit Accumulated depreciation $5,000","Debit Depreciation Expense $10,000, and Credit Accumulated depreciation $10,000","Debit Depreciation expense $5,000, and Credit Accumulated depreciation $5,000","Debit Accumulated depreciation $10,000, and Credit Depreciation expense $10,000"],
-  correct:1, explanation:"The original entry was recorded the wrong way round, so it must first be reversed (doubling the correcting effect) and then the correct entry applied, requiring a $10,000 adjustment.",
-  calcTable:{
-    columns:["Ledger Account",{v:"$",num:true}],
-    rows:[
-      ["Debit Depreciation expense - motor vehicles",{v:"10,000",num:true}],
-      ["Credit Accumulated depreciation - motor vehicles",{v:"10,000",num:true}]
-    ]
-  }
-},
-{ id:217, type:"mcq",
-  text:"Roshan made the following accounting entries to account for an increase in the allowance for receivables:\nDebit Receivables $4,300\nCredit Allowance for receivables $4,300\n\nWhat journal entry required to correct the above accounting entries to increase the allowance for receivables for the year?",
-  req:"What journal entry required to correct the above accounting entries to increase the allowance for receivables for the year?",
-  marks:2,
-  options:["Debit Receivables, and Credit Irrecoverable debts expense","Debit Allowance for receivables, and Credit Irrecoverable debts expense","Debit Irrecoverable debts expense, and Credit Receivables","Debit Irrecoverable debts expense, and Credit Allowance for receivables"],
-  correct:2, explanation:"The irrecoverable debts expense account normally includes irrecoverable debts written off during the year, along with the movement in the allowance for receivables. The movement in the allowance for receivables does not affect the receivables account.",
-  calcTable:{
-    columns:["Ledger Account",{v:"$",num:true}],
-    rows:[
-      ["Debit Irrecoverable debts expense",{v:"4,300",num:true}],
-      ["Credit Receivables",{v:"4,300",num:true}]
-    ]
-  }
-},
-{ id:218, type:"mcq",
-  text:"During the year, Ali made the following accounting entries to account for the cash proceeds received upon disposal of an item of machinery:\nDebit Bank $2,500\nCredit Revenue $2,500\n\nWhat journal entry is required to account correctly for the disposal proceeds received upon disposal of the item of machinery?",
-  req:"What journal entry is required to account correctly for the disposal proceeds received upon disposal of the item of machinery?",
-  marks:2,
-  options:["Debit Accumulated depreciation $2,500, and Credit Disposal of machinery $2,500","Debit Revenue $2,500, and Credit Bank $2,500","Debit Disposal of machinery $2,500, and Credit Machinery asset $2,500","Debit Revenue $2,500, and Credit Disposal of machinery $2,500"],
-  correct:3, explanation:"The original entry incorrectly credited revenue instead of the disposal account, so revenue must be debited to reverse the error and disposal of machinery credited.",
-  calcTable:{
-    columns:["Ledger Account",{v:"$",num:true}],
-    rows:[
-      ["Debit Revenue",{v:"2,500",num:true}],
-      ["Credit Disposal of machinery",{v:"2,500",num:true}]
-    ]
-  }
-},
-{ id:219, type:"mcq",
-  text:"What journal entry is required to correctly account for the depreciation charge for the year of $3,500 relating to buildings?",
-  req:"What journal entry is required to correctly account for the depreciation charge for the year of $3,500 relating to buildings?",
-  marks:2,
-  options:["Debit Depreciation expense $3,500, and Credit Buildings $3,500","Debit Buildings $3,500, and Credit Accumulated depreciation $3,500","Debit Depreciation expense $3,500 and Credit Accumulated depreciation $3,500","Debit Accumulated depreciation $3,500, and Credit Depreciation expense $3,500"],
-  correct:2, explanation:"Depreciation expense is debited and accumulated depreciation is credited.",
-  calcTable:{
-    columns:["Ledger Account",{v:"$",num:true}],
-    rows:[
-      ["Debit Depreciation expense account",{v:"3,500",num:true}],
-      ["Credit Accumulated depreciation account - buildings",{v:"3,500",num:true}]
-    ]
-  }
 },
 { id:220, type:"mcq",
   text:"What are the accounting entries required to account for settlement discount received of $250 from a credit supplier?",
@@ -2894,35 +2868,6 @@ const QUESTIONS = [
   correct:1, explanation:"The petty cash float can always be calculated by adding together the amount in petty cash at the end of the month plus the vouchers evidencing expenditure for the month.",
   calc:"$25 + $(7.25 + 12.75 + 15) = $60"
 },
-{ id:240, type:"number-entry",
-  text:"You are given the following figures for revenue and receivables:\n\nWhat was the value of sales returns during 20X7?",
-  dataTable:{
-    columns:["",{v:"20X7 $",num:true},{v:"20X6 $",num:true}],
-    rows:[
-      ["Receivables at year end",{v:"74,963",num:true},{v:"69,472",num:true}],
-      ["Revenue",{v:"697,104",num:true},""],
-      ["Total cash received from customers",{v:"686,912",num:true},""],
-      ["Specific allowance for receivables",{v:"2,014",num:true},{v:"1,578",num:true}],
-      ["Irrecoverable debts written off",{v:"1,697",num:true},""]
-    ]
-  },
-    tableAnchor:"You are given the following figures for revenue and receivables:",
-  req:"What was the value of sales returns during 20X7?",
-  marks:2, prefix:"$", correct:"3004", correctDisplay:"$3,004",
-  explanation:"Use the receivables control account, balancing for sales returns.",
-  calcTable:{
-    caption:"Receivables",
-    columns:["",{v:"$",num:true},"",{v:"$",num:true}],
-    rows:[
-      ["Balance b/f",{v:"69,472",num:true},"",""],
-      ["Revenue",{v:"697,104",num:true},"Cash received",{v:"686,912",num:true}],
-      ["","","Irrecoverable debts",{v:"1,697",num:true}],
-      ["","","Sales returns (β)",{v:"3,004",num:true}],
-      ["","","Balance c/f",{v:"74,963",num:true}]
-    ],
-    totalRow:["",{v:"766,576",num:true},"",{v:"766,576",num:true}]
-  }
-},
 { id:241, type:"mcq",
   text:"Which of the following might explain a debit balance on the account of an individual credit supplier?",
   req:"Which of the following might explain a debit balance on the account of an individual credit supplier?",
@@ -2946,25 +2891,6 @@ const QUESTIONS = [
     ],
     totalRow:["",{v:"112,900",num:true},"",{v:"112,900",num:true}],
     note:"Balance b/f (after c/f) = $38,100"
-  }
-},
-{ id:243, type:"number-entry",
-  text:"The entries in a receivables account in the general ledger for the first accounting period were:\nRevenue $250,000\nBank $225,000\nReturns $2,500\nIrrecoverable debts $3,000\nReturned unpaid cheque $3,500\nContra with payables $4,000\n\nWhat is the balance on the receivables account in the general ledger at the end of the accounting period?",
-  req:"What is the balance on the receivables account in the general ledger at the end of the accounting period?",
-  marks:2, prefix:"$", correct:"19000", correctDisplay:"$19,000",
-  explanation:"Use the receivables control account, including the returned unpaid cheque as a debit re-instating the receivable.",
-  calcTable:{
-    caption:"Receivables",
-    columns:["",{v:"$",num:true},"",{v:"$",num:true}],
-    rows:[
-      ["Revenue",{v:"250,000",num:true},"Bank",{v:"225,000",num:true}],
-      ["Bank: cheque returned",{v:"3,500",num:true},"Sales returns",{v:"2,500",num:true}],
-      ["","","Irrecoverable debts",{v:"3,000",num:true}],
-      ["","","Contra: payables",{v:"4,000",num:true}],
-      ["","","Balance c/f",{v:"19,000",num:true}]
-    ],
-    totalRow:["",{v:"253,500",num:true},"",{v:"253,500",num:true}],
-    note:"Balance b/f = $19,000"
   }
 },
 { id:244, type:"mcq",
@@ -3010,20 +2936,6 @@ const QUESTIONS = [
   marks:2,
   options:["It is issued by a supplier as a request for payment","It is sent to supplier as a request for a supply","It is issued by supplier listing details of recent transactions","It is sent to the supplier as notification of payment"],
   correct:0, explanation:"Item B describes a purchase order. Item C describes a supplier statement. Item D describes a remittance advice.", calc:null
-},
-{ id:248, type:"mcq",
-  text:"What are the accounting entries required to record the receipt of cash proceeds of $5,400 received following disposal of a non-current asset?",
-  req:"What are the accounting entries required to record the receipt of cash proceeds of $5,400 received following disposal of a non-current asset?",
-  marks:2,
-  options:["Debit Bank $5,400, and Credit Accumulated depreciation $5,400","Debit Bank $5,400, and Credit Depreciation expense $5,400","Debit Bank $5,400, and Credit Non-current asset disposal $5,400","Debit Bank $5,400, and Credit Non-current asset $5,400"],
-  correct:2, explanation:"Cash proceeds on disposal are debited to bank and credited to the non-current asset disposal account.",
-  calcTable:{
-    columns:["Ledger Account",{v:"$",num:true}],
-    rows:[
-      ["Debit Bank",{v:"5,400",num:true}],
-      ["Credit Non-current asset disposal",{v:"5,400",num:true}]
-    ]
-  }
 },
 { id:249, type:"mcq",
   text:"What is a ledger account?",
@@ -3129,13 +3041,6 @@ const QUESTIONS = [
   marks:2,
   options:["Debit Capital Credit Motor vehicle","Debit Motor vehicle Credit Drawings","Debit Motor vehicle Credit Capital","Debit Motor vehicle Credit Bank"],
   correct:2, explanation:"This is a transaction that records an increase in non-current assets (motor vehicle) and an increase in capital.", calc:null
-},
-{ id:258, type:"mcq",
-  text:"Which of the following is the correct journal entry to write off an irrecoverable debt?",
-  req:"Which of the following is the correct journal entry to write off an irrecoverable debt?",
-  marks:2,
-  options:["Debit Revenue Credit irrecoverable debts","Debit Irrecoverable debts Credit Bank","Debit Receivables Credit Irrecoverable debts","Debit Irrecoverable debts Credit Receivables"],
-  correct:3, explanation:"Before the debt was written-off it was recognised in receivables (with or without a related allowance for doubtful debts). To remove the debt receivables will be credited and a charge for irrecoverable debts will be recognised in profit or loss.", calc:null
 },
 
 // ── CH 4 K-KIT QUESTIONS (259-284) ──
@@ -3259,59 +3164,6 @@ const QUESTIONS = [
     {statement:"Sales tax cannot be recovered on some purchases", correct:"True"}
   ],
   explanation:"If input tax (tax on purchases) exceeds output tax (tax on sales), the difference is recoverable from the tax authorities. Sales and purchases are reported net of sales tax. Sales tax cannot be recovered on certain expenses (such as client entertaining) and purchases (such as cars).", calc:null
-},
-{ id:269, type:"number-entry",
-  text:"Based upon the following information, what was the cost of purchases?",
-  dataTable:{
-    columns:["",{v:"$",num:true}],
-    rows:[
-      ["Opening payables",{v:"142,600",num:true}],
-      ["Cash paid",{v:"542,300",num:true}],
-      ["Discounts received",{v:"13,200",num:true}],
-      ["Goods returned",{v:"27,500",num:true}],
-      ["Closing payables",{v:"137,800",num:true}]
-    ]
-  },
-    tableAnchor:"Based upon the following information, what was the cost of purchases?",
-  req:"Based upon the following information, what was the cost of purchases?",
-  marks:2, prefix:"$", correct:"578200", correctDisplay:"$578,200",
-  explanation:"Use the payables control account, balancing for purchases.",
-  calcTable:{
-    caption:"Payables",
-    columns:["",{v:"$",num:true},"",{v:"$",num:true}],
-    rows:[
-      ["Cash paid",{v:"542,300",num:true},"Balance b/f",{v:"142,600",num:true}],
-      ["Discounts received",{v:"13,200",num:true},"",""],
-      ["Goods returned",{v:"27,500",num:true},"",""],
-      ["Balance c/f",{v:"137,800",num:true},"Purchases (β)",{v:"578,200",num:true}]
-    ],
-    totalRow:["Total",{v:"720,800",num:true},"Total",{v:"720,800",num:true}]
-  }
-},
-{ id:270, type:"number-entry",
-  text:"The following information related to Abbey Co's transactions with credit customers:\n\nWhat figure should appear for revenue in Abbey Co's statement of profit or loss for the year ended 31 December 20X3?",
-  dataTable:{
-    columns:["",{v:"$",num:true}],
-    rows:[
-      ["Receivables at 1 January 20X3",{v:"10,000",num:true}],
-      ["Receivables at 31 December 20X3",{v:"9,000",num:true}],
-      ["Total receipts during 20X3 (including cash sales of $5,000)",{v:"85,000",num:true}]
-    ]
-  },
-    tableAnchor:"The following information related to Abbey Co's transactions with credit customers:",
-  req:"What figure should appear for revenue in Abbey Co's statement of profit or loss for the year ended 31 December 20X3?",
-  marks:2, prefix:"$", correct:"84000", correctDisplay:"$84,000",
-  explanation:"Revenue = cash sales $5,000 + credit sales $79,000 = $84,000.",
-  calcTable:{
-    caption:"Receivables",
-    columns:["",{v:"$",num:true},"",{v:"$",num:true}],
-    rows:[
-      ["Balance b/f",{v:"10,000",num:true},"Receipts (less cash sales)",{v:"80,000",num:true}],
-      ["Credit sales (β)",{v:"79,000",num:true},"",""],
-      ["","","Balance c/f",{v:"9,000",num:true}]
-    ],
-    totalRow:["Total",{v:"89,000",num:true},"Total",{v:"89,000",num:true}]
-  }
 },
 { id:271, type:"mcq",
   text:"Preet is a sole proprietor whose accounting records are incomplete. All the sales are cash sales and during the year $50,000 was banked, including $5,000 from the sale of a business car. Preet paid $12,000 wages in cash from the till and withdrew $2,000 per month as drawings. The cash in the till at the beginning and end of the year was $300 and $400 respectively.\n\nWhat was the value of Preet's revenue for the year?",
@@ -3764,29 +3616,6 @@ const QUESTIONS = [
     ["Purchases account 40,000","Inventory account 40,000"]
   ],
   correct:1, explanation:"Opening inventory must be removed from the statement of financial position inventory account (a credit) and expensed to the statement of profit or loss as part of cost of sales (a debit). Closing inventory must be debited on to the statement of financial position as an asset and removed from the cost of sales (a credit). This is Option B: Dr Statement of P/L $180,000, Cr Inventory account $180,000; Dr Inventory account $220,000, Cr Statement of P/L $220,000.", calc:null
-},
-{ id:308, type:"number-entry",
-  text:"Jay's annual inventory count took place on 7 July 20X6. The inventory value on this date was $38,950. During the period from 30 June 20X6 to 7 July 20X6, the following took place:\n\nThe mark up is 25% on cost. What is Jay's inventory valuation at 30 June 20X6?",
-  dataTable:{
-    columns:["",{v:"$",num:true}],
-    rows:[
-      ["Sales",{v:"6,500",num:true}],
-      ["Purchases",{v:"4,250",num:true}]
-    ]
-  },
-    tableAnchor:"During the period from 30 June 20X6 to 7 July 20X6, the following took place:",
-  req:"The mark up is 25% on cost. What is Jay's inventory valuation at 30 June 20X6?",
-  marks:2, prefix:"$", correct:"39900", correctDisplay:"$39,900",
-  explanation:"Take the inventory value at the count date and work backwards to the year end: add back the cost of goods sold in the intervening period (sales at cost, i.e. 100/125 × sales value since mark-up is 25% on cost) and deduct purchases made in that period.",
-  calcTable:{
-    columns:["",{v:"$",num:true}],
-    rows:[
-      ["Value at 7 July 20X6",{v:"38,950",num:true}],
-      ["Sales since year end (100/125 × $6,500)",{v:"5,200",num:true}],
-      ["Purchase since year end",{v:"(4,250)",num:true}]
-    ],
-    totalRow:["Value at 30 June 20X6",{v:"39,900",num:true}]
-  }
 },
 { id:309, type:"number-entry",
   text:"Inventory movements for product X during the last quarter were as follows:\nOpening inventory at 1 January was 6 items valued at $15 each.\n\nWhat was gross profit for the quarter, if inventory is valued using the continuous weighted average cost method?",
@@ -7259,27 +7088,29 @@ const QUESTIONS = [
 //     "Provision / Disclose / Do nothing" — since that styling is keyed off
 //     q.type==='true-false-table', not the category name
 const CATEGORIES = [
-  { id:'sample_mock', name:'Sample Mock', ids:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25] },
-  { id:'ch1_past_questions', name:'Ch 1 Past Questions', ids:[26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51] },
-  { id:'ch2_past_questions', name:'Ch 2 past questions', ids:[52, 53, 54, 55, 56, 57, 58] },
-  { id:'ch1_kkit_questions', name:'Ch 1 : K-Kit questions', ids:[59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104] },
-  { id:'ch2_kkit_questions', name:'Ch 2 : K-Kit questions', ids:[105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116] },
-  { id:'ch1_study_hub_questions', name:'Ch 1 Study Hub Questions', ids:[117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172] },
-  { id:'ch2_study_hub_questions', name:'Ch 2 Study Hub Questions', ids:[173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193] },
-  { id:'ch3_kkit_questions', name:'Ch 3 : K-Kit questions', ids:[196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258] },
-  { id:'ch4_kkit_questions', name:'Ch 4 : K-Kit questions', ids:[259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284] },
-  { id:'ch3_past_questions', name:'Ch 3 past questions', ids:[285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299] },
-  { id:'ch5_kkit_questions', name:'Ch 5 : K-Kit questions', ids:[300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322] },
-  { id:'ch4_past_questions', name:'Ch 4 past questions', ids:[323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345] },
-  { id:'ch5_past_questions', name:'Ch 5 past questions', ids:[346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390] },
-  { id:'ch3_study_hub_questions', name:'Ch 3 study hub questions', ids:[391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414] },
-  { id:'ch4_study_hub_questions', name:'Ch 4 study hub questions', ids:[415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446] },
-  { id:'ch5_study_hub_questions', name:'Ch 5 study hub questions', ids:[447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477] },
-  { id:'ch1_to_3_study_hub_activities', name:'Ch 1 to 3 : Study Hub Activities', ids:[478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495] },
-  { id:'ch4_5_study_hub_activities', name:'Ch 4 & 5 : Study Hub Activities', ids:[496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 507, 508, 509, 510, 511, 512, 517, 518] },
-  { id:'ch1_to_3_bkit_and_extra_questions', name:'Ch 1 to 3 - all B-Kit and extra questions including mock-1 residual questions', ids:[519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600] },
-  { id:'fa_mock1_j26', name:'FA Mock-1 J26', ids:[601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625] }
+  { id:'ch1_past_questions', name:'Ch 1 Past Questions', group:'Chapter 1', ids:[26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51] },
+  { id:'ch1_study_hub_questions', name:'Ch 1 Study Hub Questions', group:'Chapter 1', ids:[117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172] },
+  { id:'ch1_kkit_questions', name:'Ch 1 : K-Kit questions', group:'Chapter 1', ids:[59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 235, 236, 237] },
+  { id:'ch2_past_questions', name:'Ch 2 past questions', group:'Chapter 2', ids:[52, 53, 54, 55, 56, 57, 58] },
+  { id:'ch2_study_hub_questions', name:'Ch 2 Study Hub Questions', group:'Chapter 2', ids:[173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193] },
+  { id:'ch2_kkit_questions', name:'Ch 2 : K-Kit questions', group:'Chapter 2', ids:[105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116] },
+  { id:'ch3_past_questions', name:'Ch 3 past questions', group:'Chapter 3', ids:[285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299] },
+  { id:'ch3_study_hub_questions', name:'Ch 3 study hub questions', group:'Chapter 3', ids:[391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414] },
+  { id:'ch3_kkit_questions', name:'Ch 3 : K-Kit questions', group:'Chapter 3', ids:[196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 209, 214, 215, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 238, 241, 247, 249, 250, 251, 252, 253, 254, 255, 257] },
+  { id:'ch1_to_3_bkit_and_extra_questions', name:'Ch 1 to 3 - all B-Kit and extra questions including mock-1 residual questions', group:'Combined / Mocks', ids:[519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600] },
+  { id:'ch1_to_3_study_hub_activities', name:'Ch 1 to 3 : Study Hub Activities', group:'Combined / Mocks', ids:[478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495] },
+  { id:'fa_mock1_j26', name:'FA Mock-1 J26', group:'Combined / Mocks', ids:[601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625] },
+  { id:'ch4_past_questions', name:'Ch 4 past questions', group:'Chapter 4', ids:[323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345] },
+  { id:'ch4_study_hub_questions', name:'Ch 4 study hub questions', group:'Chapter 4', ids:[415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446] },
+  { id:'ch4_kkit_questions', name:'Ch 4 : K-Kit questions', group:'Chapter 4', ids:[210, 212, 213, 220, 239, 242, 244, 245, 246, 256, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 271, 272, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284] },
+  { id:'ch5_past_questions', name:'Ch 5 past questions', group:'Chapter 5', ids:[346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390] },
+  { id:'ch5_study_hub_questions', name:'Ch 5 study hub questions', group:'Chapter 5', ids:[447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477] },
+  { id:'ch5_kkit_questions', name:'Ch 5 : K-Kit questions', group:'Chapter 5', ids:[207, 211, 273, 300, 301, 302, 303, 304, 305, 306, 307, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322] },
+  { id:'ch4_5_study_hub_activities', name:'Ch 4 & 5 : Study Hub Activities', group:'Combined / Mocks', ids:[496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 507, 508, 509, 510, 511, 512, 517, 518] }
 ];
+// Ordered list of group names for the accordion dropdown — controls the order
+// chapters appear in, independent of CATEGORIES array order.
+const CATEGORY_GROUPS = ['Chapter 1','Chapter 2','Chapter 3','Chapter 4','Chapter 5','Combined / Mocks'];
 let selectedCategory = CATEGORIES[0];
 // Reverse lookup: question id -> owning category id. Built once; used to bucket
 // the "Redo My Mistakes" pool by category without re-scanning CATEGORIES each time.
@@ -7474,11 +7305,11 @@ async function renderFacultyCategoryList(){
   const listEl=document.getElementById('faculty-category-list');
   listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">Loading categories…</div>';
   try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?select=category,hidden_by_student',{headers:facultyAuthHeaders()});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?select=category,hidden_by_student,hidden_by_teacher',{headers:facultyAuthHeaders()});
     const rows=await res.json();
     if(!Array.isArray(rows)){ listEl.innerHTML='<div style="font-size:.85rem;color:#ef4444;">Could not load attempts. Check your service_role key.</div>'; return; }
     const counts={};
-    rows.forEach(r=>{ if(r.hidden_by_student) return; const c=r.category||'Sample Mock'; counts[c]=(counts[c]||0)+1; });
+    rows.forEach(r=>{ if(r.hidden_by_student||r.hidden_by_teacher) return; const c=r.category||'Sample Mock'; counts[c]=(counts[c]||0)+1; });
     listEl.innerHTML='';
     // Only show categories that currently have at least 1 attempt. This includes
     // categories from the static CATEGORIES list (only if counts[name]>0 — so a
@@ -7505,6 +7336,7 @@ async function renderFacultyCategoryList(){
 
 let facultyCurrentCategory=null, facultyCurrentRows=[];
 let viewingFacultyProfile=false, facultyProfileUserId=null, facultyProfileUsername=null;
+let facultyProfileRows=[];
 
 // Builds one attempt-row element. Shared by: faculty category view (normal rows),
 // the "Deleted by Students" folder view, and the faculty "View Profile" screen —
@@ -7527,12 +7359,13 @@ function buildFacultyAttemptRow(a, opts){
   const attemptOrdinal=a._attemptOrdinal||'';
   const partialTag=a.was_partial?'<span class="attempt-partial-tag" title="This attempt was not finished — it was auto-saved when the session ended early.">⚠ Incomplete</span>':'';
   const deletedTag=a.hidden_by_student?'<span class="attempt-partial-tag" style="background:#fee2e2;color:#b91c1c;border-color:#fecaca;" title="This attempt was removed by the student from their own view, but still exists in the database.">🗑 Removed by student</span>':'';
+  const teacherHiddenTag=a.hidden_by_teacher?'<span class="attempt-partial-tag" style="background:#fef3c7;color:#92400e;border-color:#fde68a;" title="Temporarily deleted by a teacher. Hidden from the student too until restored.">🕓 Temporarily deleted</span>':'';
   const titleText=opts.showUsername?escHTML(a.username||'Unknown user'):escHTML(a.category||'Sample Mock');
   const row=document.createElement('div');
   row.className='attempt-row '+tier;
   row.innerHTML=`
     <div class="attempt-main">
-      <div class="attempt-title">${titleText} ${attemptOrdinal?'<span class="attempt-number-tag">'+attemptOrdinal+' attempt</span>':''} ${partialTag} ${deletedTag}</div>
+      <div class="attempt-title">${titleText} ${attemptOrdinal?'<span class="attempt-number-tag">'+attemptOrdinal+' attempt</span>':''} ${partialTag} ${deletedTag} ${teacherHiddenTag}</div>
       <div class="attempt-meta">
         <span class="attempt-date">📅 ${dateStr} · 🕐 ${timeStr}</span>
         <span class="attempt-mode-tag ${modeClass}">${modeLabel}</span>
@@ -7564,13 +7397,22 @@ function buildFacultyAttemptRow(a, opts){
         <span class="stat-lbl">Time Taken</span>
       </div>
     </div>
-    <div class="attempt-actions" style="display:flex;gap:.5rem;">
+    <div class="attempt-actions" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+      ${opts.selectable?`<label style="display:none;align-items:center;gap:.4rem;font-size:.78rem;font-weight:600;color:#0f1f3d;cursor:pointer;"><input type="checkbox" class="faculty-bulk-checkbox" data-attempt-id="${escAttr(a.id)}" style="width:16px;height:16px;cursor:pointer;"> Select</label>`:''}
       <button class="btn btn-ghost" style="padding:.5rem 1rem;font-size:.78rem;" onclick="reviewPastAttempt('${a.id}', true)">Review →</button>
-      ${opts.deleteHandler?'<button class="btn btn-ghost faculty-delete-btn" style="padding:.5rem 1rem;font-size:.78rem;border-color:var(--red);color:var(--red);">🗑 Delete</button>':''}
+      ${opts.restoreHandler?'<button class="btn btn-ghost faculty-restore-btn" style="padding:.5rem 1rem;font-size:.78rem;border-color:#16a34a;color:#16a34a;">♻️ Restore</button>':''}
+      ${opts.tempDeleteHandler?`<button class="btn btn-ghost faculty-tempdelete-btn" style="padding:.5rem 1rem;font-size:.78rem;border-color:#b45309;color:#b45309;">${opts.tempDeleteLabel||'🕓 Temporarily Delete'}</button>`:''}
+      ${opts.deleteHandler?`<button class="btn btn-ghost faculty-delete-btn" style="padding:.5rem 1rem;font-size:.78rem;border-color:var(--red);color:var(--red);">${opts.deleteLabel||'🗑 Delete'}</button>`:''}
     </div>
   `;
   if(opts.deleteHandler){
     row.querySelector('.faculty-delete-btn').onclick=()=>opts.deleteHandler(a.id, row);
+  }
+  if(opts.tempDeleteHandler){
+    row.querySelector('.faculty-tempdelete-btn').onclick=()=>opts.tempDeleteHandler(a.id, row);
+  }
+  if(opts.restoreHandler){
+    row.querySelector('.faculty-restore-btn').onclick=()=>opts.restoreHandler(a.id, row);
   }
   return row;
 }
@@ -7611,19 +7453,36 @@ async function openFacultyAttemptsForCategory(categoryName){
     facultyCurrentRows=rows;
     if(rows.length===0){ subEl.textContent='No attempts recorded for this category yet.'; return; }
 
-    // Split into normal (visible-to-student) attempts and ones the student has
-    // removed from their own view. Both sets still live in Supabase; only the
-    // "deleted by students" folder's own Delete button permanently removes a row.
-    const normalRows=rows.filter(r=>!r.hidden_by_student);
-    const deletedRows=rows.filter(r=>r.hidden_by_student);
+    // Split into: normal (visible-to-student) attempts, ones the student has
+    // removed from their own view (hidden_by_student), and ones the teacher has
+    // temporarily deleted (hidden_by_teacher — hidden from BOTH the teacher's
+    // normal list and the student's own view). All three sets still live in
+    // Supabase; teacher-hidden ones live in the global "Recently Deleted"
+    // section instead of a per-category folder, since a teacher may want one
+    // place to review everything they've temporarily deleted.
+    const teacherHiddenRows=rows.filter(r=>r.hidden_by_teacher);
+    const remainingRows=rows.filter(r=>!r.hidden_by_teacher);
+    const normalRows=remainingRows.filter(r=>!r.hidden_by_student);
+    const deletedRows=remainingRows.filter(r=>r.hidden_by_student);
 
     annotateAttemptOrdinals(normalRows);
     annotateAttemptOrdinals(deletedRows);
 
-    subEl.textContent=normalRows.length+' attempt'+(normalRows.length!==1?'s':'')+' recorded'+(deletedRows.length?' · '+deletedRows.length+' removed by student'+(deletedRows.length!==1?'s':''):'')+'.';
+    subEl.textContent=normalRows.length+' attempt'+(normalRows.length!==1?'s':'')+' recorded'+(deletedRows.length?' · '+deletedRows.length+' removed by student'+(deletedRows.length!==1?'s':''):'')+(teacherHiddenRows.length?' · '+teacherHiddenRows.length+' temporarily deleted by you':'')+'.';
+
+    if(normalRows.length>0){
+      const toolbar=buildBulkDeleteToolbar({
+        listEl,
+        getAllIds:()=>normalRows.map(r=>r.id),
+        getRowsArrRefs:()=>[facultyCurrentRows, normalRows],
+        subElUpdater:()=>{ subEl.textContent=normalRows.length+' attempt'+(normalRows.length!==1?'s':'')+' recorded'+(deletedRows.length?' · '+deletedRows.length+' removed by student'+(deletedRows.length!==1?'s':''):'')+(teacherHiddenRows.length?' · '+teacherHiddenRows.length+' temporarily deleted by you':'')+'.'; },
+        rerender:()=>openFacultyAttemptsForCategory(categoryName)
+      });
+      listEl.appendChild(toolbar);
+    }
 
     normalRows.forEach(a=>{
-      listEl.appendChild(buildFacultyAttemptRow(a, { showUsername:true, deleteHandler:facultyDeleteAttempt }));
+      listEl.appendChild(buildFacultyAttemptRow(a, { showUsername:true, deleteHandler:facultyDeleteAttempt, selectable:true }));
     });
 
     // "Deleted by Students" folder — appended at the very end of this category's
@@ -7640,9 +7499,10 @@ async function openFacultyAttemptsForCategory(categoryName){
 }
 
 // The "Deleted by Students" folder view for one category. Reuses the same
-// faculty-attempts-screen; deleting here calls the SAME facultyDeleteAttempt
-// (hard delete from Supabase) as the normal view — nothing extra needed for
-// "permanent" deletion, since facultyDeleteAttempt already does a real DELETE.
+// faculty-attempts-screen; deleting here calls facultyHardDeleteAttempt (a
+// real, permanent DELETE from Supabase) since these rows are already hidden
+// from the student and this folder exists specifically to let the teacher
+// clean them up for good.
 function openFacultyDeletedFolder(categoryName, deletedRows){
   document.getElementById('faculty-attempts-title').textContent='Faculty Mode — '+categoryName+' — Deleted by Students';
   const subEl=document.getElementById('faculty-attempts-sub');
@@ -7651,11 +7511,12 @@ function openFacultyDeletedFolder(categoryName, deletedRows){
   if(deletedRows.length===0){
     subEl.textContent='No attempts have been removed by students in this category.';
   } else {
-    subEl.textContent=deletedRows.length+' attempt'+(deletedRows.length!==1?'s':'')+' removed by students. Deleting here is permanent.';
+    subEl.textContent=deletedRows.length+' attempt'+(deletedRows.length!==1?'s':'')+' removed by students. You can temporarily delete (restorable) or permanently delete (final).';
     deletedRows.forEach(a=>{
       listEl.appendChild(buildFacultyAttemptRow(a, {
         showUsername:true,
-        deleteHandler:(id,rowEl)=>facultyDeleteAttempt(id, rowEl, deletedRows)
+        tempDeleteHandler:(id,rowEl)=>facultyDeleteAttempt(id, rowEl, deletedRows),
+        deleteHandler:(id,rowEl)=>facultyHardDeleteAttempt(id, rowEl, deletedRows)
       }));
     });
   }
@@ -7666,13 +7527,390 @@ function openFacultyDeletedFolder(categoryName, deletedRows){
   listEl.appendChild(backBtn);
 }
 
-async function facultyDeleteAttempt(attemptId, cardEl, deletedRowsArr){
+// Permanently deletes a single attempt from Supabase (real DELETE, irreversible).
+// Used by the "Deleted by Students" folder and the "Recently Deleted (by
+// Teacher)" section — anywhere a teacher chooses to permanently remove a row
+// rather than just temporarily hide it.
+async function facultyHardDeleteAttempt(attemptId, cardEl, rowsArr){
   if(!requireFacultyKey()) return;
-  if(!confirm('Delete this attempt permanently? The student will no longer see it in their past attempts. This cannot be undone.')) return;
+  if(!confirm('Delete this attempt permanently? This cannot be undone.')) return;
   try{
     const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=eq.'+encodeURIComponent(attemptId),{
       method:'DELETE',
       headers:{...facultyAuthHeaders(),'Prefer':'return=minimal'}
+    });
+    if(res.status===200||res.status===204||res.status===202){
+      if(cardEl){
+        cardEl.style.transition='opacity .4s';
+        cardEl.style.opacity='0.3';
+        setTimeout(()=>cardEl.remove(),400);
+      }
+      facultyCurrentRows=facultyCurrentRows.filter(r=>r.id!==attemptId);
+      if(Array.isArray(rowsArr)){
+        const idx=rowsArr.findIndex(r=>r.id===attemptId);
+        if(idx!==-1) rowsArr.splice(idx,1);
+      }
+      return true;
+    } else {
+      const d=await res.json().catch(()=>({}));
+      alert('Delete failed: '+(d.message||JSON.stringify(d)));
+      return false;
+    }
+  }catch(err){
+    alert('Network error during delete.');
+    return false;
+  }
+}
+
+// ── FACULTY: RECENTLY DELETED (attempts the teacher temporarily deleted) ──
+// A single global list across ALL categories/students of every attempt with
+// hidden_by_teacher=true. From here the teacher can:
+//  - Restore one (♻️ Restore button per row) — sets hidden_by_teacher=false,
+//    which immediately makes it reappear in Faculty Mode's normal category
+//    view AND in the student's own Past Attempts / dashboards (since every
+//    student-facing query filters on hidden_by_teacher=false).
+//  - Restore a bulk selection, or Restore All.
+//  - Permanently delete one, a bulk selection, or all (real DELETE — final).
+let facultyRecentlyDeletedRows=[];
+
+async function openFacultyRecentlyDeleted(){
+  if(!requireFacultyKey()) return;
+  const subEl=document.getElementById('faculty-recently-deleted-sub');
+  const listEl=document.getElementById('faculty-recently-deleted-list');
+  subEl.textContent='Loading…';
+  listEl.innerHTML='';
+  showScreen('faculty-recently-deleted-screen');
+  try{
+    const url=SUPABASE_URL+'/rest/v1/attempts?select=*&hidden_by_teacher=eq.true&order=created_at.desc';
+    const res=await fetch(url,{headers:facultyAuthHeaders()});
+    const rows=await res.json();
+    if(!Array.isArray(rows)){ subEl.textContent='Could not load recently deleted attempts. Check your service_role key.'; return; }
+    facultyRecentlyDeletedRows=rows;
+    updateRecentlyDeletedBadge();
+    if(rows.length===0){
+      subEl.textContent='Nothing here right now. Attempts you temporarily delete (from any category or student profile) will show up here.';
+      return;
+    }
+    annotateAttemptOrdinals(rows);
+    renderFacultyRecentlyDeletedList();
+  }catch(err){
+    subEl.textContent='Network error loading recently deleted attempts.';
+  }
+}
+
+function recentlyDeletedSubText(){
+  const n=facultyRecentlyDeletedRows.length;
+  return n+' attempt'+(n!==1?'s':'')+' temporarily deleted — hidden from students, restorable any time.';
+}
+
+function renderFacultyRecentlyDeletedList(){
+  const subEl=document.getElementById('faculty-recently-deleted-sub');
+  const listEl=document.getElementById('faculty-recently-deleted-list');
+  listEl.innerHTML='';
+  subEl.textContent=recentlyDeletedSubText();
+  if(facultyRecentlyDeletedRows.length===0){
+    subEl.textContent='Nothing here right now. Attempts you temporarily delete (from any category or student profile) will show up here.';
+    return;
+  }
+
+  // Toolbar: Restore All / Select (restore or permanently delete selected) / Delete All Permanently
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;';
+  bar.innerHTML=`
+    <button class="rd-restoreall-btn" style="padding:.55rem 1rem;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">♻️ Restore All</button>
+    <button class="rd-select-btn" style="padding:.55rem 1rem;background:none;border:2px solid #1a3260;color:#1a3260;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">☑ Select Attempts</button>
+    <button class="rd-delall-btn" style="padding:.55rem 1rem;background:none;border:2px solid #ef4444;color:#ef4444;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">🗑 Delete All Permanently</button>
+    <div class="rd-selectbar" style="display:none;gap:.6rem;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:.78rem;color:#64748b;">Select attempts above, then:</span>
+      <button class="rd-restore-selected-btn" style="padding:.5rem .9rem;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">♻️ Restore Selected</button>
+      <button class="rd-delete-selected-btn" style="padding:.5rem .9rem;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">Delete Selected Permanently</button>
+      <button class="rd-cancel-btn" style="padding:.5rem .9rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;">Cancel</button>
+    </div>
+  `;
+  const restoreAllBtn=bar.querySelector('.rd-restoreall-btn');
+  const delAllBtn=bar.querySelector('.rd-delall-btn');
+  const selectBtn=bar.querySelector('.rd-select-btn');
+  const selectBar=bar.querySelector('.rd-selectbar');
+  const restoreSelBtn=bar.querySelector('.rd-restore-selected-btn');
+  const delSelBtn=bar.querySelector('.rd-delete-selected-btn');
+  const cancelBtn=bar.querySelector('.rd-cancel-btn');
+
+  restoreAllBtn.onclick=async()=>{
+    const ids=facultyRecentlyDeletedRows.map(r=>r.id);
+    if(!ids.length) return;
+    const ok=await appConfirm({title:'Restore ALL attempts?',message:`This will restore all ${ids.length} temporarily deleted attempt(s) — they'll reappear for their students immediately.`,icon:'♻️',confirmText:'Restore All',cancelText:'Cancel'});
+    if(!ok) return;
+    restoreAllBtn.disabled=true; restoreAllBtn.textContent='Restoring…';
+    await facultyRestoreAttempts(ids);
+    facultyRecentlyDeletedRows=[];
+    updateRecentlyDeletedBadge();
+    renderFacultyRecentlyDeletedList();
+  };
+
+  delAllBtn.onclick=async()=>{
+    const ids=facultyRecentlyDeletedRows.map(r=>r.id);
+    if(!ids.length) return;
+    const ok=await appConfirm({title:'Permanently delete ALL?',message:`This will permanently delete all ${ids.length} attempt(s) shown here. This cannot be undone.`,icon:'⚠️',confirmText:'Delete All',cancelText:'Cancel'});
+    if(!ok) return;
+    delAllBtn.disabled=true; delAllBtn.textContent='Deleting…';
+    await facultyPermanentlyDeleteAttempts(ids);
+    facultyRecentlyDeletedRows=[];
+    updateRecentlyDeletedBadge();
+    renderFacultyRecentlyDeletedList();
+  };
+
+  selectBtn.onclick=()=>{
+    const nowSelecting=selectBar.style.display==='none';
+    selectBar.style.display=nowSelecting?'flex':'none';
+    selectBtn.textContent=nowSelecting?'✕ Cancel Selecting':'☑ Select Attempts';
+    listEl.querySelectorAll('.faculty-bulk-checkbox').forEach(cb=>{
+      cb.closest('label').style.display=nowSelecting?'flex':'none';
+      if(!nowSelecting) cb.checked=false;
+    });
+  };
+  cancelBtn.onclick=()=>{ selectBtn.click(); };
+
+  restoreSelBtn.onclick=async()=>{
+    const checked=[...listEl.querySelectorAll('.faculty-bulk-checkbox:checked')].map(cb=>cb.dataset.attemptId);
+    if(!checked.length){ alert('No attempts selected.'); return; }
+    const ok=await appConfirm({title:'Restore selected attempts?',message:`This will restore ${checked.length} selected attempt(s) — they'll reappear for their students immediately.`,icon:'♻️',confirmText:'Restore Selected',cancelText:'Cancel'});
+    if(!ok) return;
+    restoreSelBtn.disabled=true; restoreSelBtn.textContent='Restoring…';
+    await facultyRestoreAttempts(checked);
+    facultyRecentlyDeletedRows=facultyRecentlyDeletedRows.filter(r=>!checked.includes(r.id));
+    updateRecentlyDeletedBadge();
+    renderFacultyRecentlyDeletedList();
+  };
+
+  delSelBtn.onclick=async()=>{
+    const checked=[...listEl.querySelectorAll('.faculty-bulk-checkbox:checked')].map(cb=>cb.dataset.attemptId);
+    if(!checked.length){ alert('No attempts selected.'); return; }
+    const ok=await appConfirm({title:'Permanently delete selected?',message:`This will permanently delete ${checked.length} selected attempt(s). This cannot be undone.`,icon:'⚠️',confirmText:'Delete Selected',cancelText:'Cancel'});
+    if(!ok) return;
+    delSelBtn.disabled=true; delSelBtn.textContent='Deleting…';
+    await facultyPermanentlyDeleteAttempts(checked);
+    facultyRecentlyDeletedRows=facultyRecentlyDeletedRows.filter(r=>!checked.includes(r.id));
+    updateRecentlyDeletedBadge();
+    renderFacultyRecentlyDeletedList();
+  };
+
+  listEl.appendChild(bar);
+
+  facultyRecentlyDeletedRows.forEach(a=>{
+    listEl.appendChild(buildFacultyAttemptRow(a, {
+      showUsername:true,
+      selectable:true,
+      restoreHandler:(id,rowEl)=>facultyRestoreOneRow(id, rowEl),
+      deleteHandler:(id,rowEl)=>facultyPermanentlyDeleteOneRow(id, rowEl),
+      deleteLabel:'🗑 Delete Permanently'
+    }));
+  });
+}
+
+// Restores a single row from its own row-level Restore button.
+async function facultyRestoreOneRow(attemptId, rowEl){
+  const ok=await appConfirm({title:'Restore this attempt?',message:'This will restore it — it will reappear for the student immediately.',icon:'♻️',confirmText:'Restore',cancelText:'Cancel'});
+  if(!ok) return;
+  const {deleted}=await facultyRestoreAttempts([attemptId]);
+  if(deleted){
+    facultyRecentlyDeletedRows=facultyRecentlyDeletedRows.filter(r=>r.id!==attemptId);
+    updateRecentlyDeletedBadge();
+    if(rowEl){ rowEl.style.transition='opacity .4s'; rowEl.style.opacity='0.3'; setTimeout(()=>renderFacultyRecentlyDeletedList(),400); }
+    else renderFacultyRecentlyDeletedList();
+  }
+}
+
+// Permanently deletes a single row from its own row-level Delete Permanently button.
+async function facultyPermanentlyDeleteOneRow(attemptId, rowEl){
+  const ok=await facultyHardDeleteAttempt(attemptId, rowEl, facultyRecentlyDeletedRows);
+  if(ok){
+    updateRecentlyDeletedBadge();
+    setTimeout(()=>renderFacultyRecentlyDeletedList(),400);
+  }
+}
+
+// PATCHes hidden_by_teacher=false for a batch of attempt ids — the actual
+// "restore". This is the ONE place restore logic lives, used by every
+// restore path (single, selected, all).
+async function facultyRestoreAttempts(ids){
+  if(!requireFacultyKey()) return {deleted:0,failed:0};
+  if(!ids.length) return {deleted:0,failed:0};
+  try{
+    const filterVal='('+ids.map(id=>encodeURIComponent(id)).join(',')+')';
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=in.'+filterVal,{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+      body:JSON.stringify({hidden_by_teacher:false})
+    });
+    if(res.status===200||res.status===204||res.status===202){
+      return {deleted:ids.length,failed:0};
+    } else {
+      const d=await res.json().catch(()=>({}));
+      alert('Restore failed: '+(d.message||JSON.stringify(d)));
+      return {deleted:0,failed:ids.length};
+    }
+  }catch(err){
+    alert('Network error during restore.');
+    return {deleted:0,failed:ids.length};
+  }
+}
+
+// Real, permanent DELETE for a batch of attempt ids — used by "Delete
+// Selected/All Permanently" in the Recently Deleted screen.
+async function facultyPermanentlyDeleteAttempts(ids){
+  if(!requireFacultyKey()) return {deleted:0,failed:0};
+  if(!ids.length) return {deleted:0,failed:0};
+  try{
+    const filterVal='('+ids.map(id=>encodeURIComponent(id)).join(',')+')';
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=in.'+filterVal,{
+      method:'DELETE',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal'}
+    });
+    if(res.status===200||res.status===204||res.status===202){
+      return {deleted:ids.length,failed:0};
+    } else {
+      const d=await res.json().catch(()=>({}));
+      alert('Permanent delete failed: '+(d.message||JSON.stringify(d)));
+      return {deleted:0,failed:ids.length};
+    }
+  }catch(err){
+    alert('Network error during permanent delete.');
+    return {deleted:0,failed:ids.length};
+  }
+}
+
+// Lightweight badge count on the Faculty Mode home screen button, so a
+// teacher can see at a glance whether anything is sitting in Recently
+// Deleted, without having to open the screen. Refreshed whenever the
+// category list loads (renderFacultyCategoryList) and whenever the
+// Recently Deleted screen itself is opened or changes.
+async function updateRecentlyDeletedBadge(){
+  const badge=document.getElementById('recently-deleted-badge');
+  if(!badge) return;
+  let count=facultyRecentlyDeletedRows.length;
+  // If we haven't loaded the list yet in this session, fetch just the count.
+  if(!facultyRecentlyDeletedScreenLoaded){
+    try{
+      const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?select=id&hidden_by_teacher=eq.true',{headers:facultyAuthHeaders()});
+      const rows=await res.json();
+      if(Array.isArray(rows)) count=rows.length;
+    }catch(err){ /* badge is best-effort; ignore errors */ }
+  }
+  if(count>0){ badge.style.display='inline-block'; badge.textContent=count; }
+  else { badge.style.display='none'; }
+}
+let facultyRecentlyDeletedScreenLoaded=false;
+// Shared by: category attempts view (faculty-attempts-screen) and the
+// student profile view (faculty-profile-screen). "Deletes" a list of attempt
+// ids by marking them hidden_by_teacher=true (temporary delete) — the rows
+// remain in Supabase so they show up under "Recently Deleted" for restore or
+// permanent removal, and disappear from the student's own view immediately.
+async function facultyBulkDeleteAttempts(ids, listEl, rowsArrRefs, subElUpdater){
+  if(!requireFacultyKey()) return {deleted:0,failed:0};
+  if(!ids.length) return {deleted:0,failed:0};
+  try{
+    const filterVal='('+ids.map(id=>encodeURIComponent(id)).join(',')+')';
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=in.'+filterVal,{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+      body:JSON.stringify({hidden_by_teacher:true})
+    });
+    if(res.status===200||res.status===204||res.status===202){
+      ids.forEach(id=>{
+        const row=listEl.querySelector(`[data-attempt-id="${CSS.escape(id)}"]`);
+        const card=row?row.closest('.attempt-row'):null;
+        if(card) card.remove();
+      });
+      rowsArrRefs.forEach(arr=>{
+        if(Array.isArray(arr)){
+          for(let i=arr.length-1;i>=0;i--){ if(ids.includes(arr[i].id)) arr.splice(i,1); }
+        }
+      });
+      if(subElUpdater) subElUpdater();
+      return {deleted:ids.length,failed:0};
+    } else {
+      const d=await res.json().catch(()=>({}));
+      alert('Bulk delete failed: '+(d.message||JSON.stringify(d)));
+      return {deleted:0,failed:ids.length};
+    }
+  }catch(err){
+    alert('Network error during bulk delete.');
+    return {deleted:0,failed:ids.length};
+  }
+}
+
+// Builds the toolbar shown above an attempts list: "Delete All" + "Select to
+// Delete" (which toggles per-row checkboxes and reveals a confirm/cancel bar).
+// onGetAllIds() must return the full array of attempt ids currently visible.
+// onRerender() re-renders the list (used when re-entering selection mode after
+// a delete, so checkboxes reset cleanly).
+function buildBulkDeleteToolbar({listEl, getAllIds, getRowsArrRefs, subElUpdater, rerender, allLabel}){
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;';
+  bar.innerHTML=`
+    <button class="fac-bulk-delall-btn" style="padding:.55rem 1rem;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">🗑 Delete All${allLabel?' '+allLabel:''}</button>
+    <button class="fac-bulk-select-btn" style="padding:.55rem 1rem;background:none;border:2px solid #ef4444;color:#ef4444;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">☑ Select to Delete</button>
+    <div class="fac-bulk-selectbar" style="display:none;gap:.6rem;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:.78rem;color:#64748b;">Select attempts above, then:</span>
+      <button class="fac-bulk-confirm-btn" style="padding:.5rem .9rem;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">Delete Selected</button>
+      <button class="fac-bulk-cancel-btn" style="padding:.5rem .9rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;">Cancel</button>
+    </div>
+  `;
+  const delAllBtn=bar.querySelector('.fac-bulk-delall-btn');
+  const selectBtn=bar.querySelector('.fac-bulk-select-btn');
+  const selectBar=bar.querySelector('.fac-bulk-selectbar');
+  const confirmBtn=bar.querySelector('.fac-bulk-confirm-btn');
+  const cancelBtn=bar.querySelector('.fac-bulk-cancel-btn');
+
+  delAllBtn.onclick=async()=>{
+    const ids=getAllIds();
+    if(!ids.length){ alert('There is nothing to delete.'); return; }
+    const ok=await appConfirm({title:'Delete ALL attempts?',message:`This will temporarily delete all ${ids.length} attempt(s) shown here — they'll disappear from the student's view but can be restored later from "Recently Deleted".`,icon:'⚠️',confirmText:'Delete All',cancelText:'Cancel'});
+    if(!ok) return;
+    delAllBtn.disabled=true; delAllBtn.textContent='Deleting…';
+    await facultyBulkDeleteAttempts(ids, listEl, getRowsArrRefs(), subElUpdater);
+    rerender();
+  };
+
+  selectBtn.onclick=()=>{
+    const nowSelecting=selectBar.style.display==='none';
+    selectBar.style.display=nowSelecting?'flex':'none';
+    selectBtn.textContent=nowSelecting?'✕ Cancel Selecting':'☑ Select to Delete';
+    listEl.querySelectorAll('.faculty-bulk-checkbox').forEach(cb=>{
+      cb.closest('label').style.display=nowSelecting?'flex':'none';
+      if(!nowSelecting) cb.checked=false;
+    });
+  };
+
+  cancelBtn.onclick=()=>{ selectBtn.click(); };
+
+  confirmBtn.onclick=async()=>{
+    const checked=[...listEl.querySelectorAll('.faculty-bulk-checkbox:checked')].map(cb=>cb.dataset.attemptId);
+    if(!checked.length){ alert('No attempts selected.'); return; }
+    const ok=await appConfirm({title:'Delete selected attempts?',message:`This will temporarily delete ${checked.length} selected attempt(s) — they'll disappear from the student's view but can be restored later from "Recently Deleted".`,icon:'⚠️',confirmText:'Delete Selected',cancelText:'Cancel'});
+    if(!ok) return;
+    confirmBtn.disabled=true; confirmBtn.textContent='Deleting…';
+    await facultyBulkDeleteAttempts(checked, listEl, getRowsArrRefs(), subElUpdater);
+    rerender();
+  };
+
+  return bar;
+}
+
+// "Temporary delete": sets hidden_by_teacher=true instead of removing the row.
+// This immediately hides the attempt from the student's own Past Attempts /
+// dashboards / mistakes breakdown (all of those queries filter on
+// hidden_by_teacher=false), while keeping the row in Supabase so the teacher
+// can restore it later from the "Recently Deleted (by Teacher)" section, or
+// permanently delete it from there.
+async function facultyDeleteAttempt(attemptId, cardEl, deletedRowsArr){
+  if(!requireFacultyKey()) return;
+  if(!confirm('Temporarily delete this attempt? The student will no longer see it in their past attempts, but you can restore it later from "Recently Deleted".')) return;
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=eq.'+encodeURIComponent(attemptId),{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+      body:JSON.stringify({hidden_by_teacher:true})
     });
     if(res.status===200||res.status===204||res.status===202){
       cardEl.style.transition='opacity .4s';
@@ -7685,10 +7923,11 @@ async function facultyDeleteAttempt(attemptId, cardEl, deletedRowsArr){
         const idx=deletedRowsArr.findIndex(r=>r.id===attemptId);
         if(idx!==-1) deletedRowsArr.splice(idx,1);
         const subEl=document.getElementById('faculty-attempts-sub');
-        if(subEl) subEl.textContent=deletedRowsArr.length+' attempt'+(deletedRowsArr.length!==1?'s':'')+' removed by students. Deleting here is permanent.';
+        if(subEl) subEl.textContent=deletedRowsArr.length+' attempt'+(deletedRowsArr.length!==1?'s':'')+' removed by students. You can temporarily delete (restorable) or permanently delete (final).';
       } else {
         document.getElementById('faculty-attempts-sub').textContent=facultyCurrentRows.length+' attempt'+(facultyCurrentRows.length!==1?'s':'')+' recorded.';
       }
+      if(typeof updateRecentlyDeletedBadge==='function'){ facultyRecentlyDeletedScreenLoaded=false; updateRecentlyDeletedBadge(); }
     } else {
       const d=await res.json().catch(()=>({}));
       alert('Delete failed: '+(d.message||JSON.stringify(d)));
@@ -8083,6 +8322,89 @@ async function loadFacultyStudentData(studentEmail){
 
 
 // ── FACULTY: user management ─────────────────────────────────
+// ── FACULTY: BULK DELETE USERS ────────────────────────────────────
+// Deletes each selected user's Supabase Auth account one at a time (the
+// Admin API has no bulk-delete endpoint), reporting how many succeeded.
+// Attempt records for deleted users are left untouched, matching the
+// behavior of the single-user "Delete User" button.
+async function facultyBulkDeleteUsers(userIds, listEl){
+  if(!requireFacultyKey()) return;
+  let deleted=0, failed=0;
+  for(const id of userIds){
+    try{
+      const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users/'+id,{ method:'DELETE', headers:facultyAuthHeaders() });
+      if(res.status===200||res.status===204){
+        deleted++;
+        const card=listEl.querySelector(`[data-user-id="${CSS.escape(id)}"]`);
+        if(card){
+          card.style.opacity='0.4';
+          const nameDiv=card.querySelector('div div');
+          if(nameDiv) nameDiv.textContent+=' (deleted)';
+          card.querySelectorAll('button').forEach(b=>b.disabled=true);
+          card.querySelectorAll('input[type=checkbox]').forEach(c=>c.disabled=true);
+        }
+      } else {
+        failed++;
+      }
+    }catch(err){
+      failed++;
+    }
+  }
+  alert(`Deleted ${deleted} user(s).`+(failed?` ${failed} failed.`:''));
+}
+
+function buildUserBulkDeleteToolbar(users, listEl, subEl){
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;';
+  bar.innerHTML=`
+    <button class="fac-userbulk-delall-btn" style="padding:.55rem 1rem;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">🗑 Delete All Users</button>
+    <button class="fac-userbulk-select-btn" style="padding:.55rem 1rem;background:none;border:2px solid #ef4444;color:#ef4444;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">☑ Select to Delete</button>
+    <div class="fac-userbulk-selectbar" style="display:none;gap:.6rem;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:.78rem;color:#64748b;">Select users above, then:</span>
+      <button class="fac-userbulk-confirm-btn" style="padding:.5rem .9rem;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;">Delete Selected</button>
+      <button class="fac-userbulk-cancel-btn" style="padding:.5rem .9rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;">Cancel</button>
+    </div>
+  `;
+  const delAllBtn=bar.querySelector('.fac-userbulk-delall-btn');
+  const selectBtn=bar.querySelector('.fac-userbulk-select-btn');
+  const selectBar=bar.querySelector('.fac-userbulk-selectbar');
+  const confirmBtn=bar.querySelector('.fac-userbulk-confirm-btn');
+  const cancelBtn=bar.querySelector('.fac-userbulk-cancel-btn');
+
+  delAllBtn.onclick=async()=>{
+    if(!users.length){ alert('There are no users to delete.'); return; }
+    const ok=await appConfirm({title:'Delete ALL users?',message:`This will permanently delete all ${users.length} registered user account(s). Their attempt records will remain unless deleted separately. This cannot be undone.`,icon:'⚠️',confirmText:'Delete All',cancelText:'Cancel'});
+    if(!ok) return;
+    delAllBtn.disabled=true; delAllBtn.textContent='Deleting…';
+    await facultyBulkDeleteUsers(users.map(u=>u.id), listEl);
+    delAllBtn.disabled=false; delAllBtn.textContent='🗑 Delete All Users';
+  };
+
+  selectBtn.onclick=()=>{
+    const nowSelecting=selectBar.style.display==='none';
+    selectBar.style.display=nowSelecting?'flex':'none';
+    selectBtn.textContent=nowSelecting?'✕ Cancel Selecting':'☑ Select to Delete';
+    listEl.querySelectorAll('.faculty-user-bulk-label').forEach(lbl=>{
+      lbl.style.display=nowSelecting?'flex':'none';
+      const cb=lbl.querySelector('input'); if(cb&&!nowSelecting) cb.checked=false;
+    });
+  };
+
+  cancelBtn.onclick=()=>{ selectBtn.click(); };
+
+  confirmBtn.onclick=async()=>{
+    const checked=[...listEl.querySelectorAll('.faculty-user-bulk-checkbox:checked')].map(cb=>cb.dataset.userId);
+    if(!checked.length){ alert('No users selected.'); return; }
+    const ok=await appConfirm({title:'Delete selected users?',message:`This will permanently delete ${checked.length} selected user account(s). This cannot be undone.`,icon:'⚠️',confirmText:'Delete Selected',cancelText:'Cancel'});
+    if(!ok) return;
+    confirmBtn.disabled=true; confirmBtn.textContent='Deleting…';
+    await facultyBulkDeleteUsers(checked, listEl);
+    confirmBtn.disabled=false; confirmBtn.textContent='Delete Selected';
+  };
+
+  return bar;
+}
+
 function openFacultyUserManagement(){
   if(!requireFacultyKey()) return;
   showScreen('faculty-users-screen');
@@ -8105,13 +8427,21 @@ async function loadFacultyUsers(){
       return na.localeCompare(nb);
     });
     subEl.textContent=users.length+' registered user'+(users.length!==1?'s':'')+'.';
+
+    const toolbar=buildUserBulkDeleteToolbar(users, listEl, subEl);
+    listEl.appendChild(toolbar);
+
     users.forEach(u=>{
       const uname=(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email.replace(FAKE_EMAIL_DOMAIN,'');
       const created=new Date(u.created_at).toLocaleDateString();
       const card=document.createElement('div');
       card.style.cssText='border:2px solid #e2e8f0;border-radius:12px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem;background:#fff;';
+      card.dataset.userId=u.id;
       card.innerHTML=`
-        <div><div style="font-weight:700;color:#0f1f3d;font-size:.9rem;">${escHTML(uname)}</div><div style="font-size:.76rem;color:#64748b;margin-top:.15rem;">Registered: ${created}</div></div>
+        <div style="display:flex;align-items:center;gap:.7rem;">
+          <label class="faculty-user-bulk-label" style="display:none;align-items:center;cursor:pointer;"><input type="checkbox" class="faculty-user-bulk-checkbox" data-user-id="${escAttr(u.id)}" style="width:16px;height:16px;cursor:pointer;"></label>
+          <div><div style="font-weight:700;color:#0f1f3d;font-size:.9rem;">${escHTML(uname)}</div><div style="font-size:.76rem;color:#64748b;margin-top:.15rem;">Registered: ${created}</div></div>
+        </div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
           <button class="faculty-viewprofile-btn" style="padding:.5rem .8rem;border:2px solid #6366f1;color:#6366f1;background:none;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;">👁 View Profile</button>
           <button class="faculty-rename-btn" style="padding:.5rem .8rem;border:2px solid #00b4a0;color:#009e8c;background:none;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;">✏️ Change Username</button>
@@ -8323,11 +8653,14 @@ async function openFacultyStudentProfile(userId, username){
   try{
     const url=SUPABASE_URL+'/rest/v1/attempts?select=*&user_id=eq.'+encodeURIComponent(userId)+'&order=created_at.desc';
     const res=await fetch(url,{headers:facultyAuthHeaders()});
-    const rows=await res.json();
+    let rows=await res.json();
     if(!Array.isArray(rows)){ subEl.textContent='Could not load this student\'s attempts. Check your service_role key.'; return; }
     if(rows.length===0){ subEl.textContent='This student has not completed any attempts yet.'; return; }
+    const teacherHiddenCount=rows.filter(r=>r.hidden_by_teacher).length;
+    rows=rows.filter(r=>!r.hidden_by_teacher);
+    if(rows.length===0){ subEl.textContent='All of this student\'s attempts are currently temporarily deleted. See "Recently Deleted" from the Faculty Mode home screen.'; return; }
     const hiddenCount=rows.filter(r=>r.hidden_by_student).length;
-    subEl.textContent=rows.length+' total attempt'+(rows.length!==1?'s':'')+(hiddenCount?' ('+hiddenCount+' removed by the student from their own view, still shown here)':'')+'.';
+    subEl.textContent=rows.length+' total attempt'+(rows.length!==1?'s':'')+(hiddenCount?' ('+hiddenCount+' removed by the student from their own view, still shown here)':'')+(teacherHiddenCount?' · '+teacherHiddenCount+' temporarily deleted by you (see "Recently Deleted")':'')+'.';
     // Ordinal numbering here mirrors the student's own view: per category+mode,
     // NOT per faculty-wide category view (which groups by user_id already since
     // this list is already scoped to one user).
@@ -8343,8 +8676,22 @@ async function openFacultyStudentProfile(userId, username){
       const n=attemptNumberById[a.id];
       a._attemptOrdinal=n===1?'1st':n===2?'2nd':n===3?'3rd':`${n}th`;
     });
+
+    facultyProfileRows=rows;
+    const toolbar=buildBulkDeleteToolbar({
+      listEl,
+      getAllIds:()=>facultyProfileRows.map(r=>r.id),
+      getRowsArrRefs:()=>[facultyProfileRows],
+      subElUpdater:()=>{
+        const hiddenCount2=facultyProfileRows.filter(r=>r.hidden_by_student).length;
+        subEl.textContent=facultyProfileRows.length+' total attempt'+(facultyProfileRows.length!==1?'s':'')+(hiddenCount2?' ('+hiddenCount2+' removed by the student from their own view, still shown here)':'')+'.';
+      },
+      rerender:()=>openFacultyStudentProfile(userId, username)
+    });
+    listEl.appendChild(toolbar);
+
     rows.forEach(a=>{
-      listEl.appendChild(buildFacultyAttemptRow(a, { showUsername:false, deleteHandler:null }));
+      listEl.appendChild(buildFacultyAttemptRow(a, { showUsername:false, deleteHandler:facultyDeleteAttempt, selectable:true }));
     });
   }catch(err){
     subEl.textContent='Network error loading this student\'s attempts.';
@@ -9177,6 +9524,7 @@ async function loadPastAttempts(){
       .select('id,mode,category,questions_attempted,score_correct,score_total,marks,marks_attempted,percent,time_taken_seconds,created_at')
       .eq('user_id', currentUser.id)
       .eq('hidden_by_student', false)
+      .eq('hidden_by_teacher', false)
       .order('created_at',{ascending:false});
     loadingEl.style.display='none';
     if(error){ emptyEl.textContent='Could not load past attempts: '+error.message; emptyEl.style.display='block'; return; }
@@ -9378,6 +9726,7 @@ async function loadEngagementCard(){
       .select('category,percent,created_at,questions_attempted,questions_json,answers_json')
       .eq('user_id', currentUser.id)
       .eq('hidden_by_student', false)
+      .eq('hidden_by_teacher', false)
       .order('created_at',{ascending:true});
     if(error||!data){ card.style.display='none'; return; }
 
@@ -9578,6 +9927,7 @@ async function loadMilestonesDashboard(){
       .select('category,percent,created_at,questions_attempted,answers_json')
       .eq('user_id', currentUser.id)
       .eq('hidden_by_student', false)
+      .eq('hidden_by_teacher', false)
       .order('created_at',{ascending:true});
     if(error||!data){ section.style.display='none'; return; }
     const dateStrings=data.map(a=>{
@@ -9669,6 +10019,7 @@ async function loadMistakesBreakdown(){
       .select('questions_json,answers_json,created_at')
       .eq('user_id', currentUser.id)
       .eq('hidden_by_student', false)
+      .eq('hidden_by_teacher', false)
       .order('created_at',{ascending:true}); // oldest first, so later duplicates overwrite with the freshest question snapshot
     if(error||!data||data.length===0){ section.style.display='none'; return; }
     // Index the live, current question bank by id so we always use today's
@@ -10030,6 +10381,9 @@ async function reviewPastAttempt(attemptId, fromFaculty){
       data=res.data; error=res.error;
     }
     if(error||!data){ alert('Could not load that attempt.'); return; }
+    // A student should never be able to open an attempt the teacher has
+    // temporarily deleted, even via a stale link/id.
+    if(!asFaculty && data.hidden_by_teacher){ alert('This attempt is not available.'); return; }
     // Load saved questions/answers into the same state the live quiz uses,
     // so the existing results & review-detail screens work unmodified.
     // Swap in the LIVE (current) version of each question by id, and re-grade the
@@ -10120,16 +10474,19 @@ async function goHomeFromResults(){
 function backFromReviewDetail(){
   showScreen('results-screen');
 }
-// Delete the attempt currently open in the results/review screens (Faculty Mode only),
-// then return to the category's attempt list — mirrors facultyDeleteAttempt's confirm/delete flow.
+// Temporarily delete the attempt currently open in the results/review screens
+// (Faculty Mode only), then return to the category's attempt list — mirrors
+// facultyDeleteAttempt's confirm/delete flow, but as a soft delete
+// (hidden_by_teacher=true) so it can be restored later from "Recently Deleted".
 async function facultyDeleteCurrentAttempt(){
   if(!facultyReviewAttemptId){ return; }
   if(!requireFacultyKey()) return;
-  if(!confirm('Delete this attempt permanently? The student will no longer see it in their past attempts. This cannot be undone.')) return;
+  if(!confirm('Temporarily delete this attempt? The student will no longer see it in their past attempts, but you can restore it later from "Recently Deleted".')) return;
   try{
     const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=eq.'+encodeURIComponent(facultyReviewAttemptId),{
-      method:'DELETE',
-      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal'}
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+      body:JSON.stringify({hidden_by_teacher:true})
     });
     if(res.status===200||res.status===204||res.status===202){
       facultyCurrentRows=facultyCurrentRows.filter(r=>r.id!==facultyReviewAttemptId);
@@ -10492,20 +10849,63 @@ function renderMatchAnswerTable(q,saved){
   return html;
 }
 
-// ── CATEGORY SELECT ─────────────────────────────────────
+// ── CATEGORY SELECT (grouped accordion dropdown) ────────
 function populateCategories(){
-  const sel=document.getElementById('category-select');
-  sel.innerHTML='';
-  CATEGORIES.forEach(cat=>{
-    const opt=document.createElement('option');
-    opt.value=cat.id; opt.textContent=`${cat.name} (${cat.ids.length} questions)`;
-    sel.appendChild(opt);
+  const panel=document.getElementById('cat-dd-panel');
+  panel.innerHTML='';
+  CATEGORY_GROUPS.forEach(groupName=>{
+    const catsInGroup=CATEGORIES.filter(c=>c.group===groupName);
+    if(!catsInGroup.length) return;
+    const groupEl=document.createElement('div');
+    groupEl.className='cat-dd-group';
+    groupEl.dataset.group=groupName;
+    const containsSelected=catsInGroup.some(c=>c.id===selectedCategory.id);
+    if(containsSelected) groupEl.classList.add('expanded');
+    const header=document.createElement('button');
+    header.type='button'; header.className='cat-dd-group-header';
+    header.innerHTML=`<span>${escHTML(groupName)}</span><span class="cat-dd-group-chevron">▾</span>`;
+    header.onclick=(e)=>{ e.stopPropagation(); toggleCategoryGroup(groupName); };
+    groupEl.appendChild(header);
+    const itemsWrap=document.createElement('div');
+    itemsWrap.className='cat-dd-group-items';
+    catsInGroup.forEach(cat=>{
+      const item=document.createElement('button');
+      item.type='button'; item.className='cat-dd-item'+(cat.id===selectedCategory.id?' selected':'');
+      item.textContent=`${cat.name} (${cat.ids.length} questions)`;
+      item.onclick=(e)=>{ e.stopPropagation(); selectCategory(cat.id); closeCategoryDropdown(); };
+      itemsWrap.appendChild(item);
+    });
+    groupEl.appendChild(itemsWrap);
+    panel.appendChild(groupEl);
   });
-  sel.value=selectedCategory.id;
+  updateCategoryTriggerLabel();
   updateHomeMeta();
 }
+function updateCategoryTriggerLabel(){
+  const label=document.getElementById('cat-dd-trigger-label');
+  if(label) label.textContent=selectedCategory.displayLabel||selectedCategory.name;
+}
+function toggleCategoryDropdown(){
+  document.getElementById('category-dropdown').classList.toggle('open');
+}
+function closeCategoryDropdown(){
+  document.getElementById('category-dropdown').classList.remove('open');
+}
+function toggleCategoryGroup(groupName){
+  const panel=document.getElementById('cat-dd-panel');
+  const groupEl=panel.querySelector(`.cat-dd-group[data-group="${CSS.escape(groupName)}"]`);
+  if(groupEl) groupEl.classList.toggle('expanded');
+}
+// Close the dropdown when clicking anywhere outside it.
+document.addEventListener('click',(e)=>{
+  const dd=document.getElementById('category-dropdown');
+  if(dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
 function selectCategory(catId){
   selectedCategory=CATEGORIES.find(c=>c.id===catId)||CATEGORIES[0];
+  // Refresh the panel so the "selected" highlight moves to the new item
+  // and the group containing it stays expanded.
+  populateCategories();
   updateHomeMeta();
   highlightCurrentMistakesCategoryRow();
 }
