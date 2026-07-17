@@ -90,6 +90,8 @@
      be reachable, while body.faculty-shell-on is present. */
   body.faculty-shell-on #mobile-bottom-nav{display:none!important;}
   body.auth-pending #mobile-bottom-nav{display:none!important;}
+  body.auth-pending .screen{visibility:hidden!important;}
+  body.auth-pending{background:#ffffff!important;}
   #mobile-bottom-nav button{
     position:relative;display:flex;flex-direction:column;align-items:center;
     justify-content:center;gap:.15rem;background:none;border:none;cursor:pointer;
@@ -179,6 +181,16 @@
   .progress-bar{height:100%;background:var(--teal);transition:width .4s ease}
   .quiz-body{max-width:780px;width:100%;margin:0 auto;padding:2rem 1.5rem 6rem;box-sizing:border-box}
   .q-nav{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:1.5rem}
+  /* Collapsed states: bars take up zero space, no residual margin/padding */
+  .topbar.qc-collapsed{display:none!important;}
+  .q-nav.qc-collapsed{display:none!important;margin:0!important;}
+  /* Toggle buttons that live in the empty space of the q-header row */
+  .q-header-toggles{display:flex;gap:.5rem;flex:1;justify-content:center;flex-wrap:wrap;}
+  .q-toggle-btn{display:flex;align-items:center;gap:.35rem;background:var(--slate-light);border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.72rem;font-weight:700;color:var(--slate);cursor:pointer;white-space:nowrap;transition:background .15s;}
+  .q-toggle-btn:hover{background:var(--border);}
+  .q-toggle-btn .qtb-arrow{font-size:.65rem;transition:transform .2s;}
+  .q-toggle-btn.qtb-open .qtb-arrow{transform:rotate(180deg);}
+  @media (max-width:480px){.q-header-toggles{gap:.35rem;}.q-toggle-btn{padding:.28rem .55rem;font-size:.68rem;}}
   .q-dot{width:28px;height:28px;border-radius:6px;border:2px solid var(--border);background:white;font-size:.68rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text-muted)}
   .q-dot.current{border-color:var(--teal);background:var(--teal);color:white}
   .q-dot.answered{background:var(--navy-mid);border-color:var(--navy-mid);color:white}
@@ -651,7 +663,7 @@
   <div style="background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:420px;box-sizing:border-box;">
     <h3 style="margin:0 0 .3rem;font-size:1.1rem;color:#0f1f3d;">🔒 Service Role Key Required</h3>
     <p style="margin:0 0 .8rem;font-size:.8rem;color:#64748b;line-height:1.5;">Access code confirmed. Now paste your Supabase <b>service_role</b> key (Project Settings → API) to unlock attempt &amp; account management. It is kept only in memory for this session — never saved or sent anywhere except your own Supabase project.</p>
-    <input type="password" id="facultyServiceKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off"
+    <input type="password" id="facultyServiceKeyInput" placeholder="Paste your service_role key here" autocomplete="off"
       style="width:100%;padding:.7rem .9rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.8rem;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;">
     <div id="facultyServiceKeyError" style="color:#ef4444;font-size:.8rem;margin-top:.5rem;display:none;"></div>
     <div style="display:flex;gap:.6rem;margin-top:1rem;">
@@ -1253,7 +1265,7 @@
       <span style="font-size:1.15rem;font-weight:800;background:linear-gradient(135deg,#6d28d9,#4338ca);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">👥 Study Groups</span>
       <button onclick="closeGroupsHub()" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
     </div>
-    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.1rem;">Team up with up to 2 classmates near your level. Once a group hits 3 members it's locked forever — choose carefully! Invites are matched by level — see "How do levels work?" on the <a href="#" onclick="closeGroupsHub();openLeaderboard();return false;" style="color:var(--teal,#00b4a0);font-weight:700;">Leaderboard</a>.</div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.1rem;">Team up with up to 2 classmates near your level. Any member can invite more teammates or start a new group, and any member can send a lock request once you hit 3 — but the group only becomes permanent once your teacher confirms it. Invites are matched by level — see "How do levels work?" on the <a href="#" onclick="closeGroupsHub();openLeaderboard();return false;" style="color:var(--teal,#00b4a0);font-weight:700;">Leaderboard</a>.</div>
 
     <!-- HOW GROUP SCORES WORK — collapsible explainer -->
     <div class="home-card" style="padding:0;margin-bottom:1.3rem;overflow:hidden;">
@@ -1262,15 +1274,15 @@
         <span id="group-score-explainer-chevron" style="transition:transform .15s;color:#94a3b8;">▾</span>
       </button>
       <div id="group-score-explainer-body" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
-        <div style="margin-bottom:.6rem;"><strong>Group score</strong> = for each member, the number of unique questions in the entire question bank they currently have <strong>correct</strong> — added together across all members. It's based on your <em>most recent</em> answer to each question, the same logic used by "Redo My Mistakes", not a running total of past attempts.</div>
+        <div style="margin-bottom:.6rem;"><strong>Group score</strong> = for each member, add up a value for every question in the bank based on how they did on it, then add all members' totals together. Per question, per member: <strong>1 point</strong> if correct on the first attempt, <strong>0.5 points</strong> if wrong first then fixed on the very next redo, and <strong>0 points</strong> otherwise. Only the first attempt and one redo count — trying a question more times after that doesn't change its value.</div>
         <div style="margin-bottom:.4rem;"><strong>How to raise your group's score:</strong></div>
         <ul style="margin:0 0 .6rem 1.1rem;padding:0;display:flex;flex-direction:column;gap:.3rem;">
-          <li>Answering a brand-new question correctly adds 1 to your own count (and so to the group total) — but answering the same question correctly again doesn't add anything extra, since it was already counted.</li>
-          <li>Going back and fixing a question you previously got wrong raises your count by 1 the moment you get it right — even without touching any new questions.</li>
-          <li>Getting a question wrong that you'd previously gotten right removes it from your count — so it pays to actually understand a topic, not just answer it once and move on.</li>
+          <li>Answering a brand-new question correctly on your first try is worth the most — 1 full point.</li>
+          <li>Going back and fixing a question you got wrong is worth 0.5 points, and only your first redo of it counts — extra retries after that don't add more.</li>
+          <li>Getting a question wrong that you'd previously gotten right can lower its value, since it's re-regraded against your most recent tries at it.</li>
           <li>Recruiting active members matters too — a member who's never attempted anything contributes 0, so a smaller but genuinely improving group can outscore a larger, less active one.</li>
         </ul>
-        <div style="font-size:.74rem;color:#94a3b8;">The Group Leaderboard below updates automatically as members save new sessions.</div>
+        <div style="font-size:.74rem;color:#94a3b8;">Group members can see each other's individual contribution inside "My Group" — the public Group Leaderboard only shows group totals, never individual scores.</div>
       </div>
     </div>
 
@@ -1443,6 +1455,7 @@
     <span id="offline-mode-status-pill" style="display:none;align-items:center;gap:.35rem;font-size:.72rem;font-weight:700;color:#0369a1;background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:20px;padding:.25rem .7rem;white-space:nowrap;">📴 Offline Mode is ON</span>
     <span id="offline-pending-badge" style="display:none;font-size:.72rem;font-weight:700;color:#92400e;background:var(--amber-light,#fef3c7);border:1.5px solid var(--amber,#f59e0b);border-radius:20px;padding:.25rem .7rem;white-space:nowrap;">📴 0 attempts waiting to sync</span>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <button id="openHelpBtn" onclick="openHelpPage()" title="How everything on this platform works" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">❓ Help</button>
       <button id="offline-mode-toggle-btn" onclick="toggleOfflineMode()" title="Prime the app for offline use, then stop trying to reach the server until you turn this back off." style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">📴 Go offline</button>
       <button id="changeUnameHomeBtn" data-offline-hide="1" onclick="openStudentChangeUnameDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">✏️ Change Username</button>
       <button data-offline-hide="1" onclick="openStudentChangePwDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">🔑 Change Password</button>
@@ -1833,6 +1846,141 @@
     <div id="milestones-page-far-wrap">
       <div style="font-size:.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.03em;margin-bottom:.5rem;">🔭 Further out</div>
       <div id="milestones-page-far-list" style="display:flex;flex-direction:column;gap:.6rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- HELP — standalone page, student-side only. Accordion of feature explainers,
+     same collapsible pattern as the Weekly Prize / Level explainers above. -->
+<div id="help-screen" class="screen">
+  <div style="max-width:760px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.15rem;font-weight:800;color:var(--navy);">❓ Help</span>
+      <button onclick="showScreen('home-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.1rem;">Tap any feature below to see how it works.</div>
+
+    <div id="help-accordion-list" style="display:flex;flex-direction:column;gap:.6rem;">
+
+      <!-- 🎯 Practice -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('practice')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">🎯 Practice (the home screen)</span>
+          <span id="help-chevron-practice" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-practice" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          <div style="margin-bottom:.6rem;">This is where you actually answer questions. Pick a category, choose a mode, and start:</div>
+          <ul style="margin:0 0 .6rem 1.1rem;padding:0;display:flex;flex-direction:column;gap:.3rem;">
+            <li><strong>Practice mode</strong> — no pressure. You get told right away if you're right or wrong, and you can see explanations as you go. Best for learning.</li>
+            <li><strong>Quiz mode</strong> — a short, timed set of questions, feedback shown after you finish.</li>
+            <li><strong>Test mode</strong> — feels like a real exam. Answer everything first, then see your results at the end.</li>
+          </ul>
+          <div style="font-size:.74rem;color:#94a3b8;">Every question you answer — right or wrong — gets remembered. That history is what powers everything else on this platform: your level, your leaderboard scores, your milestones, all of it.</div>
+        </div>
+      </div>
+
+      <!-- 🔁 Redo My Mistakes -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('mistakes')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">🔁 Redo My Mistakes</span>
+          <span id="help-chevron-mistakes" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-mistakes" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          A shortcut that gathers every question you've gotten wrong and lets you try them again. Since your score on a question is based on your <strong>average across all your attempts</strong>, getting it right this time genuinely improves your standing — it's not just for show.
+        </div>
+      </div>
+
+      <!-- 👻 Ghost of Past You -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('ghost')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">👻 Ghost of Past You</span>
+          <span id="help-chevron-ghost" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-ghost" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          Lets you race against a recording of your own past performance — same questions, same order — so you can see directly whether you've actually improved since last time.
+        </div>
+      </div>
+
+      <!-- 🏆 Leaderboard -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('leaderboard')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">🏆 The Leaderboard — two separate boards</span>
+          <span id="help-chevron-leaderboard" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-leaderboard" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          <div style="margin-bottom:.6rem;">Tap "Leaderboard" and you'll see two tabs. They are not the same thing and are scored completely differently on purpose.</div>
+          <div style="margin-bottom:.6rem;">
+            <div style="font-weight:700;color:var(--navy);margin-bottom:.2rem;">📈 Mastery Board (your Level, L1–L10)</div>
+            This measures how much of the entire question bank you've mastered overall — a long-term, permanent record. The more questions you attempt (and the better your track record on each one), the higher your level climbs. This one <strong>never resets</strong> — it's built from your whole history. Your level also decides who you're matched against in Battle Mode and who you can invite to a Study Group.
+          </div>
+          <div>
+            <div style="font-weight:700;color:var(--navy);margin-bottom:.2rem;">💰 Weekly Prize Board</div>
+            This is a short-term competition that resets on a schedule your teacher sets (e.g. every week). It rewards getting things right <strong>the first time</strong> — you get full points for a first-try correct answer, much less for getting it right only after a couple of retries, and nothing at all if you need more than a couple of tries. This stops people from just guessing repeatedly until they get it right. It's meant to reflect how sharp you are right now, not your whole history.
+          </div>
+        </div>
+      </div>
+
+      <!-- ⚔️ Battle Mode -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('battle')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">⚔️ Battle Mode</span>
+          <span id="help-chevron-battle" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-battle" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          Challenge a classmate to a head-to-head set of questions — you choose the category, how many questions (not fixed, you pick the number), and a time limit when you create the challenge. You don't need to be online at the same time as your opponent. You're only matched against people close to your own level, so it stays fair.
+        </div>
+      </div>
+
+      <!-- 👥 Study Groups -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('groups')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">👥 Study Groups</span>
+          <span id="help-chevron-groups" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-groups" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          Team up with up to 2 classmates near your level to form a group. Anyone can start a group and become its leader, and any member — not just the leader — can invite more teammates. Once your group reaches 3 people, any member can send a <strong>lock request</strong>; your teacher then reviews it and confirms the lock, which makes membership <strong>permanent for good</strong> — so choose your teammates carefully. Your group has its own leaderboard too, based on everyone's combined effort.
+        </div>
+      </div>
+
+      <!-- 📋 Tasks -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('tasks')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">📋 Tasks (assignments from your teacher)</span>
+          <span id="help-chevron-tasks" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-tasks" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          <div style="margin-bottom:.6rem;">Sometimes your teacher will assign you a specific task — a set of questions to complete, sometimes with a deadline and a minimum accuracy requirement. You'll see these under "Tasks."</div>
+          <div style="margin-bottom:.6rem;">Completing a task always gets marked as done. But some tasks also have a bonus attached — your teacher decides this when creating the task:</div>
+          <ul style="margin:0 0 .6rem 1.1rem;padding:0;display:flex;flex-direction:column;gap:.3rem;">
+            <li>If your teacher turned on leaderboard bonuses for a task, and you hit the required accuracy, finishing it gives you <strong>extra points on the Weekly Prize board</strong> and a small extra boost to your Mastery level — on top of whatever you'd normally earn just from answering those questions.</li>
+            <li>If a task doesn't have that bonus turned on, finishing it is still tracked and shown as complete — it just doesn't add anything extra to either leaderboard.</li>
+          </ul>
+          <div style="font-size:.74rem;color:#94a3b8;">If a teacher deletes a task later, any extra bonus that task gave you is automatically taken back out of both leaderboards.</div>
+        </div>
+      </div>
+
+      <!-- 🏅 Milestones -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('milestones')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">🏅 Milestones</span>
+          <span id="help-chevron-milestones" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-milestones" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          A collection of achievements you unlock as you go — things like streaks (practicing several days in a row), hitting certain accuracy marks, or reaching a new level. Purely a way to see your progress, doesn't affect scoring.
+        </div>
+      </div>
+
+      <!-- 🔥 Streaks -->
+      <div class="home-card" style="padding:0;overflow:hidden;">
+        <button onclick="toggleHelpSection('streaks')" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.8rem 1.1rem;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="font-size:.85rem;font-weight:700;color:var(--navy);">🔥 Streaks</span>
+          <span id="help-chevron-streaks" style="transition:transform .15s;color:#94a3b8;">▾</span>
+        </button>
+        <div id="help-body-streaks" style="display:none;padding:0 1.1rem 1.1rem;font-size:.8rem;line-height:1.6;color:#475569;">
+          Counts how many days in a row you've practiced. Keeping it alive is its own kind of milestone.
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -8332,6 +8480,7 @@ function usernameToEmail(u){
     window.facultyServiceRoleKey=key;
     document.getElementById('facultyServiceKeyOverlay').style.display='none';
     document.getElementById('authOverlay').style.display='none';
+    document.body.classList.remove('auth-pending');
     enterFacultyMode();
   };
 
@@ -11650,8 +11799,8 @@ async function loadFacultyGroupsData(){
   sub.textContent='Loading…';
   try{
     const [groupsRes, membersRes, cached]=await Promise.all([
-      fetch(SUPABASE_URL+'/rest/v1/groups?select=id,name,founder_id,locked,created_at',{headers:facultyAuthHeaders()}),
-      fetch(SUPABASE_URL+'/rest/v1/group_members?select=group_id,user_id',{headers:facultyAuthHeaders()}),
+      fetch(SUPABASE_URL+'/rest/v1/groups?select=id,name,founder_id,locked,lock_requested,lock_requested_by,created_at',{headers:facultyAuthHeaders()}),
+      fetch(SUPABASE_URL+'/rest/v1/group_members?select=id,group_id,user_id',{headers:facultyAuthHeaders()}),
       getFacultyProfilesAndAttempts()
     ]);
     const groups=await groupsRes.json(), members=await membersRes.json();
@@ -11670,13 +11819,13 @@ async function loadFacultyGroupsData(){
     });
 
     const membersByGroup={};
-    members.forEach(m=>{ (membersByGroup[m.group_id]=membersByGroup[m.group_id]||[]).push(m.user_id); });
+    members.forEach(m=>{ (membersByGroup[m.group_id]=membersByGroup[m.group_id]||[]).push(m); });
 
     facultyGroupsCache=groups.map(g=>{
-      const ids=membersByGroup[g.id]||[];
-      const memberRows=ids.map(id=>({ name:nameById[id]||'Student', correct:correctCountByUser[id]||0 }));
+      const rows=membersByGroup[g.id]||[];
+      const memberRows=rows.map(m=>({ memberRowId:m.id, userId:m.user_id, name:nameById[m.user_id]||'Student', correct:correctCountByUser[m.user_id]||0 }));
       const totalScore=memberRows.reduce((s,m)=>s+m.correct,0);
-      return { id:g.id, name:g.name, locked:g.locked, founderName:nameById[g.founder_id]||'Unknown', memberRows, totalScore, memberCount:ids.length };
+      return { id:g.id, name:g.name, locked:g.locked, lockRequested:!!g.lock_requested, lockRequestedByName:g.lock_requested_by?(nameById[g.lock_requested_by]||'A member'):null, founderName:nameById[g.founder_id]||'Unknown', memberRows, totalScore, memberCount:rows.length };
     }).sort((a,b)=>b.totalScore-a.totalScore);
 
     renderFacultyGroups();
@@ -11704,21 +11853,100 @@ function renderFacultyGroups(){
 
   listEl.innerHTML=groups.map((g,i)=>`
     <div style="background:white;border:2px solid var(--border);border-radius:12px;padding:1rem 1.1rem;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.6rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.6rem;flex-wrap:wrap;">
         <div>
           <div style="font-size:.92rem;font-weight:700;color:var(--navy);">#${i+1} ${escHTML(g.name)} ${g.locked?'🔒':'🔓'}</div>
-          <div style="font-size:.72rem;color:#94a3b8;">Founded by ${escHTML(g.founderName)} · ${g.memberCount}/3 members</div>
+          <div style="font-size:.72rem;color:#94a3b8;">Led by ${escHTML(g.founderName)} · ${g.memberCount}/3 members</div>
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-weight:800;color:#6d28d9;font-size:1.05rem;">${g.totalScore}</div>
+        <div style="display:flex;align-items:center;gap:.7rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-weight:800;color:#6d28d9;font-size:1.05rem;">${g.totalScore}</div>
+          <button onclick="facultyDeleteGroup('${g.id}','${escHTML(g.name).replace(/'/g,"\\'")}')" title="Delete group" style="background:#fee2e2;color:#b91c1c;border:none;border-radius:7px;padding:.35rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap;">🗑 Delete Group</button>
+        </div>
       </div>
+      ${(!g.locked && g.lockRequested)?`
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;background:#eff6ff;border:1.5px dashed #3b82f6;border-radius:8px;padding:.6rem .8rem;margin-bottom:.7rem;">
+        <span style="font-size:.78rem;color:#1e40af;font-weight:600;">🔔 ${escHTML(g.lockRequestedByName||'A member')} requested this group be locked.</span>
+        <div style="display:flex;gap:.5rem;">
+          <button onclick="facultyConfirmGroupLock('${g.id}')" style="background:#1e40af;color:#fff;border:none;border-radius:7px;padding:.35rem .8rem;font-size:.74rem;font-weight:700;cursor:pointer;">✅ Confirm Lock</button>
+          <button onclick="facultyDenyGroupLock('${g.id}')" style="background:none;border:1.5px solid #94a3b8;color:#64748b;border-radius:7px;padding:.3rem .7rem;font-size:.74rem;font-weight:600;cursor:pointer;">Deny</button>
+        </div>
+      </div>`:''}
       <div style="display:flex;flex-direction:column;gap:.3rem;">
         ${g.memberRows.map(m=>`
-          <div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.35rem .6rem;background:#f8fafc;border-radius:7px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:.78rem;padding:.35rem .6rem;background:#f8fafc;border-radius:7px;gap:.5rem;">
             <span style="color:var(--navy);font-weight:600;">${escHTML(m.name)}</span>
-            <span style="color:#6d28d9;font-weight:700;">${m.correct} correct</span>
+            <div style="display:flex;align-items:center;gap:.6rem;">
+              <span style="color:#6d28d9;font-weight:700;">${m.correct} correct</span>
+              <button onclick="facultyRemoveGroupMember('${g.id}','${m.memberRowId}','${escHTML(m.name).replace(/'/g,"\\'")}')" title="Remove member" style="background:none;border:none;color:#b91c1c;font-size:.85rem;cursor:pointer;font-weight:700;">✕</button>
+            </div>
           </div>`).join('') || `<div style="font-size:.78rem;color:#94a3b8;">No members yet.</div>`}
       </div>
     </div>`).join('');
+}
+
+// ── FACULTY: GROUP MANAGEMENT ACTIONS ────────────────────
+// Teachers can delete any group, remove any member from any group, and are
+// the only ones who can turn a "lock requested" group into a permanently
+// locked one (or deny the request and let it keep forming). All actions use
+// the same service_role fetch pattern as facultyToggleBattleBlock above.
+async function facultyDeleteGroup(groupId,groupName){
+  if(!requireFacultyKey()) return;
+  if(!confirm(`Delete the group "${groupName}"? This removes the group and all its members permanently.`)) return;
+  try{
+    await fetch(SUPABASE_URL+'/rest/v1/group_invites?group_id=eq.'+groupId,{method:'DELETE',headers:facultyAuthHeaders()});
+    await fetch(SUPABASE_URL+'/rest/v1/group_members?group_id=eq.'+groupId,{method:'DELETE',headers:facultyAuthHeaders()});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/groups?id=eq.'+groupId,{method:'DELETE',headers:facultyAuthHeaders()});
+    if(!res.ok){ alert('Could not delete the group — try again.'); return; }
+    await loadFacultyGroupsData();
+  }catch(e){ alert('Network error deleting the group.'); }
+}
+async function facultyRemoveGroupMember(groupId,memberRowId,memberName){
+  if(!requireFacultyKey()) return;
+  if(!confirm(`Remove ${memberName} from this group?`)) return;
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/group_members?id=eq.'+memberRowId,{method:'DELETE',headers:facultyAuthHeaders()});
+    if(!res.ok){ alert('Could not remove the member — try again.'); return; }
+    await loadFacultyGroupsData();
+  }catch(e){ alert('Network error removing the member.'); }
+}
+async function facultyConfirmGroupLock(groupId){
+  if(!requireFacultyKey()) return;
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/groups?id=eq.'+groupId,{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({locked:true})
+    });
+    if(!res.ok){
+      let detail='';
+      try{ detail=(await res.json()).message||''; }catch(_e){}
+      alert('Could not confirm the lock'+(detail?': '+detail:' — try again.'));
+      return;
+    }
+    await fetch(SUPABASE_URL+'/rest/v1/group_invites?group_id=eq.'+groupId+'&status=eq.pending',{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({status:'expired'})
+    });
+    await loadFacultyGroupsData();
+  }catch(e){ alert('Network error confirming the lock: '+(e&&e.message?e.message:e)); }
+}
+async function facultyDenyGroupLock(groupId){
+  if(!requireFacultyKey()) return;
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/groups?id=eq.'+groupId,{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({lock_requested:false,lock_requested_by:null})
+    });
+    if(!res.ok){
+      let detail='';
+      try{ detail=(await res.json()).message||''; }catch(_e){}
+      alert('Could not deny the lock request'+(detail?': '+detail:' — try again.'));
+      return;
+    }
+    await loadFacultyGroupsData();
+  }catch(e){ alert('Network error denying the lock request: '+(e&&e.message?e.message:e)); }
 }
 
 // ── FACULTY: ALL BATTLES ─────────────────────────────────
@@ -15203,30 +15431,65 @@ function subscribeLeaderboardRealtime(){
 // STUDY GROUPS
 // Schema (new Supabase tables, RLS should mirror the "attempts"/"battles"
 // pattern already used — students can read all rows, only write their own):
-//   groups(id uuid pk, name text, founder_id uuid, locked boolean default false, created_at)
+//   groups(id uuid pk, name text, founder_id uuid, locked boolean default false,
+//          lock_requested boolean default false, lock_requested_by uuid, created_at)
 //   group_members(id uuid pk, group_id uuid fk, user_id uuid, joined_at)
 //   group_invites(id uuid pk, group_id uuid fk, from_user uuid, to_user uuid,
 //                  status text default 'pending', created_at)
+// NOTE: the "lock_requested" and "lock_requested_by" columns are new — add
+// them to your Supabase "groups" table (boolean default false, uuid nullable)
+// for the lock-request flow below to work.
 // Rules enforced client-side (and should ALSO be enforced via RLS/policies
 // for real security — client-side checks alone can be bypassed):
 //   - Inviter and invitee must be within ±1 level (same band as Battle Mode,
 //     reusing masteryToLevel/computeMasteryFromAttempts — no separate rank system)
 //   - Max 3 members per group
-//   - The instant a group hits 3 members it is LOCKED (locked=true) — no
-//     further invites, no leaving, no swapping, permanently frozen
+//   - ANY member (not just the founder/leader) can invite more people, up to
+//     the 3-member cap, and ANY member can request the group be locked once
+//     it has 3 members.
+//   - Reaching 3 members no longer auto-locks the group. Instead, once a group
+//     has 3 members, any member can click "Request Lock", which sets
+//     lock_requested=true. The group only becomes permanently locked
+//     (locked=true) when a teacher confirms the lock from Faculty Mode
+//     (see confirmGroupLock()). Only a teacher can lock, delete a group, or
+//     remove a member — see the Faculty: All Study Groups section below.
 //   - Group score on the leaderboard = SUM of each member's best... actually
 //     sum of each member's total marks across all their attempts (see
 //     computeGroupScore below — tweak the aggregation there if you want a
 //     different definition later)
 // ══════════════════════════════════════════════════════════
 let myGroupCache=null; // {id,name,founder_id,locked,members:[{userId,displayName}]}
+let groupLeaderboardRealtimeChannel=null;
 
 async function openGroupsHub(){
   if(!currentUser) return;
   showScreen('groups-hub-screen');
   await loadGroupsHubData();
+  subscribeGroupLeaderboardRealtime();
 }
-function closeGroupsHub(){ showScreen('home-screen'); }
+function closeGroupsHub(){
+  showScreen('home-screen');
+  if(groupLeaderboardRealtimeChannel){ sb.removeChannel(groupLeaderboardRealtimeChannel); groupLeaderboardRealtimeChannel=null; }
+}
+
+// Live updates for the group leaderboard: membership changes (a leader
+// adding/removing a teammate, or a teacher removing a member/deleting a
+// whole group) all hit group_members or groups, so listening to those two
+// tables covers every case without needing per-action wiring. Each event
+// just re-runs loadGroupLeaderboard(), which already recomputes every
+// group's score from scratch — so this is "refresh on change", not manual
+// increment/decrement bookkeeping.
+function subscribeGroupLeaderboardRealtime(){
+  if(groupLeaderboardRealtimeChannel) return; // already subscribed
+  groupLeaderboardRealtimeChannel=sb.channel('group-leaderboard-updates')
+    .on('postgres_changes',{event:'*',schema:'public',table:'group_members'}, ()=>{
+      if(document.getElementById('groups-hub-screen').classList.contains('active')) loadGroupLeaderboard();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'groups'}, ()=>{
+      if(document.getElementById('groups-hub-screen').classList.contains('active')) loadGroupLeaderboard();
+    })
+    .subscribe();
+}
 
 async function refreshGroupInviteBadgeOnly(){
   const badge=document.getElementById('group-invite-badge');
@@ -15299,11 +15562,12 @@ async function respondGroupInvite(inviteId,accept){
     }
     await sb.from('group_members').insert({group_id:invite.group_id,user_id:currentUser.id});
     await sb.from('group_invites').update({status:'accepted'}).eq('id',inviteId);
-    // Auto-lock the instant membership hits 3.
+    // Reaching 3 members no longer auto-locks the group — members must click
+    // "Request Lock" and a teacher must confirm it (see requestGroupLock /
+    // confirmGroupLock). We just clear any other pending invites once full,
+    // since there are no slots left to fill.
     const {count}=await sb.from('group_members').select('id',{count:'exact',head:true}).eq('group_id',invite.group_id);
     if(count>=3){
-      await sb.from('groups').update({locked:true}).eq('id',invite.group_id);
-      // Any other still-pending invites for this group are now moot.
       await sb.from('group_invites').update({status:'expired'}).eq('group_id',invite.group_id).eq('status','pending');
     }
     await loadGroupsHubData(); refreshGroupInviteBadgeOnly();
@@ -15319,7 +15583,7 @@ async function createGroup(){
   if(name.length>40){ errBox.textContent='Keep the name under 40 characters.'; errBox.style.display='block'; return; }
   btn.disabled=true;
   try{
-    const {data:group,error}=await sb.from('groups').insert({name,founder_id:currentUser.id,locked:false}).select().single();
+    const {data:group,error}=await sb.from('groups').insert({name,founder_id:currentUser.id,locked:false,lock_requested:false}).select().single();
     if(error||!group){ errBox.textContent='Could not create group — try again.'; errBox.style.display='block'; btn.disabled=false; return; }
     await sb.from('group_members').insert({group_id:group.id,user_id:currentUser.id});
     await loadGroupsHubData();
@@ -15330,31 +15594,56 @@ async function createGroup(){
 async function renderMyGroup(groupId){
   const section=document.getElementById('my-group-section');
   try{
-    const {data:group,error:gErr}=await sb.from('groups').select('id,name,founder_id,locked').eq('id',groupId).single();
+    const {data:group,error:gErr}=await sb.from('groups').select('id,name,founder_id,locked,lock_requested,lock_requested_by').eq('id',groupId).single();
     if(gErr||!group){ section.style.display='none'; return; }
     const {data:members,error:mErr}=await sb.from('group_members').select('user_id').eq('group_id',groupId);
     if(mErr){ section.style.display='none'; return; }
     const memberIds=members.map(m=>m.user_id);
 
-    // Pending invites the founder has already sent for this group — shown as
+    // Pending invites any member has already sent for this group — shown as
     // "waiting on response" chips so invited slots don't look empty/available
     // while someone hasn't yet accepted or declined.
     const {data:pendingInvites}=await sb.from('group_invites')
-      .select('id,to_user').eq('group_id',groupId).eq('status','pending');
+      .select('id,to_user,from_user').eq('group_id',groupId).eq('status','pending');
     const pending=pendingInvites||[];
 
-    const allProfileIds=[...new Set([...memberIds,...pending.map(p=>p.to_user)])];
+    const allProfileIds=[...new Set([...memberIds,...pending.map(p=>p.to_user),...(group.lock_requested_by?[group.lock_requested_by]:[])])];
     const {data:profiles}=await sb.from('profiles').select('id,username,full_name').in('id',allProfileIds.length?allProfileIds:['00000000-0000-0000-0000-000000000000']);
     const nameById={};
     (profiles||[]).forEach(p=>{ nameById[p.id]=p.full_name||p.username||'Student'; });
-    myGroupCache={id:group.id,name:group.name,founder_id:group.founder_id,locked:group.locked,members:memberIds.map(id=>({userId:id,displayName:nameById[id]||'Student'}))};
 
-    const isFounder=group.founder_id===currentUser.id;
+    // Per-member contribution toward the group score. Visible only inside
+    // this panel (i.e. only to fellow group members, since this section only
+    // renders for people who are themselves in the group) — never surfaced
+    // on the public group leaderboard, which stays group-vs-group only.
+    const {data:memberAttempts}=await sb.from('attempts')
+      .select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
+      .eq('hidden_by_student',false).eq('hidden_by_teacher',false)
+      .in('user_id',memberIds.length?memberIds:['00000000-0000-0000-0000-000000000000'])
+      .order('created_at',{ascending:true});
+    const attemptsByMember={};
+    (memberAttempts||[]).forEach(a=>{ (attemptsByMember[a.user_id]=attemptsByMember[a.user_id]||[]).push(a); });
+    const contribByUser={};
+    memberIds.forEach(id=>{ contribByUser[id]=countCurrentCorrectForMember(attemptsByMember[id]||[]); });
+
+    myGroupCache={id:group.id,name:group.name,founder_id:group.founder_id,locked:group.locked,lockRequested:!!group.lock_requested,members:memberIds.map(id=>({userId:id,displayName:nameById[id]||'Student',contribution:contribByUser[id]||0}))};
+
+    // Any member (leader or otherwise) can invite teammates and request a lock —
+    // "founder" is just a label for who started the group, not a special permission.
+    const isMember=memberIds.includes(currentUser.id);
     const slotsLeft=3-memberIds.length-pending.length;
+    const isLeader=currentUser.id===group.founder_id;
+    const canKick=isLeader && !group.locked;
     const memberChips=myGroupCache.members.map(m=>`
-      <div style="display:flex;align-items:center;gap:.5rem;background:var(--slate-light);border-radius:8px;padding:.5rem .8rem;">
-        <span style="width:26px;height:26px;border-radius:50%;background:#6d28d9;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;">${escHTML((m.displayName||'S')[0].toUpperCase())}</span>
-        <span style="font-size:.84rem;font-weight:600;color:var(--navy);">${escHTML(m.displayName)}${m.userId===group.founder_id?' <span style="color:#94a3b8;font-weight:500;">(founder)</span>':''}</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;background:var(--slate-light);border-radius:8px;padding:.5rem .8rem;">
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <span style="width:26px;height:26px;border-radius:50%;background:#6d28d9;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;">${escHTML((m.displayName||'S')[0].toUpperCase())}</span>
+          <span style="font-size:.84rem;font-weight:600;color:var(--navy);">${escHTML(m.displayName)}${m.userId===group.founder_id?' <span style="color:#94a3b8;font-weight:500;">(leader)</span>':''}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.6rem;">
+          <span title="This member's contribution to the group score" style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:800;color:#6d28d9;background:#f3e8ff;border-radius:999px;padding:.15rem .55rem;">${m.contribution}</span>
+          ${(canKick && m.userId!==group.founder_id)?`<button data-kick-user-id="${escHTML(m.userId)}" onclick="removeGroupMember(this.dataset.kickUserId)" title="Remove from group" style="background:none;border:none;color:#94a3b8;font-size:.85rem;cursor:pointer;font-weight:700;">✕</button>`:''}
+        </div>
       </div>`).join('');
     const pendingChips=pending.map(p=>`
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;background:#fef3c7;border:1px dashed #f59e0b;border-radius:8px;padding:.5rem .8rem;">
@@ -15362,24 +15651,94 @@ async function renderMyGroup(groupId){
           <span style="width:26px;height:26px;border-radius:50%;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;">${escHTML((nameById[p.to_user]||'S')[0].toUpperCase())}</span>
           <span style="font-size:.84rem;font-weight:600;color:#92400e;">${escHTML(nameById[p.to_user]||'Student')} <span style="font-weight:500;">— invite pending</span></span>
         </div>
-        ${isFounder&&!group.locked?`<button onclick="cancelGroupInvite('${p.id}')" title="Cancel invite" style="background:none;border:none;color:#92400e;font-size:.85rem;cursor:pointer;font-weight:700;">✕</button>`:''}
+        ${((isMember&&!group.lock_requested)||(isLeader&&group.lock_requested))&&!group.locked?`<button onclick="cancelGroupInvite('${p.id}')" title="Cancel invite" style="background:none;border:none;color:#92400e;font-size:.85rem;cursor:pointer;font-weight:700;">✕</button>`:''}
       </div>`).join('');
     const emptySlots=Array.from({length:Math.max(0,slotsLeft)}).map(()=>`
       <div style="display:flex;align-items:center;gap:.5rem;border:2px dashed var(--border);border-radius:8px;padding:.5rem .8rem;color:#94a3b8;font-size:.82rem;">+ Open slot</div>`).join('');
+
+    const isFull=memberIds.length>=3;
+    let statusBadge, statusLabel;
+    if(group.locked){ statusBadge='background:#dcfce7;color:#166534;'; statusLabel='🔒 Locked'; }
+    else if(group.lock_requested){ statusBadge='background:#dbeafe;color:#1e40af;'; statusLabel='⏳ Awaiting teacher confirmation'; }
+    else{ statusBadge='background:#fef3c7;color:#92400e;'; statusLabel='Forming'; }
 
     section.style.display='block';
     section.innerHTML=`
       <div class="home-card" style="padding:1.3rem 1.5rem 1.5rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;">
           <div style="font-size:1.05rem;font-weight:800;color:var(--navy);">👥 ${escHTML(group.name)}</div>
-          <span style="font-size:.7rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:.25rem .6rem;border-radius:999px;${group.locked?'background:#dcfce7;color:#166534;':'background:#fef3c7;color:#92400e;'}">${group.locked?'🔒 Locked':'Forming'}</span>
+          <span style="font-size:.7rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:.25rem .6rem;border-radius:999px;${statusBadge}">${statusLabel}</span>
         </div>
         <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:${(slotsLeft>0||pending.length>0)&&!group.locked?'1rem':'0'};">${memberChips}${!group.locked?pendingChips+emptySlots:''}</div>
-        ${(!group.locked && isFounder && slotsLeft>0)?`<button class="start-btn" style="width:100%;margin:0;" onclick="openInviteModal()">+ Invite a Teammate</button>`:''}
-        ${(!group.locked && !isFounder)?`<div style="font-size:.76rem;color:#94a3b8;text-align:center;margin-top:.4rem;">Only ${escHTML(nameById[group.founder_id]||'the founder')} can invite more members.</div>`:''}
-        <div style="font-size:.74rem;color:#94a3b8;margin-top:.8rem;text-align:center;">Membership is permanent once your group locks at 3 members — choose teammates carefully.</div>
+        ${(!group.locked && !group.lock_requested && isMember && slotsLeft>0)?`<button class="start-btn" style="width:100%;margin:0;" onclick="openInviteModal()">+ Invite a Teammate</button>`:''}
+        ${(!group.locked && group.lock_requested && isLeader && slotsLeft>0)?`<button class="start-btn" style="width:100%;margin:0;" onclick="openInviteModal()">+ Invite a Teammate</button>`:''}
+        ${(!group.locked && !group.lock_requested && isMember && isFull)?`<button class="start-btn" style="width:100%;margin:.6rem 0 0;background:linear-gradient(135deg,#1e40af,#3b82f6);" onclick="requestGroupLock()">🔒 Request Lock (ask teacher to confirm)</button>`:''}
+        ${(!group.locked && group.lock_requested)?`<div style="font-size:.78rem;color:#1e40af;text-align:center;margin-top:.6rem;background:#eff6ff;border-radius:8px;padding:.6rem;">${escHTML(nameById[group.lock_requested_by]||'A member')} requested this group be locked. Your teacher needs to confirm it before it becomes permanent.${isLeader?`<button class="start-btn" style="width:100%;margin:.6rem 0 0;background:none;border:2px solid #1e40af;color:#1e40af;" onclick="revokeGroupLockRequest()">Revoke Lock Request</button>`:''}</div>`:''}
+        <div style="font-size:.74rem;color:#94a3b8;margin-top:.8rem;text-align:center;">Any member can invite teammates or request a lock. Once your teacher confirms the lock, membership is permanent — choose teammates carefully.</div>
       </div>`;
   }catch(e){ section.style.display='none'; }
+}
+
+// Any member (not just the leader) can request that a full (3-member) group
+// be locked. This does NOT lock it — it only flags it for teacher review;
+// see confirmGroupLock() in the Faculty section, which is the only thing
+// that actually sets locked=true.
+// Leader-only: cancel a pending lock request before the teacher acts on it.
+// Only clears lock_requested/lock_requested_by — has no effect once the
+// teacher has actually confirmed the lock (group.locked===true), since at
+// that point membership is permanent and this button is no longer shown.
+async function revokeGroupLockRequest(){
+  if(!myGroupCache||myGroupCache.locked||!myGroupCache.lockRequested) return;
+  if(currentUser.id!==myGroupCache.founder_id) return; // leader-only: any member can request a lock, but only the leader can revoke it
+  try{
+    const {data,error}=await sb.from('groups').update({lock_requested:false,lock_requested_by:null}).eq('id',myGroupCache.id).select();
+    if(error){ alert('Could not revoke the lock request: '+error.message); return; }
+    if(!data||!data.length){ alert('The revoke could not be saved — your account may not have permission. Please tell your teacher.'); return; }
+    await renderMyGroup(myGroupCache.id);
+  }catch(e){ console.warn('revokeGroupLockRequest failed',e); alert('Network error revoking the lock request: '+(e&&e.message?e.message:e)); }
+}
+
+async function requestGroupLock(){
+  if(!myGroupCache||myGroupCache.locked||myGroupCache.lockRequested) return;
+  if((myGroupCache.members||[]).length<3) return;
+  try{
+    const {data,error}=await sb.from('groups').update({lock_requested:true,lock_requested_by:currentUser.id}).eq('id',myGroupCache.id).select();
+    if(error){ alert('Could not send the lock request: '+error.message); return; }
+    // Supabase returns an empty array (no error) when a row exists but RLS
+    // silently blocks the update — that looks identical to "nothing happened"
+    // from the UI's perspective, so we surface it explicitly instead of
+    // quietly re-rendering the unchanged group.
+    if(!data||!data.length){ alert('The lock request could not be saved — your account may not have permission to update this group. Please tell your teacher.'); return; }
+    const {data:myMembership}=await sb.from('group_members').select('group_id').eq('user_id',currentUser.id).maybeSingle();
+    if(myMembership) await renderMyGroup(myMembership.group_id);
+  }catch(e){ console.warn('requestGroupLock failed',e); alert('Network error sending the lock request: '+(e&&e.message?e.message:e)); }
+}
+
+// Leader-only: kick a member out of the group before it's locked. Deleting
+// the group_members row is all that's needed — the group leaderboard query
+// (loadGroupLeaderboard) re-sums scores from whoever is currently in
+// group_members every time it loads, so the kicked member's score drops out
+// and the group's leaderboard position updates automatically on next refresh.
+// Blocked entirely once the teacher has confirmed the lock (group.locked===true).
+// While a lock request is merely pending, the leader can still add/remove
+// members — see canKick above / guard below.
+async function removeGroupMember(memberUserId){
+  if(!myGroupCache||myGroupCache.locked) return;
+  if(currentUser.id!==myGroupCache.founder_id) return; // only the leader can kick
+  if(memberUserId===myGroupCache.founder_id) return; // leader can't remove themselves this way
+  const memberName=(myGroupCache.members.find(m=>m.userId===memberUserId)||{}).displayName||'this member';
+  if(!confirm(`Remove ${memberName} from the group?`)) return;
+  try{
+    const {data,error}=await sb.from('group_members').delete().eq('group_id',myGroupCache.id).eq('user_id',memberUserId).select();
+    if(error){ alert('Could not remove '+memberName+': '+error.message); return; }
+    // Supabase returns an empty array (no error) when the row exists but RLS
+    // silently blocks the delete — that looks identical to "nothing happened"
+    // from the UI's perspective, so we surface it explicitly instead of
+    // quietly re-rendering as if the removal succeeded.
+    if(!data||!data.length){ alert('Could not remove '+memberName+' — your account may not have permission to modify this group. Please tell your teacher.'); return; }
+    await renderMyGroup(myGroupCache.id);
+    await loadGroupLeaderboard();
+  }catch(e){ console.warn('removeGroupMember failed',e); alert('Network error removing '+memberName+': '+(e&&e.message?e.message:e)); }
 }
 
 async function cancelGroupInvite(inviteId){
@@ -15469,22 +15828,37 @@ async function sendGroupInvite(){
   }catch(e){ errBox.textContent='Could not send invite — try again.'; errBox.style.display='block'; }
 }
 
-// Group score = sum of every member's total marks earned across all their
-// attempts (career total, not just one session) — simplest "sum" reading of
-// "group score is sum score". Adjust the reduce() below if you'd rather sum
-// percent, best-attempt-only, etc.
-// Computes, for one member, the count of unique questions in the bank they
-// currently have CORRECT — using the exact same "regrade against the live
-// question, take the most recent verdict" logic as Redo My Mistakes
-// (loadMistakesBreakdown/regradeAgainstLive above). A question flips from
-// wrong to correct (or vice versa) if a later attempt re-answers it, or if
-// the question itself was edited after the student answered it — so this
-// always reflects the student's CURRENT mastery, not a stale sum of past
-// per-attempt marks.
+// Group score = sum, across all questions in the bank, of the per-question
+// value each member has earned on it (see scoring rule below). Adjust
+// valueForQuestionHistory() if the scoring rule ever changes.
+//
+// Per-question scoring rule (per-member, per-question):
+//   - Correct on the FIRST attempt at that question -> worth 1.0
+//   - Wrong on the first attempt, then corrected on the very NEXT attempt
+//     (the one and only "redo" that counts) -> worth 0.5
+//   - Wrong on the first attempt and still wrong (or not yet redone) on
+//     that one counted redo -> worth 0
+//   - Any further re-attempts after that first redo don't change the value
+//     either way — only the first two tries at a question ever matter.
+// "Correct" for each historical try is regraded against the LIVE question
+// definition (same regradeAgainstLive logic as Redo My Mistakes), so an
+// edited question is judged by its current answer key, not a stale one.
+function valueForQuestionHistory(triesInOrder){
+  // triesInOrder: array of booleans (isCorrectNow), oldest try first,
+  // already capped by the caller to at most the first two tries.
+  if(!triesInOrder.length) return 0;
+  if(triesInOrder[0]) return 1;           // correct first try
+  if(triesInOrder.length>1 && triesInOrder[1]) return 0.5; // wrong then fixed on the one redo
+  return 0;                                // still wrong (no redo yet, or redo also wrong)
+}
+
 function countCurrentCorrectForMember(attempts){
   const liveById={};
   QUESTIONS.forEach(q=>{ liveById[q.id]=q; });
-  const correctSet=new Set();
+  // For each question, collect the ordered (oldest->newest) correctness of
+  // each try, but only keep at most the first two tries — everything after
+  // the first redo is irrelevant to scoring.
+  const triesByQuestion={};
   attempts // must already be sorted oldest→newest by caller
     .forEach(attempt=>{
       const qs=attempt.questions_json||[], ans=attempt.answers_json||{};
@@ -15493,13 +15867,16 @@ function countCurrentCorrectForMember(attempts){
         if(!a) return;
         const liveQ=liveById[snapshotQ.id];
         if(!liveQ) return; // question removed since — doesn't count either way
+        const arr=(triesByQuestion[snapshotQ.id]=triesByQuestion[snapshotQ.id]||[]);
+        if(arr.length>=2) return; // only the first attempt + one redo ever matter
         const regraded=regradeAgainstLive(liveQ, a.userAnswer);
         const isCorrectNow = regraded===null ? (a.isCorrect===true) : (regraded===true);
-        if(isCorrectNow) correctSet.add(snapshotQ.id);
-        else correctSet.delete(snapshotQ.id);
+        arr.push(isCorrectNow);
       });
     });
-  return correctSet.size;
+  let total=0;
+  Object.values(triesByQuestion).forEach(tries=>{ total+=valueForQuestionHistory(tries); });
+  return total;
 }
 
 async function loadGroupLeaderboard(){
@@ -16767,8 +17144,10 @@ function showScreen(id){
   // is fragile — this one place catches every path instead.
   const leavingBattle = id!=='battle-hub-screen' && typeof battleRealtimeChannel!=='undefined' && battleRealtimeChannel;
   const leavingLeaderboard = id!=='leaderboard-screen' && typeof leaderboardRealtimeChannel!=='undefined' && leaderboardRealtimeChannel;
+  const leavingGroupsHub = id!=='groups-hub-screen' && typeof groupLeaderboardRealtimeChannel!=='undefined' && groupLeaderboardRealtimeChannel;
   if(leavingBattle){ sb.removeChannel(battleRealtimeChannel); battleRealtimeChannel=null; }
   if(leavingLeaderboard){ sb.removeChannel(leaderboardRealtimeChannel); leaderboardRealtimeChannel=null; }
+  if(leavingGroupsHub){ sb.removeChannel(groupLeaderboardRealtimeChannel); groupLeaderboardRealtimeChannel=null; }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);updateStickyOffsets()
 }
 
@@ -16777,6 +17156,18 @@ function openMistakesPage(){ showScreen('mistakes-screen'); loadMistakesBreakdow
 function openGhostPage(){ showScreen('ghost-screen'); loadGhostSection(); }
 async function openPastAttemptsPage(){ showScreen('past-attempts-screen'); await loadPastAttempts(); }
 function openMilestonesPage(){ showScreen('milestones-screen'); loadMilestonesPageDetail(); }
+function openHelpPage(){ showScreen('help-screen'); }
+
+// Accordion toggle for the Help screen — same expand/collapse pattern as the
+// Weekly Prize / Level explainers, generalized by section key so each card
+// expands/collapses independently.
+function toggleHelpSection(key){
+  const body=document.getElementById('help-body-'+key);
+  const chevron=document.getElementById('help-chevron-'+key);
+  const isOpen=body.style.display==='block';
+  body.style.display=isOpen?'none':'block';
+  chevron.style.transform=isOpen?'rotate(0deg)':'rotate(180deg)';
+}
 
 // ── RESPONSIVE STICKY OFFSETS ───────────────────────────
 // Keeps sticky headers/progress bars correctly stacked even when the
@@ -17166,6 +17557,7 @@ function startExam(){
 // (marks × 1.2) timer allowance.
 async function beginSessionWithQuestions(qList, timerMinutesOverride){
   shuffledQ = qList;
+  _qcNavCollapsed=false; _qcMenuCollapsed=false; // start each session with both bars expanded
   currentIdx=0; answers={}; pendingTF={}; pendingMCQ={}; pendingNum={}; pendingToken={}; pendingCheckbox={}; pendingMatch={}; shuffledPoolCache={}; pendingPairs={}; armedLeft={}; pendingDrag={}; armedChip={}; pendingMulti={};
   totalMarksSelected=shuffledQ.reduce((s,q)=>s+(q.noMark?2:(q.marks||2)),0);
   totalRealMarksSelected=shuffledQ.reduce((s,q)=>s+(q.noMark?0:(q.marks||2)),0);
@@ -17201,6 +17593,41 @@ function startTimer(){
     if(secondsLeft%5===0) autosaveLiveAttempt(); // periodic snapshot, throttled to every 5s
     if(secondsLeft<=0){clearInterval(timerInterval);if(mode==='test')finalizeTestAnswers();showResults()}
   },1000);
+}
+
+// ── COLLAPSIBLE BARS: Jump-to-Question (q-nav dots) and top Menu bar (topbar) ──
+// Expanded by default. State persists across question navigation (re-renders)
+// within the same quiz session, and is re-applied every time renderQuestion runs
+// since the q-header (with the toggle buttons) is rebuilt from scratch each time.
+let _qcNavCollapsed=false, _qcMenuCollapsed=false;
+function toggleQNav(){
+  _qcNavCollapsed=!_qcNavCollapsed;
+  applyQCState();
+}
+function toggleQMenu(){
+  _qcMenuCollapsed=!_qcMenuCollapsed;
+  applyQCState();
+}
+function applyQCState(){
+  const nav=document.getElementById('q-nav');
+  const bar=document.querySelector('.topbar');
+  const navBtn=document.getElementById('qtb-nav');
+  const menuBtn=document.getElementById('qtb-menu');
+  const navLbl=document.getElementById('qtb-nav-label');
+  const menuLbl=document.getElementById('qtb-menu-label');
+  if(nav){
+    // Only actually hide it if it's meant to be visible in this mode (practice/test);
+    // in quiz mode it's already display:none via inline style, leave that alone.
+    const shouldShow = nav.style.display!=='none' || mode==='practice' || mode==='test';
+    if(mode==='practice'||mode==='test'){
+      nav.classList.toggle('qc-collapsed', _qcNavCollapsed);
+    }
+  }
+  if(bar) bar.classList.toggle('qc-collapsed', _qcMenuCollapsed);
+  if(navBtn){ navBtn.classList.toggle('qtb-open', !_qcNavCollapsed); }
+  if(menuBtn){ menuBtn.classList.toggle('qtb-open', !_qcMenuCollapsed); }
+  if(navLbl) navLbl.textContent = _qcNavCollapsed ? 'Jump to Question' : 'Hide Jump to Question';
+  if(menuLbl) menuLbl.textContent = _qcMenuCollapsed ? 'Menu' : 'Hide Menu';
 }
 
 // ── NAV ────────────────────────────────────────────────
@@ -17254,7 +17681,7 @@ function updateQuizProgressBar(){
   if(frac)frac.textContent=`${done} / ${total}`;
   if(fill)fill.style.width=`${pct}%`;
 }
-function goToQuestion(i){if(mode==='quiz')return;currentIdx=i;updateNav();renderQuestion(i);window.scrollTo(0,0)}
+function goToQuestion(i){if(mode==='quiz')return;currentIdx=i;updateNav();renderQuestion(i);applyQCState();window.scrollTo(0,0)}
 
 // ── RENDER QUESTION ────────────────────────────────────
 function renderQuestion(idx){
@@ -17266,6 +17693,10 @@ function renderQuestion(idx){
 
   let html=`<div class="q-header">
     <span class="q-num">Question ${idx+1} of ${shuffledQ.length}</span>
+    <div class="q-header-toggles">
+      <button type="button" class="q-toggle-btn" id="qtb-nav" onclick="toggleQNav()"><span class="qtb-arrow">▾</span><span id="qtb-nav-label">Jump to Question</span></button>
+      <button type="button" class="q-toggle-btn" id="qtb-menu" onclick="toggleQMenu()"><span class="qtb-arrow">▾</span><span id="qtb-menu-label">Menu</span></button>
+    </div>
     ${q.noMark?'<span class="q-marks">Practice</span>':`<span class="q-marks">${q.marks} marks</span>`}
   </div><div class="q-body">
     <div class="q-text">${renderQText(q)}</div>`;
@@ -17573,6 +18004,7 @@ function renderQuestion(idx){
   document.getElementById('question-card').innerHTML=html;
   updateNav();
   autosaveLiveAttempt();
+  applyQCState();
 }
 
 // ── SELECTION & SUBMIT ─────────────────────────────────
