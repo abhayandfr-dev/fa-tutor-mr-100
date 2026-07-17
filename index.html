@@ -1152,6 +1152,7 @@
         <span id="leaderboard-your-level-num" style="font-size:2.1rem;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.15);">L1</span>
         <span id="leaderboard-your-mastery" style="font-size:.88rem;color:rgba(255,255,255,.95);font-weight:600;">0% mastery</span>
       </div>
+      <div id="leaderboard-your-rank-line" style="font-size:.78rem;color:rgba(255,255,255,.9);font-weight:600;margin-top:.35rem;"></div>
       <div style="height:9px;background:rgba(255,255,255,.25);border-radius:6px;margin-top:.7rem;overflow:hidden;">
         <div id="leaderboard-your-progress-bar" style="height:100%;width:0%;background:#fff;border-radius:6px;transition:width .4s;box-shadow:0 0 10px rgba(255,255,255,.6);"></div>
       </div>
@@ -1234,6 +1235,12 @@
     <div id="battle-finished-section" style="display:none;">
       <div style="font-size:.9rem;font-weight:700;color:var(--navy);margin-bottom:.6rem;">✅ Finished</div>
       <div id="battle-finished-list" style="display:flex;flex-direction:column;gap:.6rem;"></div>
+    </div>
+
+    <!-- BATTLES A TEACHER CANCELLED -->
+    <div id="battle-cancelled-section" style="display:none;margin-top:1.3rem;">
+      <div style="font-size:.9rem;font-weight:700;color:var(--navy);margin-bottom:.6rem;">🚫 Cancelled by teacher</div>
+      <div id="battle-cancelled-list" style="display:flex;flex-direction:column;gap:.6rem;"></div>
     </div>
 
     <div id="battle-hub-empty-msg" style="display:none;text-align:center;padding:2rem 1rem;color:#94a3b8;font-size:.85rem;">No battles yet — start one above!</div>
@@ -12045,35 +12052,40 @@ function renderFacultyBattles(){
 }
 
 // Faculty force-cancelling any pending/in-progress battle (e.g. a dispute, a
-// mismatch, or an inappropriate opponent pairing) — sets the same 'declined'
-// status the student-side reject/cancel actions use, so it disappears from
-// both students' hubs immediately.
+// mismatch, or an inappropriate opponent pairing). Sets 'declined' (the same
+// status the student-side reject/cancel actions use) plus cancelled_by_faculty
+// so the hub can tell the challenger "your teacher cancelled this" instead of
+// the battle just silently vanishing. Some Supabase projects' battles table
+// has a status CHECK constraint that doesn't (yet) include every status value
+// this app writes, so we try a small set of payloads/columns in order and use
+// whichever the DB actually accepts, instead of failing outright.
 async function facultyCancelBattle(battleId){
   if(!requireFacultyKey()) return;
   if(!confirm('Cancel this battle for both students? This cannot be undone.')) return;
+  const attempts=[
+    {status:'declined',declined_at:new Date().toISOString(),cancelled_by_faculty:true},
+    {status:'declined',cancelled_by_faculty:true},
+    {status:'declined',declined_at:new Date().toISOString()},
+    {status:'declined'},
+    {status:'expired',cancelled_by_faculty:true},
+    {status:'expired'}
+  ];
+  let res, lastDetail='';
   try{
-    let res=await fetch(SUPABASE_URL+'/rest/v1/battles?id=eq.'+encodeURIComponent(battleId),{
-      method:'PATCH',
-      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
-      body:JSON.stringify({status:'declined',declined_at:new Date().toISOString()})
-    });
-    // If the declined_at column doesn't exist yet on this Supabase project,
-    // Postgrest rejects the whole PATCH (incl. status) — retry with status
-    // alone so cancelling still works even before that migration is run.
-    if(!res.ok){
+    for(const payload of attempts){
       res=await fetch(SUPABASE_URL+'/rest/v1/battles?id=eq.'+encodeURIComponent(battleId),{
         method:'PATCH',
         headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
-        body:JSON.stringify({status:'declined'})
+        body:JSON.stringify(payload)
       });
+      if(res.ok) break;
+      try{ const j=await res.json(); lastDetail=j&&j.message?j.message:''; }catch(e){}
     }
     if(res.ok){
-      facultyBattlesCache=facultyBattlesCache.map(b=>b.id===battleId?{...b,status:'declined'}:b);
+      facultyBattlesCache=facultyBattlesCache.map(b=>b.id===battleId?{...b,status:'declined',cancelled_by_faculty:true}:b);
       renderFacultyBattles();
     } else {
-      let detail='';
-      try{ const j=await res.json(); detail=j&&j.message?' ('+j.message+')':''; }catch(e){}
-      alert('Could not cancel — check your service_role key and try again.'+detail);
+      alert('Could not cancel \u2014 the battles table\'s status rule on this Supabase project is rejecting every status value this app tries (declined/expired). Ask whoever manages the database to check the "battles_status_check" constraint.'+(lastDetail?' ('+lastDetail+')':''));
     }
   }catch(e){ alert('Network error while cancelling.'); }
 }
@@ -14990,6 +15002,13 @@ function renderLeaderboard(){
     document.getElementById('leaderboard-your-level-num').textContent='L'+me.level;
     document.getElementById('leaderboard-your-mastery').textContent=Math.round(me.mastery*100)+'% mastery';
     document.getElementById('leaderboard-your-progress-bar').style.width=Math.round(me.mastery*100)+'%';
+    // Exact rank within your own level tier, so "Your Level" doesn't just
+    // say the level number — it tells you where you stand among peers at
+    // that same level.
+    const tierMates=students.filter(s=>s.level===me.level).sort((a,b)=>b.mastery-a.mastery);
+    const myRankInTier=tierMates.findIndex(s=>s.userId===currentUser.id)+1;
+    document.getElementById('leaderboard-your-rank-line').textContent=
+      myRankInTier>0 ? `👉 You're #${myRankInTier} of ${tierMates.length} at Level ${me.level}` : '';
   }else{
     banner.style.display='none';
   }
@@ -15013,8 +15032,8 @@ function renderLeaderboard(){
     const rows=inTier.map((s,idx)=>{
       const highlight=s.userId===currentUser.id;
       const medal=idx<3?medals[idx]+' ':`<span style="opacity:.4;font-weight:700;">${idx+1}.</span> `;
-      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.6rem .85rem;border-radius:10px;${highlight?`background:linear-gradient(135deg,#fef3c7,#fff7ed);border:2px solid #f59e0b;box-shadow:0 2px 8px rgba(245,158,11,.2);`:'background:#f8fafc;border:2px solid transparent;'}">
-        <span style="font-size:.85rem;font-weight:${highlight?'800':'600'};color:var(--navy);">${medal}${escHTML(s.displayName)}${highlight?' <span style="font-size:.7rem;color:#b45309;">(you)</span>':''}</span>
+      return `<div ${highlight?'id="leaderboard-my-row"':''} style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.6rem .85rem;border-radius:10px;${highlight?`background:linear-gradient(135deg,#fef3c7,#fff7ed);border:2px solid #f59e0b;box-shadow:0 2px 8px rgba(245,158,11,.2);`:'background:#f8fafc;border:2px solid transparent;'}">
+        <span style="font-size:.85rem;font-weight:${highlight?'800':'600'};color:var(--navy);display:flex;align-items:center;gap:.4rem;">${highlight?'<span style="font-size:1rem;">👉</span>':''}${medal}${escHTML(s.displayName)}${highlight?' <span style="font-size:.7rem;color:#b45309;font-weight:800;">← this is you</span>':''}</span>
         <span style="display:flex;align-items:baseline;gap:.4rem;flex-wrap:wrap;justify-content:flex-end;">
           <span style="font-size:.68rem;color:#94a3b8;">${s.attemptCount} answered</span>
           <span style="font-size:.85rem;font-weight:800;color:${tierColor};">${Math.round(s.mastery*100)}%</span>
@@ -15032,6 +15051,14 @@ function renderLeaderboard(){
       <div style="display:flex;flex-direction:column;gap:.4rem;">${rows}</div>
     </div>`;
   }).join('');
+
+  // Scroll the student's own row into view so they don't have to hunt for
+  // themselves across the (up to 3) visible tiers. Small delay so the DOM
+  // has actually painted the freshly-injected HTML first.
+  setTimeout(()=>{
+    const myRow=document.getElementById('leaderboard-my-row');
+    if(myRow) myRow.scrollIntoView({behavior:'smooth',block:'center'});
+  },50);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -16115,12 +16142,20 @@ async function loadBattleOpponentOptions(){
     const myLevel=masteryToLevel(myMastery);
 
     const nearMyLevel=students.filter(s=>Math.abs(s.level-myLevel)<=1);
-    battleOpponentPool=nearMyLevel.length>0?nearMyLevel:students; // fall back to everyone if my tier is empty
+    // Battle Mode is strictly limited to opponents within ±1 level of the
+    // challenger (per the level-mastery leaderboard position). No fallback
+    // to "everyone" — if nobody is in range, the pool (and dropdown) stay
+    // empty rather than letting a mismatched challenge happen.
+    battleOpponentPool=nearMyLevel;
 
-    const optionsHtml=students
+    const optionsHtml=nearMyLevel
       .sort((a,b)=>a.displayName.localeCompare(b.displayName))
       .map(s=>`<option value="${escHTML(s.userId)}">${escHTML(s.displayName)} (L${s.level})</option>`).join('');
-    sel.innerHTML=`<option value="__random__">🎲 Random (someone near my level)</option>`+optionsHtml;
+    if(nearMyLevel.length===0){
+      sel.innerHTML=`<option value="">No opponents within your level range yet</option>`;
+    }else{
+      sel.innerHTML=`<option value="__random__">🎲 Random (someone near my level)</option>`+optionsHtml;
+    }
     loadingMsg.style.display='none';
   }catch(e){
     loadingMsg.textContent='Could not load opponents — try again.';
@@ -16152,6 +16187,14 @@ async function createBattle(){
   }
   if(!opponentId||opponentId==='__random__'){
     errBox.textContent='Pick an opponent first.';
+    errBox.style.display='block';
+    return;
+  }
+  // Safety net: the dropdown only lists opponents within ±1 level, but
+  // double-check here too so a challenge can never be created against
+  // someone outside that range (e.g. stale dropdown state).
+  if(!battleOpponentPool.some(s=>s.userId===opponentId)){
+    errBox.textContent='That opponent is no longer within your level range — refresh and pick again.';
     errBox.style.display='block';
     return;
   }
@@ -16287,12 +16330,18 @@ function renderBattleHub(){
   const incomingSection=document.getElementById('battle-incoming-section');
   const outgoingSection=document.getElementById('battle-outgoing-section');
   const finishedSection=document.getElementById('battle-finished-section');
+  const cancelledSection=document.getElementById('battle-cancelled-section');
   const incomingList=document.getElementById('battle-incoming-list');
   const outgoingList=document.getElementById('battle-outgoing-list');
   const finishedList=document.getElementById('battle-finished-list');
+  const cancelledList=document.getElementById('battle-cancelled-list');
   const emptyMsg=document.getElementById('battle-hub-empty-msg');
 
   const myId=currentUser.id;
+  // Teacher-cancelled battles get their own "Cancelled by teacher" section
+  // (with an explanation) instead of silently vanishing like a normal
+  // player reject/withdraw does — shown until the student dismisses it.
+  const cancelledByFaculty=battleHubCache.filter(b=>b.status==='declined' && b.cancelled_by_faculty && !b.cancelled_seen_by_challenger);
   const active=battleHubCache.filter(b=>b.status!=='declined');
   // Incoming: I'm player2 and haven't played my side yet.
   const incoming=active.filter(b=>b.player2_id===myId && !b.player2_done_at);
@@ -16304,7 +16353,7 @@ function renderBattleHub(){
   });
   const finished=active.filter(b=>b.status==='complete');
 
-  emptyMsg.style.display=active.length===0?'block':'none';
+  emptyMsg.style.display=(active.length===0 && cancelledByFaculty.length===0)?'block':'none';
 
   const rowHtml=(b, opponentLabel, actionHtml)=>`
     <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem .95rem;border-radius:10px;border:2px solid var(--border);background:#fff;">
@@ -16350,6 +16399,21 @@ function renderBattleHub(){
       </div>`
     );
   }).join('');
+
+  cancelledSection.style.display=cancelledByFaculty.length>0?'block':'none';
+  cancelledList.innerHTML=cancelledByFaculty.map(b=>rowHtml(b, `vs ${escHTML(b.opponentName||'a classmate')} — your teacher cancelled this battle${battleMetaLabel(b)}`,
+    `<button style="width:auto;white-space:nowrap;padding:.5rem .9rem;margin:0;font-size:.82rem;font-weight:700;color:var(--text-muted);background:none;border:2px solid var(--border);border-radius:8px;cursor:pointer;" onclick="dismissCancelledBattle('${b.id}')">Dismiss</button>`
+  )).join('');
+}
+
+// Lets a student clear a "cancelled by teacher" notice once they've seen it.
+// Tries to persist the dismissal server-side (so it stays gone on other
+// devices/reloads); if the column isn't present on this Supabase project,
+// falls back to removing it from the local cache only for this session.
+async function dismissCancelledBattle(battleId){
+  battleHubCache=battleHubCache.map(b=>b.id===battleId?{...b,cancelled_seen_by_challenger:true}:b);
+  renderBattleHub();
+  try{ await sb.from('battles').update({cancelled_seen_by_challenger:true}).eq('id',battleId); }catch(e){ /* non-fatal */ }
 }
 
 // Small "· 15 Qs · 10 min" suffix shown next to the opponent label so
