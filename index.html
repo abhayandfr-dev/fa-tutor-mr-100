@@ -14534,7 +14534,6 @@ function startTaskSession(taskId){
   document.getElementById('card-quiz').classList.toggle('selected', mode==='quiz');
   document.getElementById('card-test').classList.toggle('selected', mode==='test');
   selectedCategory={ id:'task_'+task.id, name:'📌 '+task.label, ids:pool.map(q=>q.id) };
-  const shuffled=shuffle([...pool]);
   // Resume support: a task's progress is the running sum of every matching
   // attempt the student has ever logged (see computeTaskProgress), so partial
   // completions across separate visits already add up correctly on their own
@@ -14546,6 +14545,26 @@ function startTaskSession(taskId){
   // have a natural per-question remainder, so those still get the full pool.
   const {current}=computeTaskProgress(task, studentTasksCache.myAttempts||[]);
   const remaining=Math.max(1, task.target_count-current);
+  // BUGFIX ("54/55 stuck forever, different random question each retry"):
+  // capping to `remaining` alone isn't enough — without also excluding the
+  // specific question ids the student has ALREADY answered for this task,
+  // a random slice of the shuffled pool can re-serve an already-completed
+  // question. Answering it again doesn't grow the unique-question count
+  // (see uniqueQuestionCountForTask), so progress never advances past
+  // 54/55 while a different random question appears each time the student
+  // hits Resume. Fix: always draw the session from only the genuinely
+  // outstanding (not-yet-answered) question ids.
+  const answeredIdsForTask=new Set();
+  (studentTasksCache.myAttempts||[]).filter(a=>attemptCountsForTask(task,a)).forEach(a=>{
+    questionIdsForAttempt(a).forEach(id=>answeredIdsForTask.add(id));
+  });
+  const outstandingPool = (task.metric==='sessions')
+    ? pool
+    : pool.filter(q=>!answeredIdsForTask.has(q.id));
+  // Guard: if every question somehow looks "answered" already (stale/edge
+  // data) fall back to the full pool rather than producing an empty session.
+  const effectivePool = outstandingPool.length ? outstandingPool : pool;
+  const shuffled=shuffle([...effectivePool]);
   // If this task was reopened because a modified question's CURRENT
   // wording is missing from this student's history (see MODIFIED_QUESTIONS
   // / fetchMyTasksData), make sure those specific question(s) are
