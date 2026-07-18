@@ -15637,24 +15637,45 @@ async function getProfilesAndAttemptsWithCreatedAt(){
   }
   if(weeklyAttemptsRawCacheInflight) return weeklyAttemptsRawCacheInflight;
 
+  // NOTE: when called from Faculty Mode we must use the service_role REST
+  // path (facultyAuthHeaders()), exactly like getFacultyProfilesAndAttempts()
+  // does -- NOT the RLS-scoped sb.from(...) client. The old code always used
+  // sb.from(...), so a logged-in teacher's session could only see rows
+  // Row-Level-Security allowed for *that specific user* -- effectively hiding
+  // every other student's attempts from the Faculty Weekly Prize tab (it
+  // looked like "no one has attempted" even though a student's own Weekly
+  // Prize view, correctly using that student's own RLS-scoped session, showed
+  // fine for them).
+  const useFacultyRest = !!window.facultyServiceRoleKey;
+
   weeklyAttemptsRawCacheInflight=(async()=>{
-    const [{data:profiles,error:pErr},{data:attempts,error:aErr},completionsRes,warmupRes]=await Promise.all([
-      sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard'),
-      sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
-        .eq('hidden_by_student',false).eq('hidden_by_teacher',false),
-      // task_completions.bonus_points feeds the Weekly Prize task-completion
-      // bonus (see computeTaskWeeklyPrizeBonus / computeWeeklyPrizeScore).
-      // Best-effort: older schemas without bonus_points, or without the
-      // table's public SELECT policy, just fall back to empty (no bonuses),
-      // never breaking the rest of the leaderboard.
-      sb.from('task_completions').select('user_id,task_id,created_at,bonus_points').then(r=>r).catch(()=>({data:[],error:null})),
-      // daily_warmup_completions feeds the Daily Warm-Up Weekly Prize bonus
-      // (see WARMUP_WEEKLY_PRIZE_BONUS_POINTS / computeWeeklyPrizeScore).
-      // Best-effort same as above — requires a public SELECT RLS policy on
-      // this table (added in the SQL for this feature); falls back to empty
-      // (no warm-up bonuses, rest of leaderboard unaffected) if missing.
-      sb.from('daily_warmup_completions').select('user_id,warmup_date,correct,created_at').then(r=>r).catch(()=>({data:[],error:null}))
-    ]);
+    let profiles,attempts,pErr,aErr,completionsRes,warmupRes;
+    if(useFacultyRest){
+      const [profRes, attRes, compRes, warmRes]=await Promise.all([
+        fetch(SUPABASE_URL+'/rest/v1/profiles?select=id,username,full_name,hidden_from_leaderboard',{headers:facultyAuthHeaders()}),
+        fetch(SUPABASE_URL+'/rest/v1/attempts?select=user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher&hidden_by_student=eq.false&hidden_by_teacher=eq.false',{headers:facultyAuthHeaders()}),
+        fetch(SUPABASE_URL+'/rest/v1/task_completions?select=user_id,task_id,created_at,bonus_points',{headers:facultyAuthHeaders()}).catch(()=>null),
+        fetch(SUPABASE_URL+'/rest/v1/daily_warmup_completions?select=user_id,warmup_date,correct,created_at',{headers:facultyAuthHeaders()}).catch(()=>null)
+      ]);
+      profiles=await profRes.json().catch(()=>null);
+      attempts=await attRes.json().catch(()=>null);
+      if(!Array.isArray(profiles)||!Array.isArray(attempts)){
+        pErr=new Error('Could not load faculty profiles/attempts -- check your service_role key.');
+      }
+      completionsRes = compRes ? {data:await compRes.json().catch(()=>[]), error: compRes.ok?null:true} : {data:[],error:null};
+      warmupRes = warmRes ? {data:await warmRes.json().catch(()=>[]), error: warmRes.ok?null:true} : {data:[],error:null};
+    } else {
+      const results=await Promise.all([
+        sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard'),
+        sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
+          .eq('hidden_by_student',false).eq('hidden_by_teacher',false),
+        sb.from('task_completions').select('user_id,task_id,created_at,bonus_points').then(r=>r).catch(()=>({data:[],error:null})),
+        sb.from('daily_warmup_completions').select('user_id,warmup_date,correct,created_at').then(r=>r).catch(()=>({data:[],error:null}))
+      ]);
+      profiles=results[0].data; pErr=results[0].error;
+      attempts=results[1].data; aErr=results[1].error;
+      completionsRes=results[2]; warmupRes=results[3];
+    }
     if(pErr||aErr){ weeklyAttemptsRawCacheInflight=null; throw (pErr||aErr); }
     const attemptsByUser={};
     (attempts||[]).forEach(a=>{ (attemptsByUser[a.user_id]=attemptsByUser[a.user_id]||[]).push(a); });
