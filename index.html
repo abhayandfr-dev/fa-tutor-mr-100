@@ -994,6 +994,15 @@
   </div>
 </div>
 
+<!-- FACULTY: pick which player's side to review for a finished battle -->
+<div id="faculty-battle-review-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:2000;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#fff;border-radius:16px;padding:1.4rem;max-width:420px;width:100%;">
+    <div style="font-size:.95rem;font-weight:800;color:var(--navy);margin-bottom:1rem;">Review whose answers?</div>
+    <div id="faculty-battle-review-picker-body"></div>
+    <button onclick="closeFacultyBattleReviewPicker()" style="width:100%;margin-top:.8rem;padding:.6rem;border:2px solid var(--border);background:none;border-radius:10px;font-size:.83rem;font-weight:700;color:var(--slate);cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
 <!-- FACULTY MODE: SEARCH FOR STUDENT'S DATA (generic profile first, then mock reports — extensible for future mocks) -->
 <div id="faculty-mock1search-screen" class="screen">
   <div style="max-width:760px;width:100%;margin:0 auto;">
@@ -1123,6 +1132,7 @@
             <li>Only your <strong>first 2 retries</strong> of the same question count toward your score each period — further retries on that question this period earn 0, though you can keep practicing them for your own learning.</li>
             <li>Each question can only contribute points <strong>once per period</strong>, on whichever of your counted attempts was correct.</li>
             <li>Completing a task your teacher assigned can add a <strong>one-time bonus</strong> on top — but only if your teacher checked "Count this task toward leaderboards" when assigning it, and only if your accuracy on that task met the required minimum. The bonus size scales with the number of questions in the task and your accuracy on it.</li>
+            <li>Answering your <strong>Daily Warm-Up</strong> correctly adds a flat <strong>+10 point bonus</strong> to this board — once per day, the day it's completed.</li>
           </ul>
           <div style="font-size:.74rem;color:#94a3b8;">Ties are broken by first-try accuracy %, then by number of distinct questions attempted.</div>
         </div>
@@ -11648,13 +11658,14 @@ async function loadFacultyWeeklyPrizeStandings(){
     facultyWeeklyPeriodStart=effectiveStart;
     facultyWeeklyDurationDays=settings.durationDays;
 
-    const {profiles,attemptsByUser,taskBonusRowsByUser}=await getProfilesAndAttemptsWithCreatedAt();
+    const {profiles,attemptsByUser,taskBonusRowsByUser,warmupRowsByUser}=await getProfilesAndAttemptsWithCreatedAt();
 
     const students=(profiles||[])
       .map(p=>{
         const rows=attemptsByUser[p.id]||[];
         const bonusRows=(taskBonusRowsByUser&&taskBonusRowsByUser[p.id])||[];
-        const {score,firstTryAccuracy,distinctQuestionsAttempted}=computeWeeklyPrizeScore(rows, effectiveStart, bonusRows);
+        const warmupRows=(warmupRowsByUser&&warmupRowsByUser[p.id])||[];
+        const {score,firstTryAccuracy,distinctQuestionsAttempted}=computeWeeklyPrizeScore(rows, effectiveStart, bonusRows, warmupRows);
         const looksLikeGmail=/@gmail\.com$/i.test(p.username||'');
         const displayName=(looksLikeGmail && p.full_name) ? p.full_name : (p.full_name||p.username||'Student');
         return { userId:p.id, displayName, score, firstTryAccuracy, distinctQuestionsAttempted, hidden:!!p.hidden_from_leaderboard };
@@ -11997,7 +12008,10 @@ function renderFacultyBattles(){
   const emptyMsg=document.getElementById('faculty-battles-empty');
   const search=(document.getElementById('faculty-battles-search').value||'').trim().toLowerCase();
 
-  let battles=facultyBattlesCache;
+  // Cancelled battles the teacher has already dismissed stay hidden from
+  // this list (persisted via cancelled_seen_by_faculty, same pattern as the
+  // student-side "cancelled_seen_by_challenger" dismiss).
+  let battles=facultyBattlesCache.filter(b=>!(b.status==='declined' && b.cancelled_seen_by_faculty));
   if(search){
     battles=battles.filter(b=>
       (b.player1Name||'').toLowerCase().includes(search) ||
@@ -12035,6 +12049,8 @@ function renderFacultyBattles(){
         : `<span style="font-size:.72rem;font-weight:800;color:#475569;background:#f1f5f9;border-radius:999px;padding:.25rem .7rem;">In progress</span>`;
     }
     const canCancel = b.status!=='complete' && b.status!=='declined';
+    const canDismiss = b.status==='declined';
+    const canReview = b.status==='complete';
     return `<div style="background:white;border:2px solid var(--border);border-radius:12px;padding:.9rem 1.1rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;">
         <div>
@@ -12044,6 +12060,8 @@ function renderFacultyBattles(){
         <div style="display:flex;align-items:center;gap:.5rem;">
           ${statusHtml}
           ${canCancel?`<button onclick="facultyCancelBattle('${b.id}')" style="padding:.4rem .8rem;border:2px solid #ef4444;color:#ef4444;background:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap;">Cancel Battle</button>`:''}
+          ${canDismiss?`<button onclick="facultyDismissBattle('${b.id}')" style="padding:.4rem .8rem;border:2px solid var(--border);color:#64748b;background:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap;">Dismiss</button>`:''}
+          ${canReview?`<button onclick="facultyReviewBattle('${b.id}')" style="padding:.4rem .8rem;border:2px solid #6366f1;color:#6366f1;background:none;border-radius:8px;font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap;">Review</button>`:''}
         </div>
       </div>
       ${scoreHtml}
@@ -12088,6 +12106,86 @@ async function facultyCancelBattle(battleId){
       alert('Could not cancel \u2014 the battles table\'s status rule on this Supabase project is rejecting every status value this app tries (declined/expired). Ask whoever manages the database to check the "battles_status_check" constraint.'+(lastDetail?' ('+lastDetail+')':''));
     }
   }catch(e){ alert('Network error while cancelling.'); }
+}
+
+// Teacher dismisses a cancelled/declined battle from their own list — purely
+// a "clean up my view" action, mirrors the student-side dismiss for battles
+// cancelled by the teacher (cancelled_seen_by_challenger). Persisted via
+// cancelled_seen_by_faculty so it stays hidden across reloads, but never
+// touches the student-facing cancelled_seen_by_challenger flag — each side
+// dismisses independently.
+async function facultyDismissBattle(battleId){
+  if(!requireFacultyKey()) return;
+  facultyBattlesCache=facultyBattlesCache.map(b=>b.id===battleId?{...b,cancelled_seen_by_faculty:true}:b);
+  renderFacultyBattles();
+  try{
+    await fetch(SUPABASE_URL+'/rest/v1/battles?id=eq.'+encodeURIComponent(battleId),{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+      body:JSON.stringify({cancelled_seen_by_faculty:true})
+    });
+  }catch(e){ /* non-fatal — worst case it reappears next reload, teacher can dismiss again */ }
+}
+
+// Teacher-side detailed review of a FINISHED battle: shows both players'
+// full question-by-question review, reusing the exact same results/review
+// screens reviewBattleAttempt() uses for students, just flagged
+// viewingAsFaculty so the results screen shows faculty-appropriate chrome
+// (and "Back" returns to the faculty Battles list instead of the student
+// battle hub). Opens a small side picker so the teacher can choose whose
+// answers to review first — from that review screen they can navigate back
+// here and review the other side too.
+function facultyReviewBattle(battleId){
+  const b=facultyBattlesCache.find(x=>x.id===battleId);
+  if(!b){ alert('Could not load that battle.'); return; }
+  if(!b.player1_answers_json && !b.player2_answers_json){ alert('Neither player\'s answers were saved for this battle.'); return; }
+  facultyReviewBattleId=battleId;
+  const p1Label=b.player1Name||'Player 1', p2Label=b.player2Name||'Player 2';
+  const p1Score=b.player1_score||0, p2Score=b.player2_score||0;
+  const overlay=document.getElementById('faculty-battle-review-picker-overlay');
+  const body=document.getElementById('faculty-battle-review-picker-body');
+  body.innerHTML=`
+    <button ${b.player1_answers_json?'':'disabled'} onclick="closeFacultyBattleReviewPicker();facultyReviewBattleSide('${battleId}','p1')" style="width:100%;text-align:left;padding:.85rem 1rem;border:2px solid var(--border);border-radius:10px;background:#fff;font-family:inherit;cursor:${b.player1_answers_json?'pointer':'not-allowed'};opacity:${b.player1_answers_json?'1':'.5'};margin-bottom:.6rem;">
+      <div style="font-size:.86rem;font-weight:700;color:var(--navy);">${escHTML(p1Label)}</div>
+      <div style="font-size:.74rem;color:#94a3b8;">Score: ${p1Score}${b.player1_answers_json?'':' · no answers saved'}</div>
+    </button>
+    <button ${b.player2_answers_json?'':'disabled'} onclick="closeFacultyBattleReviewPicker();facultyReviewBattleSide('${battleId}','p2')" style="width:100%;text-align:left;padding:.85rem 1rem;border:2px solid var(--border);border-radius:10px;background:#fff;font-family:inherit;cursor:${b.player2_answers_json?'pointer':'not-allowed'};opacity:${b.player2_answers_json?'1':'.5'};">
+      <div style="font-size:.86rem;font-weight:700;color:var(--navy);">${escHTML(p2Label)}</div>
+      <div style="font-size:.74rem;color:#94a3b8;">Score: ${p2Score}${b.player2_answers_json?'':' · no answers saved'}</div>
+    </button>`;
+  overlay.style.display='flex';
+}
+function closeFacultyBattleReviewPicker(){
+  document.getElementById('faculty-battle-review-picker-overlay').style.display='none';
+}
+function facultyReviewBattleSide(battleId, side){
+  const b=facultyBattlesCache.find(x=>x.id===battleId);
+  if(!b) return;
+  const savedAnswers = side==='p1' ? b.player1_answers_json : b.player2_answers_json;
+  if(!savedAnswers){ alert('That side hasn\'t played yet.'); return; }
+
+  const liveById={};
+  QUESTIONS.forEach(q=>{ liveById[q.id]=q; });
+  shuffledQ=(b.question_ids||[]).map(id=>liveById[id]).filter(Boolean);
+  answers={};
+  Object.keys(savedAnswers).forEach(qid=>{
+    const a=savedAnswers[qid];
+    const liveQ=liveById[qid]||liveById[Number(qid)];
+    const regraded=liveQ?regradeAgainstLive(liveQ,a.userAnswer):null;
+    answers[qid]=regraded===null?a:{...a,isCorrect:regraded};
+  });
+  mode='practice';
+  const qTotal=b.question_count||(b.question_ids||[]).length;
+  totalMarksSelected=qTotal*2;
+  secondsLeft=0;
+  const sideName = side==='p1' ? (b.player1Name||'Player 1') : (b.player2Name||'Player 2');
+  selectedCategory={ id:'battle_'+b.id, name:`⚔️ Battle — ${b.category_name} (${sideName})`, ids:shuffledQ.map(q=>q.id) };
+  viewingPastAttempt=true;
+  viewingBattleReview=true;
+  viewingBattleResultId=battleId;
+  viewingAsFaculty=true;
+  facultyReviewAttemptId=null;
+  showResults({ created_at:b.created_at });
 }
 
 function openFacultyDashboard(){
@@ -12932,6 +13030,7 @@ let viewingPastAttempt = false; // true when results/review screens are showing 
 let pendingAttemptSavePromise = null;
 let viewingAsFaculty = false; // true when results/review screens were opened from Faculty Mode (controls back-nav + delete button)
 let facultyReviewAttemptId = null; // id of the attempt currently shown, so the faculty delete button can act on it
+let facultyReviewBattleId = null; // id of the battle currently being reviewed via facultyReviewBattle, for back-nav context
 
 document.body.style.overflow='hidden';
 
@@ -14466,7 +14565,7 @@ async function submitDailyWarmup(chosenIndex,btnEl,optsList){
   resultEl.style.background = correct ? 'linear-gradient(135deg,#dcfce7,#f0fdf4)' : 'linear-gradient(135deg,#fee2e2,#fef2f2)';
   resultEl.style.border = correct ? '2px solid #22c55e' : '2px solid #ef4444';
   resultEl.style.color = correct ? '#166534' : '#991b1b';
-  resultEl.innerHTML = `<div style="font-size:1rem;margin-bottom:.3rem;">${correct?'🎉 Correct! Nice one.':'❌ Not quite — here\'s why:'}</div>` + escHTML(warmupQuestion.explanation||'');
+  resultEl.innerHTML = `<div style="font-size:1rem;margin-bottom:.3rem;">${correct?'🎉 Correct! +10 pts added to your Weekly Prize score.':'❌ Not quite — here\'s why:'}</div>` + escHTML(warmupQuestion.explanation||'');
 
   try{
     await sb.from('daily_warmup_completions').insert({
@@ -15099,6 +15198,10 @@ function renderLeaderboard(){
 const WEEKLY_PRIZE_MAX_COUNTED_RETRIES=2; // only the 1st + 2nd retry can score
 const WEEKLY_PRIZE_FIRST_TRY_POINTS=1.0;
 const WEEKLY_PRIZE_RETRY_POINTS=0.3;
+// Flat Weekly Prize bonus for correctly answering a given day's Daily
+// Warm-Up. One bonus per calendar day (a daily_warmup_completions row is
+// already unique per user+day, so this can't be farmed by retrying).
+const WARMUP_WEEKLY_PRIZE_BONUS_POINTS=10;
 
 let weeklyPrizeStudentsCache=[];
 let weeklyPrizeCurrentPeriodStart=null; // Date or null (null = no limit set, all-time board)
@@ -15168,7 +15271,7 @@ function computeEffectiveWeeklyPrizePeriod(settings){
 // means a bonus earned in a past (now-rolled-over) period does NOT keep
 // inflating every future week's score forever — it behaved like a
 // same-period scoring event, not a permanent account-wide addition.
-function computeWeeklyPrizeScore(attemptsRows, periodStart, taskBonusRows){
+function computeWeeklyPrizeScore(attemptsRows, periodStart, taskBonusRows, warmupRows){
   const sorted=[...attemptsRows].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   // Per-question chronological log of correct/wrong for the CURRENT PERIOD only
   // (or all-time if periodStart is null).
@@ -15224,6 +15327,20 @@ function computeWeeklyPrizeScore(attemptsRows, periodStart, taskBonusRows){
     taskBonusTotal+=c.bonus_points;
   });
   score+=taskBonusTotal;
+
+  // Add Daily Warm-Up bonuses earned inside this same period — same
+  // period-gating rule as task bonuses above (a bonus earned in a past,
+  // now-rolled-over period doesn't carry forward into the new one).
+  let warmupBonusTotal=0;
+  (warmupRows||[]).forEach(w=>{
+    if(!w.correct) return;
+    if(periodStart){
+      const createdAt=new Date(w.created_at);
+      if(createdAt<periodStart) return; // outside the current period
+    }
+    warmupBonusTotal+=WARMUP_WEEKLY_PRIZE_BONUS_POINTS;
+  });
+  score+=warmupBonusTotal;
 
   const firstTryAccuracy = distinctQuestionsAttempted>0 ? firstTryCorrectCount/distinctQuestionsAttempted : 0;
   return { score: Math.round(score*10)/10, firstTryAccuracy, distinctQuestionsAttempted };
@@ -15299,14 +15416,15 @@ async function loadWeeklyPrizeData(){
     // created_at filter is done client-side inside computeWeeklyPrizeScore so
     // we can reuse the same profiles+attempts cache the Mastery Board uses —
     // avoids a second full-table round trip when a student just switches tabs.
-    const {profiles,attemptsByUser,taskBonusRowsByUser}=await getProfilesAndAttemptsWithCreatedAt();
+    const {profiles,attemptsByUser,taskBonusRowsByUser,warmupRowsByUser}=await getProfilesAndAttemptsWithCreatedAt();
 
     const students=(profiles||[])
       .filter(p=>!p.hidden_from_leaderboard)
       .map(p=>{
         const rows=attemptsByUser[p.id]||[];
         const bonusRows=(taskBonusRowsByUser&&taskBonusRowsByUser[p.id])||[];
-        const {score,firstTryAccuracy,distinctQuestionsAttempted}=computeWeeklyPrizeScore(rows, effectiveStart, bonusRows);
+        const warmupRows=(warmupRowsByUser&&warmupRowsByUser[p.id])||[];
+        const {score,firstTryAccuracy,distinctQuestionsAttempted}=computeWeeklyPrizeScore(rows, effectiveStart, bonusRows, warmupRows);
         const looksLikeGmail=/@gmail\.com$/i.test(p.username||'');
         const displayName=(looksLikeGmail && p.full_name) ? p.full_name : (p.full_name||p.username||'Student');
         return { userId:p.id, displayName, score, firstTryAccuracy, distinctQuestionsAttempted };
@@ -15337,7 +15455,7 @@ async function getProfilesAndAttemptsWithCreatedAt(){
   if(weeklyAttemptsRawCacheInflight) return weeklyAttemptsRawCacheInflight;
 
   weeklyAttemptsRawCacheInflight=(async()=>{
-    const [{data:profiles,error:pErr},{data:attempts,error:aErr},completionsRes]=await Promise.all([
+    const [{data:profiles,error:pErr},{data:attempts,error:aErr},completionsRes,warmupRes]=await Promise.all([
       sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard'),
       sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
         .eq('hidden_by_student',false).eq('hidden_by_teacher',false),
@@ -15346,7 +15464,13 @@ async function getProfilesAndAttemptsWithCreatedAt(){
       // Best-effort: older schemas without bonus_points, or without the
       // table's public SELECT policy, just fall back to empty (no bonuses),
       // never breaking the rest of the leaderboard.
-      sb.from('task_completions').select('user_id,task_id,created_at,bonus_points').then(r=>r).catch(()=>({data:[],error:null}))
+      sb.from('task_completions').select('user_id,task_id,created_at,bonus_points').then(r=>r).catch(()=>({data:[],error:null})),
+      // daily_warmup_completions feeds the Daily Warm-Up Weekly Prize bonus
+      // (see WARMUP_WEEKLY_PRIZE_BONUS_POINTS / computeWeeklyPrizeScore).
+      // Best-effort same as above — requires a public SELECT RLS policy on
+      // this table (added in the SQL for this feature); falls back to empty
+      // (no warm-up bonuses, rest of leaderboard unaffected) if missing.
+      sb.from('daily_warmup_completions').select('user_id,warmup_date,correct,created_at').then(r=>r).catch(()=>({data:[],error:null}))
     ]);
     if(pErr||aErr){ weeklyAttemptsRawCacheInflight=null; throw (pErr||aErr); }
     const attemptsByUser={};
@@ -15355,7 +15479,11 @@ async function getProfilesAndAttemptsWithCreatedAt(){
     if(completionsRes && !completionsRes.error){
       (completionsRes.data||[]).forEach(c=>{ (taskBonusRowsByUser[c.user_id]=taskBonusRowsByUser[c.user_id]||[]).push(c); });
     }
-    const result={profiles:profiles||[], attemptsByUser, taskBonusRowsByUser, fetchedAt:Date.now()};
+    const warmupRowsByUser={};
+    if(warmupRes && !warmupRes.error){
+      (warmupRes.data||[]).forEach(w=>{ (warmupRowsByUser[w.user_id]=warmupRowsByUser[w.user_id]||[]).push(w); });
+    }
+    const result={profiles:profiles||[], attemptsByUser, taskBonusRowsByUser, warmupRowsByUser, fetchedAt:Date.now()};
     weeklyAttemptsRawCache=result;
     weeklyAttemptsRawCacheInflight=null;
     return result;
@@ -17040,6 +17168,15 @@ async function goHomeFromResults(){
   facultyReviewAttemptId=null;
   viewingFacultyProfile=false;
   viewingBattleReview=false;
+  if(cameFromBattle && wasFaculty){
+    // Faculty reviewing a finished battle (facultyReviewBattle) — return to
+    // the faculty Battles list, never the student-facing battle hub/result
+    // screens below.
+    facultyReviewBattleId=null;
+    showScreen('faculty-battles-screen');
+    loadFacultyBattlesData();
+    return;
+  }
   if(cameFromBattle){
     // Return to the battle's result screen (not the student home screen) —
     // re-fetch from the hub cache so the Review buttons there still work.
