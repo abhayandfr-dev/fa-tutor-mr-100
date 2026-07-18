@@ -347,7 +347,7 @@
   .review-header.incorrect{background:var(--red-light);color:#991b1b;border-bottom:1px solid #fecaca}
   .review-body{padding:1rem 1.2rem;font-size:.85rem;line-height:1.7;background:white}
   .review-answer{font-weight:700;color:var(--navy);margin-bottom:.5rem}
-  .review-explanation{color:var(--text)}
+  .review-explanation{color:var(--text);white-space:pre-wrap}
   .review-calc{margin-top:.75rem;background:var(--slate-light);border-radius:8px;padding:.75rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:.78rem;line-height:1.8;white-space:pre-wrap;border:1px solid var(--border)}
   .action-bar{padding:1.2rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.75rem;justify-content:flex-end;background:var(--slate-light);flex-wrap:wrap}
   .btn{padding:.65rem 1.4rem;border-radius:10px;font-size:.88rem;font-weight:600;border:none;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:.4rem}
@@ -5551,11 +5551,11 @@ const QUESTIONS = [
   }
 },
 { id:367, type:"mcq",
-  text:"A business received a delivery of goods on 29 June 2013, which was included in inventory at 30 June 2013.\n\nThe invoice for the goods was recorded in July 2013.\n\nWhat effect will this have had on the business?",
+  text:"A business received a delivery of goods (bought on credit) on 29 June 2013, the goods were omitted during the inventory counting on 30 June 2013.\n\nThe invoice for the goods was recorded in July 2013.\n\nWhat effect will this have had on the business?",
   req:"What effect will this have had on the business?",
   marks:2,
-  options:["Inventory at 30 June 2013 will be understated","Profit for the year ended 30 June 2014 will be overstated","Profit for the year ended 30 June 2013 will be overstated","Inventory at 30 June 2013 will be overstated"],
-  correct:2, explanation:"The goods were correctly included in inventory. The invoice should also have been included. Because it had not been, purchases have been understated and therefore profit overstated.", calc:null
+  options:["Inventory at 30 June 2013 will not be understated","Profit for the year ended 30 June 2014 will be overstated","Profit for the year ended 30 June 2013 will be overstated","Net assets at 30 June 2013 will not be misstated."],
+  correct:3, explanation:"Net assets at 30 June 2013 will not be misstated.\n\nExplanation:\n\nThere are 2 things to consider :\n1. The invoice should have been recorded within the year but was recorded in next year (Dr Purchase Cr Payable) - means purchase and payables are understated for current year and overstated for next year.\n2. The inventory should have been included in counting means closing inventory for current year is understated and opening inventory for next year is understated.\nCurrent year :\n1. Profit : purchase has been understated and closing inventory has been understated as well - so net 0 effect on profit\n2. Asset : asset will be understated i.e. closing inventory will be understated.\n3. Net asset : since asset is understated but liability (payable) has been understated as well - so net 0 effect on net assets.\nNext year :\n1. Profit : opening inventory has been understated but purchase has been overstated means net effect on profit is again 0.", calc:null
 },
 { id:368, type:"checkbox",
   text:"Which TWO of the following statements about inventory valuation for Statement of financial position purposes are true?",
@@ -5580,11 +5580,11 @@ const QUESTIONS = [
   }
 },
 { id:370, type:"mcq",
-  text:"A business received a delivery of goods on 29 June 2006, which was included in inventory at 30 June 2006. The invoice for the goods was recorded in July 2006.\n\nWhat effect will this have on the business?\n(1) Profit for the year ended 30 June 2006 will be overstated.\n(2) Inventory at 30 June 2006 will be understated.\n(3) Profit for the year ending 30 June 2007 will be overstated.\n(4) Inventory at 30 June 2006 will be overstated.",
+  text:"A business received a delivery of goods on 29 June 2006, which was included in inventory at 30 June 2006. The invoice for the goods was recorded in July 2006.\n\nWhat effect will this have on the business?\n(1) Profit for the year ended 30 June 2006 will be overstated.\n(2) Inventory at 30 June 2006 will be understated.\n(3) Profit for the year ending 30 June 2007 will be misstated.\n(4) Inventory at 30 June 2006 will be overstated.",
   req:"What effect will this have on the business?",
   marks:2,
-  options:["1 and 4","1 only","2 and 3","1 and 2"],
-  correct:3, explanation:"The goods were correctly included in inventory, so inventory is not misstated. The invoice had not been entered for the goods and therefore the profit for the year ended 30 June 2006 will have been overstated (purchases understated). The correct combination is statements 1 and 2.", calc:null
+  options:["1 and 4","1 only","1 and 3","1 and 2"],
+  correct:2, explanation:"1 and 3\n\nExplanation:\n\nThe goods were correctly included in inventory at 30 June 2006 so inventory is not misstated.\n\nThe invoice had not been entered for the goods and therefore the profit for the year ended 30 June 2006 will have been overstated.\nAlso, the invoice was mistakenly recorded in the accounts of next year so next year's purchase will be under-stated i.e. profit for the year ended 30 June 2007.", calc:null
 },
 { id:371, type:"checkbox-any",
   text:"According to IAS 2 Inventories, which of the following costs should be included in valuing the inventories of a manufacturing company? (tick all that apply)",
@@ -8333,6 +8333,29 @@ let selectedCategory = CATEGORIES[0];
 // the "Redo My Mistakes" pool by category without re-scanning CATEGORIES each time.
 const QUESTION_ID_TO_CATEGORY = {};
 CATEGORIES.forEach(cat => cat.ids.forEach(id => { QUESTION_ID_TO_CATEGORY[id] = cat.id; }));
+
+// ══════════════════════════════════════════════════════════
+// MODIFIED_QUESTIONS — registry of questions whose wording/options/answer
+// were edited after being live. Add an entry here any time a live question
+// is changed, so that: (1) any already-completed task covering that
+// question's category gets reopened for students who don't have any
+// attempt containing that question id in their history for that task, and
+// (2) those students get a one-time notification telling them which
+// questions changed. This is purely PRESENCE-based (does the student have
+// any attempt, for this task, containing this id at all?) — not
+// timestamp-based, since comparing clock times against an edit date is
+// fragile (e.g. a retroactive history cleanup can run well after a
+// student's original completion timestamp, which would otherwise wrongly
+// suppress the reopen). Leave old entries here permanently rather than
+// removing them — they cost nothing once every affected student has
+// requalified (stillMissing will just be empty for them), but removing one
+// too early could momentarily re-hide a genuine gap for a student who
+// hasn't logged in since the edit yet.
+// ══════════════════════════════════════════════════════════
+const MODIFIED_QUESTIONS = [
+  { id:367, note:"Ch 5 Past Questions — question wording/options replaced" },
+  { id:370, note:"Ch 5 Past Questions — question wording/options replaced" }
+];
 
 // ── BATTLE MODE: "whole chapter" / "all mocks" / "random from everywhere" ──
 // These are synthetic pseudo-categories built by unioning ids from every real
@@ -11239,10 +11262,10 @@ async function fetchMyTasksData(){
   const tasks=tasksRaw.filter(t=>taskAppliesToStudent(t, myProfileForFilter));
   if(error||!tasks) return {tasks:[], myAttempts:[], completedTaskIds:new Set()};
   const {data:myAttempts,error:aErr}=await sb.from('attempts')
-    .select('category,questions_attempted,percent,score_correct,score_total,task_id,created_at,mode')
+    .select('category,questions_attempted,percent,score_correct,score_total,task_id,created_at,mode,questions_json,answers_json,created_at')
     .eq('user_id',currentUser.id).eq('hidden_by_student',false).eq('hidden_by_teacher',false);
   if(aErr) return {tasks, myAttempts:[], completedTaskIds:new Set()};
-  const {data:myCompletions}=await sb.from('task_completions').select('task_id').eq('user_id',currentUser.id);
+  const {data:myCompletions}=await sb.from('task_completions').select('task_id,created_at').eq('user_id',currentUser.id);
   const completedTaskIds=new Set((myCompletions||[]).map(c=>c.task_id));
   // Record any newly-met task as completed, once, permanently — and (if the
   // task is leaderboard-eligible) compute its one-time Weekly Prize bonus at
@@ -11268,6 +11291,65 @@ async function fetchMyTasksData(){
       queueTaskBonusNotification(t, bonus);
     }
   }
+  // ══════════════════════════════════════════════════════════
+  // REOPEN TASKS AFFECTED BY EDITED QUESTIONS (see MODIFIED_QUESTIONS below)
+  // A task_completions row is normally permanent (by design — see comment
+  // above). But if a question inside that task's category was edited, and
+  // the student has no attempt (for this task) whose SNAPSHOT of that
+  // question actually matches the CURRENT live wording, we treat the task
+  // as "not complete" again for THIS SESSION'S rendering only — we do not
+  // delete the task_completions row (so nothing about the leaderboard/
+  // mastery bonus, which already paid out, is touched — requirement: past
+  // leaderboard/mastery effects never change). We simply drop the task id
+  // back out of completedTaskIds so the student sees it as in-progress
+  // (43/45, Resume button) rather than done.
+  //
+  // IMPORTANT: this is a snapshot TEXT comparison, not just an id-presence
+  // check. An attempt can still contain an entry with id 367 in its
+  // questions_json — e.g. a stray practice-mode session logged against an
+  // outdated copy of the site, or a row a retroactive cleanup missed — but
+  // if that snapshot's stored wording is the OLD wording, it must NOT count
+  // as "answered the new version". We only accept a match when the stored
+  // snapshot's `text` is identical, character-for-character, to the
+  // question's CURRENT text in the live QUESTIONS registry (built from the
+  // question edit itself, so it's always in sync automatically — no second
+  // place to remember to update when a question is edited again later).
+  //
+  // Also deliberately NOT timestamp-based: comparing "edited at" vs
+  // "completed at" clock times is fragile (e.g. a retroactive history
+  // cleanup, or a stray old-site attempt, can land at any point in the
+  // timeline regardless of the edit's logical position).
+  //
+  // Once they answer the modified question(s) for real (producing a fresh
+  // snapshot whose text matches current QUESTIONS), computeTaskProgress
+  // naturally reports 'met' again and the normal completion path above will
+  // silently re-insert a task_completions row (a harmless duplicate-looking
+  // insert; the original row + bonus are untouched, this just restores the
+  // ✅ badge).
+  // ══════════════════════════════════════════════════════════
+  const LIVE_QUESTION_BY_ID={};
+  QUESTIONS.forEach(q=>{ LIVE_QUESTION_BY_ID[q.id]=q; });
+  function attemptHasCurrentVersionOf(attempt, questionId){
+    if(!Array.isArray(attempt.questions_json)) return false;
+    const snapshot=attempt.questions_json.find(q=>q&&q.id===questionId);
+    if(!snapshot) return false;
+    const live=LIVE_QUESTION_BY_ID[questionId];
+    if(!live) return false; // question no longer exists at all — can't verify, treat as not matching
+    return snapshot.text===live.text;
+  }
+  const modifiedIdsNeedingNotice=[];
+  for(const t of tasks){
+    if(!completedTaskIds.has(t.id)) continue; // only need to check ones currently marked done
+    const relevantModified=MODIFIED_QUESTIONS.filter(m=>!t.category_ids||!t.category_ids.length||t.category_ids.includes(QUESTION_ID_TO_CATEGORY[m.id]));
+    if(!relevantModified.length) continue;
+    const relevantAttempts=(myAttempts||[]).filter(a=>attemptCountsForTask(t,a));
+    const stillMissing=relevantModified.filter(m=>!relevantAttempts.some(a=>attemptHasCurrentVersionOf(a, m.id)));
+    if(stillMissing.length){
+      completedTaskIds.delete(t.id);
+      modifiedIdsNeedingNotice.push({task:t, ids:stillMissing.map(m=>m.id)});
+    }
+  }
+  if(modifiedIdsNeedingNotice.length) queueModifiedQuestionsNotification(modifiedIdsNeedingNotice);
   return {tasks, myAttempts:myAttempts||[], completedTaskIds};
 }
 // Newly-completed tasks (detected in fetchMyTasksData, above) queue a small
@@ -11304,6 +11386,57 @@ function showTaskBonusToast(message){
   setTimeout(()=>{ el.style.transition='opacity .5s'; el.style.opacity='0'; setTimeout(()=>el.remove(),500); }, 4500);
 }
 
+// ══════════════════════════════════════════════════════════
+// NOTIFY STUDENTS WHEN A COMPLETED TASK'S QUESTIONS CHANGED
+// Reuses the exact same fire-once mechanism as milestones (milestones_seen
+// table: user_id + milestone_key, unique-once-per-student, persists across
+// devices) so this notification also survives refreshes/relogins and never
+// repeats once shown. Keyed per task + per edited-question-id so a student
+// with two separate reopened tasks (or a task reopened by two different
+// edits at different times) gets a distinct, accurate one-time notice for
+// each rather than a single generic one.
+// ══════════════════════════════════════════════════════════
+async function queueModifiedQuestionsNotification(entries){
+  if(!currentUser || !entries.length) return;
+  try{
+    const keys=[];
+    entries.forEach(({task,ids})=>ids.forEach(id=>keys.push(`modq_${task.id}_${id}`)));
+    const {data:seenRows,error}=await sb.from('milestones_seen').select('milestone_key').eq('user_id',currentUser.id).in('milestone_key',keys);
+    if(error) return; // fail silently — never block the home screen over a notification
+    const seenSet=new Set((seenRows||[]).map(r=>r.milestone_key));
+    const freshEntries=entries.map(({task,ids})=>({task, ids:ids.filter(id=>!seenSet.has(`modq_${task.id}_${id}`))})).filter(e=>e.ids.length);
+    if(!freshEntries.length) return;
+    const newKeys=[];
+    freshEntries.forEach(({task,ids})=>ids.forEach(id=>newKeys.push(`modq_${task.id}_${id}`)));
+    await sb.from('milestones_seen').insert(newKeys.map(k=>({user_id:currentUser.id, milestone_key:k})));
+    freshEntries.forEach(({task,ids})=>{
+      const n=ids.length;
+      pendingModifiedQuestionNotices.push(`📝 ${n} question${n>1?'s':''} in your assignment "${task.label}" ${n>1?'have':'has'} been updated. Please go to Tasks & Goals and tap Resume to complete ${n>1?'them':'it'} — your assignment isn't fully complete until you do.`);
+    });
+  }catch(err){ /* non-fatal */ }
+}
+let pendingModifiedQuestionNotices=[];
+function flushPendingModifiedQuestionNotices(){
+  if(!pendingModifiedQuestionNotices.length) return;
+  const queue=pendingModifiedQuestionNotices;
+  pendingModifiedQuestionNotices=[];
+  queue.forEach(msg=>showModifiedQuestionBanner(msg));
+}
+// Slightly more prominent + longer-lived than the small toast used for task
+// bonuses, since this one needs an action taken, not just an FYI — shown as a
+// dismissible banner near the top of the screen instead of an auto-fading toast.
+function showModifiedQuestionBanner(message){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#b45309,#d97706);color:#fff;padding:.9rem 1.2rem;border-radius:12px;font-size:.83rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:92vw;line-height:1.5;display:flex;align-items:flex-start;gap:.6rem;';
+  const textEl=document.createElement('div'); textEl.textContent=message; textEl.style.flex='1';
+  const closeBtn=document.createElement('button');
+  closeBtn.textContent='✕'; closeBtn.setAttribute('aria-label','Dismiss');
+  closeBtn.style.cssText='background:none;border:none;color:#fff;font-weight:700;cursor:pointer;font-size:1rem;line-height:1;padding:0;flex-shrink:0;';
+  closeBtn.onclick=()=>el.remove();
+  el.appendChild(textEl); el.appendChild(closeBtn);
+  document.body.appendChild(el);
+}
+
 // ── STUDENT: TASKS & GOALS FULL PAGE ─────────────────────────────────────
 let studentTasksCache=null; // {tasks, myAttempts, completedTaskIds} — reused across tab switches
 let studentTasksActiveTab='open';
@@ -11334,6 +11467,7 @@ async function loadStudentTasksPage(){
     studentTasksCache=await fetchMyTasksData();
     renderStudentTasksTab();
     flushPendingTaskBonusNotifications();
+    flushPendingModifiedQuestionNotices();
   }catch(e){ listEl.innerHTML=''; emptyEl.textContent='Could not load tasks — try again.'; emptyEl.style.display='block'; }
 }
 function switchStudentTasksTab(tab){
@@ -11519,6 +11653,7 @@ async function refreshMyTasksBadge(){
     const openCount=tasks.filter(t=>!completedTaskIds.has(t.id) && taskDeadlineDate(t)>=now).length;
     badge.textContent=openCount;
     badge.style.display=openCount?'inline-block':'none';
+    flushPendingModifiedQuestionNotices();
   }catch(e){ /* non-fatal */ }
 }
 
@@ -14411,7 +14546,36 @@ function startTaskSession(taskId){
   // have a natural per-question remainder, so those still get the full pool.
   const {current}=computeTaskProgress(task, studentTasksCache.myAttempts||[]);
   const remaining=Math.max(1, task.target_count-current);
-  const capped = (task.metric==='sessions') ? shuffled : shuffled.slice(0, Math.min(remaining, shuffled.length));
+  // If this task was reopened because a modified question's CURRENT
+  // wording is missing from this student's history (see MODIFIED_QUESTIONS
+  // / fetchMyTasksData), make sure those specific question(s) are
+  // guaranteed to land inside the capped session rather than possibly
+  // being left out by the random shuffle — pull any still-outstanding
+  // modified ids to the very front. Harmless no-op for every ordinary task
+  // (the filter below is empty unless the task was actually reopened for
+  // this reason). Uses the same snapshot-text comparison as
+  // fetchMyTasksData's reopen check (not just id presence, and not
+  // timestamp-based) — see the long comment there for why.
+  const relevantAttemptsForTask=(studentTasksCache.myAttempts||[]).filter(a=>attemptCountsForTask(task,a));
+  function taskSessionHasCurrentVersionOf(questionId){
+    const live=(QUESTIONS.find(q=>q.id===questionId));
+    if(!live) return false;
+    return relevantAttemptsForTask.some(a=>{
+      if(!Array.isArray(a.questions_json)) return false;
+      const snapshot=a.questions_json.find(q=>q&&q.id===questionId);
+      return !!snapshot && snapshot.text===live.text;
+    });
+  }
+  const outstandingModifiedIds=new Set(
+    MODIFIED_QUESTIONS
+      .filter(m=>pool.some(q=>q.id===m.id))
+      .filter(m=>!taskSessionHasCurrentVersionOf(m.id))
+      .map(m=>m.id)
+  );
+  const prioritized = outstandingModifiedIds.size
+    ? [...shuffled.filter(q=>outstandingModifiedIds.has(q.id)), ...shuffled.filter(q=>!outstandingModifiedIds.has(q.id))]
+    : shuffled;
+  const capped = (task.metric==='sessions') ? prioritized : prioritized.slice(0, Math.min(remaining, prioritized.length));
   beginSessionWithQuestions(capped, null);
 }
 
