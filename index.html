@@ -90,6 +90,7 @@
      be reachable, while body.faculty-shell-on is present. */
   body.faculty-shell-on #mobile-bottom-nav{display:none!important;}
   body.auth-pending #mobile-bottom-nav{display:none!important;}
+  body.maintenance-lockout-active #mobile-bottom-nav{display:none!important;}
   body.auth-pending .screen{visibility:hidden!important;}
   body.auth-pending{background:#ffffff!important;}
   #mobile-bottom-nav button{
@@ -1421,6 +1422,62 @@
   </div>
 </div>
 
+<!-- FACULTY MODE: SET UP / TURN ON MAINTENANCE MODE (full page — timer, exceptions checklist, and notice text all live here together) -->
+<div id="faculty-maintenance-setup-screen" class="screen">
+  <div style="max-width:640px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🛠 Turn On Maintenance Mode</span>
+      <button onclick="showScreen('faculty-maintenance-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.3rem;">Students will be locked out of the platform right after logging in or signing up, until you turn this back off.</div>
+
+    <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;margin-bottom:.6rem;">How long should it stay on?</div>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:#334155;margin-bottom:.5rem;cursor:pointer;">
+      <input type="radio" name="maint-duration-mode" value="manual" checked onchange="updateMaintTimerInputState()"> Until I turn it off manually
+    </label>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:#334155;margin-bottom:.4rem;cursor:pointer;">
+      <input type="radio" name="maint-duration-mode" value="timer" onchange="updateMaintTimerInputState()"> Turn off automatically after
+    </label>
+    <div style="display:flex;gap:.5rem;align-items:center;margin:.2rem 0 1.4rem 1.6rem;">
+      <input id="maint-timer-value" type="number" min="1" value="60" disabled style="width:90px;padding:.5rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;">
+      <select id="maint-timer-unit" disabled style="padding:.5rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;">
+        <option value="minutes">minutes</option>
+        <option value="hours">hours</option>
+        <option value="days">days</option>
+      </select>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;">Exceptions</div>
+      <button id="maint-exceptions-selectall-btn" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;color:#1a3260;cursor:pointer;">☑ Select All</button>
+    </div>
+    <div style="font-size:.78rem;color:#64748b;margin-bottom:.6rem;">Selected accounts can keep using the platform normally, unaffected by maintenance mode.</div>
+    <div id="maint-exceptions-sub" style="font-size:.8rem;color:#64748b;margin-bottom:.5rem;">Loading users…</div>
+    <div id="maint-exceptions-list" style="display:flex;flex-direction:column;gap:.4rem;max-height:260px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:10px;padding:.6rem;margin-bottom:1.4rem;"></div>
+
+    <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;margin-bottom:.4rem;">Notice for students (optional)</div>
+    <textarea id="maint-notice-text" rows="3" placeholder="e.g. We'll be back online by 6 PM today. Thanks for your patience!" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;font-family:inherit;resize:vertical;margin-bottom:1.4rem;"></textarea>
+
+    <div style="display:flex;gap:.6rem;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding-top:.6rem;">
+      <button onclick="showScreen('faculty-maintenance-screen')" style="padding:.6rem 1rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="maint-activate-confirm-btn" onclick="confirmActivateMaintenance()" style="padding:.6rem 1.2rem;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">🛠 Turn On Maintenance Mode</button>
+    </div>
+  </div>
+</div>
+
+<!-- FACULTY MODE: MAINTENANCE MODE (lock students out of the platform) -->
+<div id="faculty-maintenance-screen" class="screen">
+  <div style="max-width:640px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🛠 Maintenance Mode</span>
+      <button onclick="showScreen('faculty-categories-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">When maintenance mode is on, students can still log in or sign up as normal, but instead of the platform they'll only see a notice that the platform is under maintenance — until you turn it back off.</div>
+    <div id="faculty-maintenance-status-card" style="border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;"></div>
+    <div id="faculty-maintenance-actions" style="display:flex;flex-direction:column;gap:.7rem;"></div>
+  </div>
+</div>
+
 <!-- FACULTY MODE: RECENTLY DELETED (attempts temporarily deleted by a teacher, across ALL categories) -->
 <div id="faculty-recently-deleted-screen" class="screen">
   <div style="max-width:760px;width:100%;margin:0 auto;">
@@ -1466,6 +1523,17 @@
 </div>
 
 <!-- HOME -->
+<!-- STUDENT-SIDE: MAINTENANCE LOCKOUT (shown after successful login/signup while maintenance mode is on and the student has no exception) -->
+<div id="maintenance-lockout-screen" class="screen">
+  <div style="max-width:480px;width:100%;margin:0 auto;text-align:center;padding:2rem 1.2rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;">🛠</div>
+    <div style="font-size:1.2rem;font-weight:700;color:#0f1f3d;margin-bottom:.7rem;">The platform is currently unavailable</div>
+    <div style="font-size:.92rem;color:#64748b;margin-bottom:1.2rem;line-height:1.5;">The platform is currently inaccessible because of maintenance work going on. Please check back later.</div>
+    <div id="maintenance-lockout-notice" style="display:none;background:#fef3c7;border:2px solid #fde68a;border-radius:12px;padding:1rem 1.1rem;font-size:.85rem;color:#92400e;line-height:1.5;margin-bottom:1.4rem;white-space:pre-wrap;"></div>
+    <button onclick="handleLogout()" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.6rem 1.2rem;font-size:.82rem;font-weight:600;color:#64748b;cursor:pointer;">🚪 Log out</button>
+  </div>
+</div>
+
 <div id="home-screen" class="screen">
   <div id="home-topbar-row" style="max-width:760px;width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;padding:0 .25rem;box-sizing:border-box;flex-wrap:wrap;gap:.5rem;">
     <span style="font-size:.85rem;color:var(--navy);font-weight:600;">👋 <span id="welcome-username">User</span></span>
@@ -8554,6 +8622,7 @@ const FACULTY_NAV_ITEMS=[
   {id:'faculty-uname-requests-screen', icon:'✏️', label:'Username Requests', action:'openFacultyUsernameRequests()', badge:'uname-req-badge'},
   {id:'faculty-users-screen', icon:'🔑', label:'Manage Users', action:'openFacultyUserManagement()'},
   {id:'faculty-recently-deleted-screen', icon:'🕓', label:'Recently Deleted', action:'openFacultyRecentlyDeleted()', badge:'recently-deleted-badge'},
+  {id:'faculty-maintenance-screen', icon:'🛠', label:'Maintenance Mode', action:'openFacultyMaintenanceScreen()', badge:'maintenance-badge'},
 ];
 function buildFacultySidebarHTML(activeId){
   const items=FACULTY_NAV_ITEMS.map(it=>{
@@ -9953,6 +10022,184 @@ function openFacultyUserManagement(){
   if(!requireFacultyKey()) return;
   showScreen('faculty-users-screen');
   loadFacultyUsers();
+}
+
+// ── FACULTY: MAINTENANCE MODE ─────────────────────────────
+// Single-row settings table (id=1). Anyone can read it (anon key, so the
+// student-side lockout check can run before/around login); only the
+// service_role key used by Faculty Mode can write to it (see
+// migration_maintenance.sql for the RLS policies).
+function openFacultyMaintenanceScreen(){
+  if(!requireFacultyKey()) return;
+  showScreen('faculty-maintenance-screen');
+  loadFacultyMaintenanceStatus();
+}
+
+async function fetchMaintenanceRow(){
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/platform_maintenance?id=eq.1&select=*',{headers:facultyAuthHeaders()});
+    if(!res.ok) return {missing:true};
+    const rows=await res.json();
+    if(rows && rows.error) return {missing:true};
+    if(!rows || !rows.length) return {missing:false, row:null};
+    return {missing:false, row:rows[0]};
+  }catch(e){ return {missing:true}; }
+}
+
+async function loadFacultyMaintenanceStatus(){
+  const statusCard=document.getElementById('faculty-maintenance-status-card');
+  const actionsEl=document.getElementById('faculty-maintenance-actions');
+  statusCard.innerHTML='Loading status…';
+  actionsEl.innerHTML='';
+
+  const {missing,row}=await fetchMaintenanceRow();
+  if(missing){
+    statusCard.style.cssText='border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;background:#fef2f2;border:2px solid #ef4444;';
+    statusCard.innerHTML='⚠️ Maintenance Mode isn\'t set up yet — the <code>platform_maintenance</code> table is missing. Run <code>migration_maintenance.sql</code> in the Supabase SQL Editor, then reload this page.';
+    return;
+  }
+
+  const isActive = row && row.is_active;
+  // Auto-expire check: if a timer was set and it has passed, treat as off
+  // and silently turn it off for real so the status/UI stay consistent.
+  if(isActive && row.auto_off_at && new Date(row.auto_off_at).getTime()<=Date.now()){
+    await writeMaintenanceRow({ is_active:false });
+    return loadFacultyMaintenanceStatus();
+  }
+
+  if(isActive){
+    statusCard.style.cssText='border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;background:#fef3c7;border:2px solid #fde68a;';
+    const exCount=(row.exception_user_ids||[]).length;
+    let timerLine='Will stay on until you turn it off manually.';
+    if(row.auto_off_at){
+      timerLine='Will turn off automatically at '+new Date(row.auto_off_at).toLocaleString()+'.';
+    }
+    statusCard.innerHTML=`
+      <div style="font-weight:700;color:#92400e;font-size:.95rem;margin-bottom:.4rem;">🛠 Maintenance Mode is ON</div>
+      <div style="font-size:.82rem;color:#78350f;margin-bottom:.3rem;">${timerLine}</div>
+      <div style="font-size:.82rem;color:#78350f;margin-bottom:.3rem;">${exCount} exception${exCount!==1?'s':''} — ${exCount?'these accounts can still use the platform.':'every student is locked out.'}</div>
+      ${row.notice_text?`<div style="font-size:.8rem;color:#78350f;margin-top:.5rem;border-top:1px solid #fde68a;padding-top:.5rem;"><b>Notice shown to students:</b><br>${escapeHtml(row.notice_text)}</div>`:''}
+    `;
+    actionsEl.innerHTML=`<button onclick="turnOffMaintenance()" style="padding:.8rem 1rem;background:#059669;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">✅ Turn Off Maintenance Mode</button>`;
+  }else{
+    statusCard.style.cssText='border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;background:#f0fdf4;border:2px solid #bbf7d0;';
+    statusCard.innerHTML='<div style="font-weight:700;color:#166534;font-size:.95rem;">✅ Maintenance Mode is OFF</div><div style="font-size:.82rem;color:#166534;margin-top:.3rem;">Students can use the platform normally.</div>';
+    actionsEl.innerHTML=`<button onclick="openFacultyMaintenanceSetupScreen()" style="padding:.8rem 1rem;background:#b45309;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">🛠 Turn On Maintenance Mode</button>`;
+  }
+}
+
+function escapeHtml(s){
+  const d=document.createElement('div'); d.textContent=s; return d.innerHTML;
+}
+
+// Writes a partial update to the single settings row via upsert (so it works
+// whether or not the row already exists yet).
+async function writeMaintenanceRow(patch){
+  const {row}=await fetchMaintenanceRow();
+  const merged=Object.assign({
+    id:1, is_active:false, notice_text:'', auto_off_at:null, exception_user_ids:[]
+  }, row||{}, patch, { updated_at:new Date().toISOString() });
+  const res=await fetch(SUPABASE_URL+'/rest/v1/platform_maintenance?on_conflict=id',{
+    method:'POST',
+    headers: Object.assign({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'}, facultyAuthHeaders()),
+    body: JSON.stringify(merged)
+  });
+  if(!res.ok){
+    const t=await res.text();
+    throw new Error('Failed to update maintenance settings: '+t);
+  }
+  return res.json();
+}
+
+async function turnOffMaintenance(){
+  const ok=await appConfirm({title:'Turn off Maintenance Mode?',message:'Students will be able to use the platform normally again immediately.',icon:'✅',confirmText:'Turn Off',cancelText:'Cancel'});
+  if(!ok) return;
+  try{
+    await writeMaintenanceRow({ is_active:false });
+    loadFacultyMaintenanceStatus();
+  }catch(e){ alert(e.message); }
+}
+
+// ── Full-page setup screen (timer + exceptions checklist + notice, all on
+// one page — no popup, so there's nothing that can stack on top of anything
+// else or block interaction). ──
+function openFacultyMaintenanceSetupScreen(){
+  if(!requireFacultyKey()) return;
+  document.getElementById('maint-timer-value').value=60;
+  document.getElementById('maint-timer-unit').value='minutes';
+  document.querySelector('input[name="maint-duration-mode"][value="manual"]').checked=true;
+  document.getElementById('maint-notice-text').value='';
+  updateMaintTimerInputState();
+  showScreen('faculty-maintenance-setup-screen');
+  loadMaintenanceExceptionsChecklist();
+}
+function updateMaintTimerInputState(){
+  const isTimer=document.querySelector('input[name="maint-duration-mode"]:checked').value==='timer';
+  document.getElementById('maint-timer-value').disabled=!isTimer;
+  document.getElementById('maint-timer-unit').disabled=!isTimer;
+}
+
+// Loads every registered user directly into the checklist on the setup page
+// (reuses the same admin users list as Manage Users). No pre-selection is
+// needed since this is a fresh "turn on" each time.
+async function loadMaintenanceExceptionsChecklist(){
+  const subEl=document.getElementById('maint-exceptions-sub');
+  const listEl=document.getElementById('maint-exceptions-list');
+  subEl.textContent='Loading users…';
+  listEl.innerHTML='';
+  try{
+    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
+    const data=await res.json();
+    const users=(data.users||[]).map(u=>({
+      id:u.id,
+      label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
+    })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+    if(!users.length){ subEl.textContent='No registered users found.'; return; }
+    subEl.textContent=users.length+' registered user'+(users.length!==1?'s':'')+'. Check anyone who should be exempt from maintenance mode.';
+    listEl.innerHTML=users.map(u=>`
+      <label style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;color:#334155;cursor:pointer;">
+        <input type="checkbox" class="maint-exc-checkbox" value="${u.id}">
+        ${escapeHtml(u.label)}
+      </label>
+    `).join('');
+    document.getElementById('maint-exceptions-selectall-btn').onclick=()=>{
+      const boxes=[...listEl.querySelectorAll('.maint-exc-checkbox')];
+      const allChecked=boxes.every(b=>b.checked);
+      boxes.forEach(b=>b.checked=!allChecked);
+    };
+  }catch(err){
+    subEl.textContent='Error loading users. Check your service_role key is correct.';
+  }
+}
+
+async function confirmActivateMaintenance(){
+  const btn=document.getElementById('maint-activate-confirm-btn');
+  const isTimer=document.querySelector('input[name="maint-duration-mode"]:checked').value==='timer';
+  let autoOffAt=null;
+  if(isTimer){
+    const val=parseFloat(document.getElementById('maint-timer-value').value);
+    const unit=document.getElementById('maint-timer-unit').value;
+    if(!val||val<=0){ alert('Please enter a valid duration.'); return; }
+    const ms = unit==='minutes'?val*60000 : unit==='hours'?val*3600000 : val*86400000;
+    autoOffAt=new Date(Date.now()+ms).toISOString();
+  }
+  const notice=document.getElementById('maint-notice-text').value.trim();
+  const exceptionIds=[...document.querySelectorAll('.maint-exc-checkbox:checked')].map(b=>b.value);
+  btn.disabled=true; btn.textContent='Turning on…';
+  try{
+    await writeMaintenanceRow({
+      is_active:true,
+      notice_text:notice,
+      auto_off_at:autoOffAt,
+      exception_user_ids:exceptionIds
+    });
+    showScreen('faculty-maintenance-screen');
+    loadFacultyMaintenanceStatus();
+  }catch(e){
+    alert(e.message);
+  }finally{
+    btn.disabled=false; btn.textContent='🛠 Turn On Maintenance Mode';
+  }
 }
 
 async function loadFacultyUsers(){
@@ -13257,6 +13504,31 @@ async function handleLogin(){
   }
 }
 
+// ── STUDENT-SIDE: MAINTENANCE MODE CHECK ──────────────────
+// Reads the single platform_maintenance row using the anon key (readable by
+// everyone per RLS policy). Returns true if this account should be locked
+// out right now. If maintenance mode was set with a timer that has already
+// passed, treat it as off (the teacher's next visit to the Maintenance Mode
+// screen will also flip the DB row to match — this just avoids locking a
+// student out on a technicality if the teacher hasn't reopened that screen).
+async function checkMaintenanceLockout(userId){
+  const {data,error}=await sb.from('platform_maintenance').select('*').eq('id',1).maybeSingle();
+  if(error||!data) return false; // table missing or unreachable — fail open
+  if(!data.is_active) return false;
+  if(data.auto_off_at && new Date(data.auto_off_at).getTime()<=Date.now()) return false;
+  const exceptions=data.exception_user_ids||[];
+  if(exceptions.includes(userId)) return false;
+  // Populate the notice text on the lockout screen, if one was set.
+  const noticeEl=document.getElementById('maintenance-lockout-notice');
+  if(data.notice_text && data.notice_text.trim()){
+    noticeEl.textContent=data.notice_text.trim();
+    noticeEl.style.display='block';
+  }else{
+    noticeEl.style.display='none';
+  }
+  return true;
+}
+
 // Shared final step for both signup and login.
 // isResume=true means this came from a same-tab reload (checkExistingSession),
 // NOT a genuine fresh login — in that case we skip auto-submitting any
@@ -13264,6 +13536,17 @@ async function handleLogin(){
 // about to resume that exact snapshot as a live quiz instead.
 async function completeLogin(userId, username, isResume){
   currentUser = { id: userId, username: username };
+  // One-time backfill: students who used the platform before the
+  // leaderboard_scores table existed won't have a row yet. Check cheaply
+  // (just the id column) and only run the real computation if missing —
+  // so this costs nothing extra for every student after their first login
+  // post-upgrade.
+  (async()=>{
+    try{
+      const {data:existing}=await sb.from('leaderboard_scores').select('user_id').eq('user_id',userId).maybeSingle();
+      if(!existing) await updateMyLeaderboardScore();
+    }catch(e){ /* non-fatal — next attempt submit will populate it anyway */ }
+  })();
   // Mark this login in sessionStorage (NOT localStorage): it survives a page
   // reload/refresh within the SAME browser tab, but is automatically wiped the
   // moment the tab or browser window is closed. This lets a reload resume the
@@ -13271,6 +13554,23 @@ async function completeLogin(userId, username, isResume){
   // student opening a new tab, or the same student reopening the browser
   // later, always gets a fresh login screen.
   try{ sessionStorage.setItem('quizapp_active_session', JSON.stringify({ userId, username })); }catch(e){}
+
+  // ── MAINTENANCE MODE GATE ──
+  // Runs right after auth succeeds, before any student data loads. If
+  // maintenance mode is on and this account has no exception, show only the
+  // lockout screen and stop here — nothing else on this page gets touched.
+  try{
+    const isLocked=await checkMaintenanceLockout(userId);
+    if(isLocked){
+      document.getElementById('authOverlay').style.display='none';
+      document.body.classList.remove('auth-pending');
+      document.body.classList.add('maintenance-lockout-active');
+      document.body.style.overflow='';
+      showScreen('maintenance-lockout-screen');
+      return;
+    }
+  }catch(e){ /* if the check itself fails (e.g. offline, table missing), fail open — don't lock students out over a network hiccup */ }
+
   // Self-heal: link this student's mock_reports row (matched by gmail) to
   // their auth account, in case it was never linked before — covers BOTH
   // a fresh gmail signup that just happened, AND any older account that got
@@ -13651,7 +13951,7 @@ async function studentDeleteMergedTaskAttempt(mergedRow, rowEl){
         .eq('user_id', currentUser.id);
       if(error){ alert('Could not remove this assignment: '+error.message); return; }
     }
-    invalidateMyAttemptsCache();
+    invalidateMyAttemptsCache(); invalidateProfilesAttemptsCache(); updateMyLeaderboardScore();
     rowEl.style.transition='opacity .4s';
     rowEl.style.opacity='0.3';
     setTimeout(()=>{ rowEl.remove(); }, 400);
@@ -13673,7 +13973,7 @@ async function studentDeleteAttempt(attemptId, rowEl){
       .eq('id', attemptId)
       .eq('user_id', currentUser.id);
     if(error){ alert('Could not remove this attempt: '+error.message); return; }
-    invalidateMyAttemptsCache();
+    invalidateMyAttemptsCache(); invalidateProfilesAttemptsCache(); updateMyLeaderboardScore();
     rowEl.style.transition='opacity .4s';
     rowEl.style.opacity='0.3';
     setTimeout(()=>{
@@ -14849,7 +15149,7 @@ async function getProfilesAndAttempts(){
   profilesAttemptsCacheInflight=(async()=>{
     const [{data:profiles,error:pErr},{data:attempts,error:aErr}]=await Promise.all([
       sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard'),
-      sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
+      sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher,task_id,category,mode,score_correct,score_total,questions_attempted')
         .eq('hidden_by_student',false).eq('hidden_by_teacher',false)
     ]);
     if(pErr||aErr){ profilesAttemptsCacheInflight=null; throw (pErr||aErr); }
@@ -14862,6 +15162,36 @@ async function getProfilesAndAttempts(){
   })();
   return profilesAttemptsCacheInflight;
 }
+
+// --- Lightweight leaderboard_scores table sync -------------------------
+// Instead of every leaderboard/battle/group screen download EVERY
+// student's full questions_json+answers_json to recompute mastery, each
+// student's browser recomputes only ITS OWN mastery (from the cheap,
+// already-cached getMyAttempts()) right after they submit/hide an
+// attempt, and writes just the resulting number into leaderboard_scores.
+// Every other screen then reads that tiny table instead of everyone's
+// full history. See leaderboard_scores_setup.sql for the table itself.
+async function updateMyLeaderboardScore(){
+  if(!currentUser) return;
+  try{
+    const myAttempts=await getMyAttempts();
+    const [tasksRes,completionsRes]=await Promise.all([
+      sb.from('tasks').select('id,counts_toward_leaderboard,min_accuracy,category_ids,mode,created_at,target_count').eq('archived',false).then(r=>r).catch(()=>({data:[],error:null})),
+      sb.from('task_completions').select('task_id').eq('user_id',currentUser.id).then(r=>r).catch(()=>({data:[],error:null}))
+    ]);
+    const allTasks=(tasksRes&&!tasksRes.error&&tasksRes.data)?tasksRes.data:[];
+    const myCompletedTaskIds=new Set(((completionsRes&&!completionsRes.error&&completionsRes.data)||[]).map(c=>c.task_id));
+    const topupQuestionIds=computeTaskMasteryTopupQuestionIds(allTasks, myAttempts, myCompletedTaskIds);
+    const {mastery,attemptedCount}=myAttempts.length?computeMasteryFromAttempts(myAttempts, topupQuestionIds):{mastery:0,attemptedCount:0};
+    await sb.from('leaderboard_scores').upsert({
+      user_id:currentUser.id,
+      mastery:Math.round(mastery*10000)/10000, // keep same precision computeMasteryFromAttempts already uses
+      attempted_count:attemptedCount,
+      updated_at:new Date().toISOString()
+    });
+  }catch(e){ /* non-fatal — leaderboard_scores just stays one attempt stale until next successful sync */ }
+}
+
 
 function masteryToLevel(mastery){
   // 0-9.99% -> L1 ... 90-100% -> L10
@@ -15212,38 +15542,26 @@ async function loadLeaderboardData(){
   emptyMsg.style.display='none';
 
   try{
-    // Pull every profile, every attempt row (with the extra columns needed
-    // to re-derive which questions counted toward which tasks), every task
-    // (to know which are counts_toward_leaderboard-eligible and their
-    // accuracy gates), and every task_completions row (to know who
-    // completed what) — then compute mastery + the task top-up entirely
-    // client-side, per student.
-    const [{data:profiles,error:pErr},{data:attempts,error:aErr},tasksResult,completionsResult]=await Promise.all([
+    // Each student's mastery is pre-computed (by updateMyLeaderboardScore())
+    // the moment they submit/hide an attempt, and stored in the small
+    // leaderboard_scores table. So opening the leaderboard just reads that
+    // small table + profiles — no more downloading everyone's full
+    // questions_json/answers_json history to recompute mastery live here.
+    const [{data:profiles,error:pErr},{data:scores,error:sErr}]=await Promise.all([
       sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard'),
-      sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher,task_id,category,mode,score_correct,score_total,questions_attempted')
-        .eq('hidden_by_student',false).eq('hidden_by_teacher',false),
-      sb.from('tasks').select('id,counts_toward_leaderboard,min_accuracy,category_ids,mode,created_at,target_count').eq('archived',false).then(r=>r).catch(()=>({data:[],error:null})),
-      sb.from('task_completions').select('task_id,user_id').then(r=>r).catch(()=>({data:[],error:null}))
+      sb.from('leaderboard_scores').select('user_id,mastery,attempted_count')
     ]);
-    if(pErr||aErr){ sub.textContent='Could not load leaderboard right now.'; return; }
-    // tasks/task_completions may be on an older schema missing
-    // counts_toward_leaderboard — fail open to "no top-ups yet" rather than
-    // breaking the whole leaderboard load.
-    const allTasks=(tasksResult&&!tasksResult.error&&tasksResult.data)?tasksResult.data:[];
-    const allCompletions=(completionsResult&&!completionsResult.error&&completionsResult.data)?completionsResult.data:[];
-    const completionsByUser={};
-    allCompletions.forEach(c=>{ (completionsByUser[c.user_id]=completionsByUser[c.user_id]||new Set()).add(c.task_id); });
+    if(pErr||sErr){ sub.textContent='Could not load leaderboard right now.'; return; }
 
-    const attemptsByUser={};
-    (attempts||[]).forEach(a=>{ (attemptsByUser[a.user_id]=attemptsByUser[a.user_id]||[]).push(a); });
+    const scoreByUser={};
+    (scores||[]).forEach(s=>{ scoreByUser[s.user_id]=s; });
 
     const students=(profiles||[])
       .filter(p=>!p.hidden_from_leaderboard)
       .map(p=>{
-        const rows=attemptsByUser[p.id]||[];
-        const myCompletedTaskIds=completionsByUser[p.id]||new Set();
-        const topupQuestionIds=computeTaskMasteryTopupQuestionIds(allTasks, rows, myCompletedTaskIds);
-        const {mastery,attemptedCount}=rows.length?computeMasteryFromAttempts(rows, topupQuestionIds):{mastery:0,attemptedCount:0};
+        const s=scoreByUser[p.id];
+        const mastery=s?Number(s.mastery)||0:0;
+        const attemptedCount=s?Number(s.attempted_count)||0:0;
         // Display name: gmail-linked accounts show full_name only, never the
         // gmail itself; plain usernames show the username as-is.
         const looksLikeGmail=/@gmail\.com$/i.test(p.username||'');
@@ -15975,11 +16293,10 @@ async function renderMyGroup(groupId){
     // this panel (i.e. only to fellow group members, since this section only
     // renders for people who are themselves in the group) — never surfaced
     // on the public group leaderboard, which stays group-vs-group only.
-    const {data:memberAttempts}=await sb.from('attempts')
-      .select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
-      .eq('hidden_by_student',false).eq('hidden_by_teacher',false)
-      .in('user_id',memberIds.length?memberIds:['00000000-0000-0000-0000-000000000000'])
-      .order('created_at',{ascending:true});
+    const {attempts:allAttemptsForContrib}=await getProfilesAndAttempts();
+    const memberIdSetForContrib=new Set(memberIds);
+    const memberAttempts=(allAttemptsForContrib||[]).filter(a=>memberIdSetForContrib.has(a.user_id))
+      .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)); // countCurrentCorrectForMember relies on oldest-first order
     const attemptsByMember={};
     (memberAttempts||[]).forEach(a=>{ (attemptsByMember[a.user_id]=attemptsByMember[a.user_id]||[]).push(a); });
     const contribByUser={};
@@ -16118,29 +16435,28 @@ async function openInviteModal(){
   try{
     // Reuse exactly the same mastery/level computation as Battle Mode's ±1
     // opponent matching — no separate ranking system for groups.
-    const [{data:profiles,error:pErr},{data:attempts,error:aErr},{data:existingMembers},{data:pendingAny}]=await Promise.all([
+    const [{data:profiles,error:pErr},{data:scores,error:sErr},{data:existingMembers},{data:pendingAny}]=await Promise.all([
       sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard'),
-      sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
-        .eq('hidden_by_student',false).eq('hidden_by_teacher',false),
+      sb.from('leaderboard_scores').select('user_id,mastery'),
       sb.from('group_members').select('user_id'), // everyone already in ANY group can't be invited
       sb.from('group_invites').select('to_user').eq('status','pending') // already-invited-somewhere students can't be double-invited
     ]);
-    if(pErr||aErr){ loadingMsg.textContent='Could not load students — try again.'; return; }
+    if(pErr||sErr){ loadingMsg.textContent='Could not load students — try again.'; return; }
     const alreadyGrouped=new Set((existingMembers||[]).map(m=>m.user_id));
     (pendingAny||[]).forEach(inv=>alreadyGrouped.add(inv.to_user));
 
-    const attemptsByUser={};
-    (attempts||[]).forEach(a=>{ (attemptsByUser[a.user_id]=attemptsByUser[a.user_id]||[]).push(a); });
+    const scoreByUser={};
+    (scores||[]).forEach(s=>{ scoreByUser[s.user_id]=s; });
 
-    const myRows=attemptsByUser[currentUser.id]||[];
-    const {mastery:myMastery}=myRows.length?computeMasteryFromAttempts(myRows):{mastery:0};
+    const myScore=scoreByUser[currentUser.id];
+    const myMastery=myScore?Number(myScore.mastery)||0:0;
     const myLevel=masteryToLevel(myMastery);
 
     const eligible=(profiles||[])
       .filter(p=>!p.hidden_from_leaderboard && p.id!==currentUser.id && !alreadyGrouped.has(p.id))
       .map(p=>{
-        const rows=attemptsByUser[p.id]||[];
-        const {mastery}=rows.length?computeMasteryFromAttempts(rows):{mastery:0};
+        const s=scoreByUser[p.id];
+        const mastery=s?Number(s.mastery)||0:0;
         const level=masteryToLevel(mastery);
         const looksLikeGmail=/@gmail\.com$/i.test(p.username||'');
         const displayName=(looksLikeGmail && p.full_name) ? p.full_name : (p.full_name||p.username||'Student');
@@ -16247,12 +16563,13 @@ async function loadGroupLeaderboard(){
     const {data:members,error:mErr}=await sb.from('group_members').select('group_id,user_id');
     if(mErr){ list.innerHTML=''; emptyMsg.style.display='block'; return; }
     const memberIds=[...new Set(members.map(m=>m.user_id))];
-    const [{data:profiles},{data:attempts}]=await Promise.all([
-      sb.from('profiles').select('id,username,full_name').in('id',memberIds.length?memberIds:['00000000-0000-0000-0000-000000000000']),
-      sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
-        .eq('hidden_by_student',false).eq('hidden_by_teacher',false).in('user_id',memberIds.length?memberIds:['00000000-0000-0000-0000-000000000000'])
-        .order('created_at',{ascending:true}) // oldest first — countCurrentCorrectForMember relies on this order
-    ]);
+    const {profiles:allProfiles,attempts:allAttempts}=await getProfilesAndAttempts();
+    const memberIdSet=new Set(memberIds);
+    const profiles=(allProfiles||[]).filter(p=>memberIdSet.has(p.id));
+    // countCurrentCorrectForMember relies on oldest-first order; the shared
+    // cache doesn't guarantee server sort order, so sort client-side here.
+    const attempts=(allAttempts||[]).filter(a=>memberIdSet.has(a.user_id))
+      .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
     const nameById={}; (profiles||[]).forEach(p=>{ nameById[p.id]=p.full_name||p.username||'Student'; });
 
     // Group each member's attempts, then reduce to "unique questions currently
@@ -16447,21 +16764,23 @@ async function loadBattleOpponentOptions(){
   const loadingMsg=document.getElementById('battle-opponent-loading');
   loadingMsg.style.display='block';
   try{
-    const [{data:profiles,error:pErr},{data:attempts,error:aErr}]=await Promise.all([
-      sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard,blocked_from_battle'),
-      sb.from('attempts').select('user_id,questions_json,answers_json,created_at,hidden_by_student,hidden_by_teacher')
-        .eq('hidden_by_student',false).eq('hidden_by_teacher',false)
+    const [{data:profiles,error:pErr},{data:scores,error:sErr},{data:battleFlags}]=await Promise.all([
+      sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard'),
+      sb.from('leaderboard_scores').select('user_id,mastery,attempted_count'),
+      sb.from('profiles').select('id,blocked_from_battle')
     ]);
-    if(pErr||aErr){ loadingMsg.textContent='Could not load opponents — try again.'; return; }
+    if(pErr||sErr){ loadingMsg.textContent='Could not load opponents — try again.'; return; }
+    const blockedById={}; (battleFlags||[]).forEach(p=>{ blockedById[p.id]=p.blocked_from_battle; });
 
-    const attemptsByUser={};
-    (attempts||[]).forEach(a=>{ (attemptsByUser[a.user_id]=attemptsByUser[a.user_id]||[]).push(a); });
+    const scoreByUser={};
+    (scores||[]).forEach(s=>{ scoreByUser[s.user_id]=s; });
 
     const students=(profiles||[])
-      .filter(p=>!p.hidden_from_leaderboard && !p.blocked_from_battle && p.id!==currentUser.id)
+      .filter(p=>!p.hidden_from_leaderboard && !blockedById[p.id] && p.id!==currentUser.id)
       .map(p=>{
-        const rows=attemptsByUser[p.id]||[];
-        const {mastery,attemptedCount}=rows.length?computeMasteryFromAttempts(rows):{mastery:0,attemptedCount:0};
+        const s=scoreByUser[p.id];
+        const mastery=s?Number(s.mastery)||0:0;
+        const attemptedCount=s?Number(s.attempted_count)||0:0;
         const looksLikeGmail=/@gmail\.com$/i.test(p.username||'');
         const displayName=(looksLikeGmail && p.full_name) ? p.full_name : (p.full_name||p.username||'Student');
         return { userId:p.id, displayName, mastery, level:masteryToLevel(mastery), attemptCount:attemptedCount };
@@ -16469,8 +16788,8 @@ async function loadBattleOpponentOptions(){
       .filter(s=>s.attemptCount>0);
 
     // My own level (0 attempts = level 1, same default the leaderboard uses).
-    const myRows=attemptsByUser[currentUser.id]||[];
-    const {mastery:myMastery}=myRows.length?computeMasteryFromAttempts(myRows):{mastery:0};
+    const myScore=scoreByUser[currentUser.id];
+    const myMastery=myScore?Number(myScore.mastery)||0:0;
     const myLevel=masteryToLevel(myMastery);
 
     const nearMyLevel=students.filter(s=>Math.abs(s.level-myLevel)<=1);
@@ -17009,7 +17328,7 @@ async function saveAttemptToSupabase(wasPartial){
       attemptNumber=(count||0)+1;
     }catch(cErr){ /* non-fatal — fall back to 1 */ }
     const {data,error}=await sb.from('attempts').insert({...insertPayload, attempt_number: attemptNumber}).select();
-    if(!error) invalidateMyAttemptsCache();
+    if(!error){ invalidateMyAttemptsCache(); invalidateProfilesAttemptsCache(); updateMyLeaderboardScore(); }
     if(error){
       if(looksLikeOfflineError(error)){
         queuePendingAttempt(insertPayload);
@@ -17213,7 +17532,7 @@ async function flushPendingAttemptQueue(){
       }catch(cErr){ /* non-fatal */ }
       const {queuedAt, ...cleanPayload}=payload; // don't upload our own bookkeeping field
       const {error}=await sb.from('attempts').insert({...cleanPayload, attempt_number: attemptNumber});
-      if(!error) invalidateMyAttemptsCache();
+      if(!error){ invalidateMyAttemptsCache(); invalidateProfilesAttemptsCache(); updateMyLeaderboardScore(); }
       if(error){
         if(looksLikeOfflineError(error)){ stillPending.push(payload); continue; } // still offline — keep for next try
         console.error('Failed to sync queued attempt (Supabase error):', error.message);
