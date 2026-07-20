@@ -91,6 +91,24 @@
   body.faculty-shell-on #mobile-bottom-nav{display:none!important;}
   body.auth-pending #mobile-bottom-nav{display:none!important;}
   body.maintenance-lockout-active #mobile-bottom-nav{display:none!important;}
+  /* FEATURE MAINTENANCE — any element marked .feature-blocked (applied by
+     applyFeatureBlockLockdown() to buttons/cards/nav-links for a currently
+     blocked feature) becomes visibly greyed out and fully unclickable,
+     without needing every call site to duplicate this styling by hand. A
+     tiny badge is injected so it's obvious at a glance why it's disabled. */
+  .feature-blocked{opacity:.45!important;filter:grayscale(.6);cursor:not-allowed!important;position:relative;pointer-events:none;}
+  .feature-blocked::after{content:'🛠 Temporarily disabled';position:absolute;left:50%;bottom:-1.35rem;transform:translateX(-50%);font-size:.62rem;font-weight:700;color:#b45309;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:.15rem .5rem;white-space:nowrap;pointer-events:none;z-index:2;}
+  /* The bottom nav bar is pinned to the very bottom of the viewport, so the
+     default badge (positioned below the element) would render off-screen
+     and never be seen. Inside #mobile-bottom-nav specifically, swap it for
+     a small "🛠" lock badge pinned to the top-right corner of the icon
+     instead — same "this is blocked" signal, but it stays on-screen. */
+  #mobile-bottom-nav button.feature-blocked::after{
+    content:'🛠';top:-2px;bottom:auto;left:auto;right:8%;transform:none;
+    background:#fef3c7;border:1.5px solid #fde68a;border-radius:999px;
+    padding:0;width:16px;height:16px;font-size:.62rem;line-height:15px;
+    box-shadow:0 0 0 2px #fff;
+  }
   body.auth-pending .screen{visibility:hidden!important;}
   body.auth-pending{background:#ffffff!important;}
   #mobile-bottom-nav button{
@@ -843,7 +861,8 @@
 
       <div id="faculty-goal-accuracy-wrap" style="display:none;">
         <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Minimum accuracy required (%) <span style="font-weight:600;color:#94a3b8;">— optional</span></label>
-        <input id="faculty-goal-min-accuracy" type="number" min="1" max="100" placeholder="Leave blank for no minimum" style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;">
+        <input id="faculty-goal-min-accuracy" type="number" min="1" max="100" placeholder="Leave blank for no minimum" style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:.4rem;box-sizing:border-box;">
+        <div style="font-size:.72rem;color:#94a3b8;line-height:1.5;margin-bottom:1rem;">This is the bar for the <b>task itself</b> to count as completed. If a student reaches the required number of questions but their combined accuracy falls below this %, the task stays open (not completed) and they can keep trying. Leave this blank and there's <b>no</b> accuracy requirement at all — the task completes as soon as the question count is reached, regardless of score.</div>
       </div>
 
       <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Due within</label>
@@ -865,7 +884,8 @@
         <input id="faculty-goal-counts-toward-leaderboard" type="checkbox" style="margin-top:.15rem;flex:0 0 auto;">
         <span style="font-size:.8rem;color:#9a3412;line-height:1.4;">
           <b>Count this task toward leaderboards</b><br>
-          <span style="font-weight:600;color:#c2410c;">If checked, completing this task gives the student a flat Weekly Prize point boost (2 points per question in the task). If left unchecked, completing this task contributes nothing to any leaderboard — it's just tracked as a completed task.</span>
+          <span style="font-weight:600;color:#c2410c;">If checked, completing this task gives the student a Weekly Prize point boost (scaled by accuracy — up to 1.5 points per question) plus a Mastery Board top-up, on top of their normal points for answering the questions. If left unchecked, completing this task contributes nothing to any leaderboard — it's just tracked as a completed task.<br><br>
+          <u>Note on accuracy:</u> the leaderboard bonus has its own accuracy bar, separate from the task-completion requirement above. It uses whatever minimum accuracy you set above — but if you left that blank, the leaderboard bonus still requires a <b>default 50%</b> combined accuracy on the task (even though the task itself completes at any score). Fall short of that 50% and the task still shows as completed, it just earns no leaderboard bonus.</span>
         </span>
       </label>
 
@@ -1137,7 +1157,7 @@
             <li>Got it wrong first, then <strong>correct on retry</strong> = <strong>0.3 points</strong> instead of 1.0.</li>
             <li>Only your <strong>first 2 retries</strong> of the same question count toward your score each period — further retries on that question this period earn 0, though you can keep practicing them for your own learning.</li>
             <li>Each question can only contribute points <strong>once per period</strong>, on whichever of your counted attempts was correct.</li>
-            <li>Completing a task your teacher assigned can add a <strong>one-time bonus</strong> on top — but only if your teacher checked "Count this task toward leaderboards" when assigning it, and only if your accuracy on that task met the required minimum. The bonus size scales with the number of questions in the task and your accuracy on it.</li>
+            <li>Completing a task your teacher assigned can add a <strong>one-time bonus</strong> on top — but only if your teacher checked "Count this task toward leaderboards" when assigning it. You still need to clear an accuracy bar for the <strong>bonus</strong> specifically: your teacher's own minimum if they set one, or a <strong>default 50%</strong> if they didn't. (This is separate from — and can be different from — whatever accuracy bar decides if the task counts as completed at all.) The bonus size scales with the number of questions in the task and your accuracy on it.</li>
             <li>Answering your <strong>Daily Warm-Up</strong> correctly adds a flat <strong>+10 point bonus</strong> to this board — once per day, the day it's completed.</li>
           </ul>
           <div style="font-size:.74rem;color:#94a3b8;">Ties are broken by first-try accuracy %, then by number of distinct questions attempted.</div>
@@ -1489,6 +1509,13 @@
       <div style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Temporarily disable one or more categories — e.g. while you're editing their questions — without locking out the whole platform. Students still see the category, but it's greyed out and unclickable, and they can't Battle-challenge anyone on it either, until you turn it back off.</div>
       <button onclick="openFacultyCategoryMaintenanceScreen()" style="padding:.75rem 1rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.86rem;font-weight:700;cursor:pointer;width:100%;">🗂️ Manage Category Maintenance →</button>
     </div>
+
+    <!-- FEATURE MAINTENANCE — block/unblock individual platform features (Practice, Battle, Leaderboards, etc) for all students, with exceptions and timers, without touching the whole-platform or category locks above. -->
+    <div style="border-top:2px solid #e2e8f0;padding-top:1.3rem;margin-top:1.3rem;">
+      <div style="font-size:.95rem;font-weight:700;color:#0f1f3d;margin-bottom:.3rem;">🧩 Block Individual Features</div>
+      <div style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Temporarily disable specific platform features — Practice, Battle Mode, Leaderboards, Study Groups, and more — one at a time or several at once. Blocked features become greyed out and unclickable for students, with an optional exception list and an auto or manual timer, until you turn each one back on.</div>
+      <button onclick="openFeatureBlockScreen()" style="padding:.75rem 1rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.86rem;font-weight:700;cursor:pointer;width:100%;">🧩 Manage Blocked Features →</button>
+    </div>
   </div>
 </div>
 
@@ -1499,9 +1526,35 @@
       <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🗂️ Category Maintenance</span>
       <button onclick="showScreen('faculty-maintenance-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
     </div>
-    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Categories listed here are currently locked — invisible to click, greyed out, and unusable everywhere (Practice, Quiz, Test, Battle, Redo My Mistakes) for students, until you turn each one off or its timer runs out.</div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Categories listed here are currently locked — invisible to click, greyed out, and unusable everywhere (Quiz, Test, Battle, Redo My Mistakes) for students, until you turn each one off or its timer runs out. You can grant individual students an exception so they can still practice (without saving) — see "Exceptions" on each locked category below.</div>
+    <div id="faculty-catmaint-unlockall-wrap" style="display:none;margin-bottom:.8rem;">
+      <button onclick="unlockAllCategoryMaintenance()" style="padding:.7rem 1rem;background:#059669;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;width:100%;">✅ Unlock All</button>
+    </div>
     <div id="faculty-catmaint-list" style="display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.4rem;"></div>
     <button onclick="openFacultyCategoryMaintenanceSetupScreen()" style="padding:.8rem 1rem;background:#b45309;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%;">🛠 Lock More Categories</button>
+  </div>
+</div>
+
+<!-- FACULTY MODE: CATEGORY MAINTENANCE — per-category exceptions (pick students who can still practice) -->
+<div id="faculty-catmaint-exceptions-screen" class="screen">
+  <div style="max-width:680px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🧑‍🎓 Exceptions</span>
+      <button onclick="showScreen('faculty-category-maintenance-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div id="catmaint-exc-category-label" style="font-size:.9rem;font-weight:700;color:#b45309;margin-bottom:.3rem;"></div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Students you check here can still practice this category's questions while it's locked — they see and attempt everything normally, they just won't have any attempt saved until you unlock it. Everyone else stays fully locked out, exactly as now.</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;">Students</div>
+      <button id="catmaint-exc-selectall-btn" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;color:#1a3260;cursor:pointer;">☑ Select All</button>
+    </div>
+    <div id="catmaint-exc-sub" style="font-size:.8rem;color:#64748b;margin-bottom:.5rem;">Loading users…</div>
+    <div id="catmaint-exc-list" style="display:flex;flex-direction:column;gap:.4rem;max-height:320px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:10px;padding:.6rem;margin-bottom:1.4rem;"></div>
+    <div id="catmaint-exc-error" style="display:none;color:#dc2626;font-size:.8rem;font-weight:600;margin-bottom:.8rem;"></div>
+    <div style="display:flex;gap:.6rem;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding-top:.6rem;">
+      <button onclick="showScreen('faculty-category-maintenance-screen')" style="padding:.6rem 1rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="catmaint-exc-save-btn" onclick="saveCategoryMaintExceptions()" style="padding:.6rem 1.2rem;background:#059669;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">💾 Save Exceptions</button>
+    </div>
   </div>
 </div>
 
@@ -1541,11 +1594,109 @@
     <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;margin-bottom:.4rem;">Notice for students (optional)</div>
     <textarea id="catmaint-notice-text" rows="2" placeholder="e.g. Updating these questions — back shortly!" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;font-family:inherit;resize:vertical;margin-bottom:1.4rem;"></textarea>
 
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;">Exceptions (optional)</div>
+      <button id="catmaint-setup-exc-selectall-btn" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;color:#1a3260;cursor:pointer;">☑ Select All</button>
+    </div>
+    <div style="font-size:.78rem;color:#64748b;margin-bottom:.6rem;">Checked students can still practice (unsaved) every category you lock in this step, right from when the lock goes on — no need to set this up separately afterward.</div>
+    <div id="catmaint-setup-exc-sub" style="font-size:.8rem;color:#64748b;margin-bottom:.5rem;">Loading users…</div>
+    <div id="catmaint-setup-exc-list" style="display:flex;flex-direction:column;gap:.4rem;max-height:260px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:10px;padding:.6rem;margin-bottom:1.4rem;"></div>
+
     <div id="catmaint-setup-error" style="display:none;font-size:.82rem;color:#ef4444;font-weight:600;margin-bottom:1rem;"></div>
 
     <div style="display:flex;gap:.6rem;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding-top:.6rem;">
       <button onclick="showScreen('faculty-category-maintenance-screen')" style="padding:.6rem 1rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;">Cancel</button>
       <button id="catmaint-activate-confirm-btn" onclick="confirmActivateCategoryMaintenance()" style="padding:.6rem 1.2rem;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">🛠 Lock Selected Categories</button>
+    </div>
+  </div>
+</div>
+
+<!-- FACULTY MODE: FEATURE MAINTENANCE — status/list screen -->
+<div id="faculty-feature-block-screen" class="screen">
+  <div style="max-width:680px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🧩 Blocked Features</span>
+      <button onclick="showScreen('faculty-maintenance-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Features listed here are currently blocked — greyed out and unclickable for students, everywhere they appear, until you turn each one off or its timer runs out. You can grant individual students an exception so they can keep using a blocked feature normally — see "Exceptions" on each blocked feature below.</div>
+    <div id="faculty-featblock-unblockall-wrap" style="display:none;margin-bottom:.8rem;">
+      <button onclick="unblockAllFeatures()" style="padding:.7rem 1rem;background:#059669;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;width:100%;">✅ Unblock All</button>
+    </div>
+    <div id="faculty-featblock-list" style="display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.4rem;"></div>
+    <button onclick="openFeatureBlockSetupScreen()" style="padding:.8rem 1rem;background:#b45309;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%;">🧩 Block More Features</button>
+  </div>
+</div>
+
+<!-- FACULTY MODE: FEATURE MAINTENANCE — per-feature exceptions (pick students who can still use it) -->
+<div id="faculty-featblock-exceptions-screen" class="screen">
+  <div style="max-width:680px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🧑‍🎓 Exceptions</span>
+      <button onclick="showScreen('faculty-feature-block-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div id="featblock-exc-feature-label" style="font-size:.9rem;font-weight:700;color:#b45309;margin-bottom:.3rem;"></div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Students you check here can keep using this feature completely normally while it's blocked for everyone else. Everyone else stays fully locked out, exactly as now.</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;">Students</div>
+      <button id="featblock-exc-selectall-btn" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;color:#1a3260;cursor:pointer;">☑ Select All</button>
+    </div>
+    <div id="featblock-exc-sub" style="font-size:.8rem;color:#64748b;margin-bottom:.5rem;">Loading users…</div>
+    <div id="featblock-exc-list" style="display:flex;flex-direction:column;gap:.4rem;max-height:320px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:10px;padding:.6rem;margin-bottom:1.4rem;"></div>
+    <div id="featblock-exc-error" style="display:none;color:#dc2626;font-size:.8rem;font-weight:600;margin-bottom:.8rem;"></div>
+    <div style="display:flex;gap:.6rem;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding-top:.6rem;">
+      <button onclick="showScreen('faculty-feature-block-screen')" style="padding:.6rem 1rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="featblock-exc-save-btn" onclick="saveFeatureBlockExceptions()" style="padding:.6rem 1.2rem;background:#059669;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">💾 Save Exceptions</button>
+    </div>
+  </div>
+</div>
+
+<!-- FACULTY MODE: FEATURE MAINTENANCE — setup screen (select features + timer + exceptions) -->
+<div id="faculty-feature-block-setup-screen" class="screen">
+  <div style="max-width:680px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🧩 Block Features</span>
+      <button onclick="showScreen('faculty-feature-block-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Select every feature you want to temporarily disable for students. Already-blocked features aren't shown again here — manage those from the previous screen.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+      <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;">Features to block</div>
+      <button id="featblock-selectall-btn" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:600;color:#1a3260;cursor:pointer;">☑ Select All</button>
+    </div>
+    <div id="featblock-feature-list" style="display:flex;flex-direction:column;gap:.5rem;max-height:340px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:10px;padding:.7rem;margin-bottom:1.4rem;"></div>
+
+    <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;margin-bottom:.6rem;">How long should the block stay on?</div>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:#334155;margin-bottom:.5rem;cursor:pointer;">
+      <input type="radio" name="featblock-duration-mode" value="manual" checked onchange="updateFeatBlockTimerInputState()"> Until I turn it off manually
+    </label>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:#334155;margin-bottom:.4rem;cursor:pointer;">
+      <input type="radio" name="featblock-duration-mode" value="timer" onchange="updateFeatBlockTimerInputState()"> Turn off automatically after
+    </label>
+    <div style="display:flex;gap:.5rem;align-items:center;margin:.2rem 0 1.4rem 1.6rem;">
+      <input id="featblock-timer-value" type="number" min="1" value="60" disabled style="width:90px;padding:.5rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;">
+      <select id="featblock-timer-unit" disabled style="padding:.5rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;">
+        <option value="minutes">minutes</option>
+        <option value="hours">hours</option>
+        <option value="days">days</option>
+      </select>
+    </div>
+
+    <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;margin-bottom:.4rem;">Notice for students (optional)</div>
+    <textarea id="featblock-notice-text" rows="2" placeholder="e.g. Fixing a bug in this feature — back shortly!" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;font-family:inherit;resize:vertical;margin-bottom:1.4rem;"></textarea>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;">Exceptions (optional)</div>
+      <button id="featblock-setup-exc-selectall-btn" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;color:#1a3260;cursor:pointer;">☑ Select All</button>
+    </div>
+    <div style="font-size:.78rem;color:#64748b;margin-bottom:.6rem;">Checked students can keep using every feature you block in this step completely normally, right from when the block goes on — no need to set this up separately afterward.</div>
+    <div id="featblock-setup-exc-sub" style="font-size:.8rem;color:#64748b;margin-bottom:.5rem;">Loading users…</div>
+    <div id="featblock-setup-exc-list" style="display:flex;flex-direction:column;gap:.4rem;max-height:260px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:10px;padding:.6rem;margin-bottom:1.4rem;"></div>
+
+    <div id="featblock-setup-error" style="display:none;font-size:.82rem;color:#ef4444;font-weight:600;margin-bottom:1rem;"></div>
+
+    <div style="display:flex;gap:.6rem;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding-top:.6rem;">
+      <button onclick="showScreen('faculty-feature-block-screen')" style="padding:.6rem 1rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="featblock-activate-confirm-btn" onclick="confirmActivateFeatureBlock()" style="padding:.6rem 1.2rem;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">🧩 Block Selected Features</button>
     </div>
   </div>
 </div>
@@ -1606,6 +1757,17 @@
   </div>
 </div>
 
+<!-- STUDENT-SIDE: BLOCKED-FEATURE NOTICE — small centered popup shown whenever a student tries to use a feature currently blocked by Feature Maintenance. Feature buttons stay unclickable (see .feature-blocked CSS + disabled attr), but this also covers any non-button access path (keyboard, direct function call, stale cached UI) as a second line of defense. -->
+<div id="feature-blocked-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,31,61,.55);z-index:9000;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;padding:1.8rem 1.6rem;text-align:center;box-shadow:0 8px 40px rgba(15,31,61,.25);">
+    <div style="font-size:2.4rem;margin-bottom:.8rem;">🛠</div>
+    <div style="font-size:1.05rem;font-weight:700;color:#0f1f3d;margin-bottom:.5rem;">Feature temporarily unavailable</div>
+    <div id="feature-blocked-message" style="font-size:.88rem;color:#64748b;line-height:1.5;margin-bottom:1rem;">This feature is temporarily disabled because maintenance work is going on. Please check back later.</div>
+    <div id="feature-blocked-notice" style="display:none;background:#fef3c7;border:2px solid #fde68a;border-radius:12px;padding:.85rem .9rem;font-size:.82rem;color:#92400e;line-height:1.5;margin-bottom:1.1rem;white-space:pre-wrap;text-align:left;"></div>
+    <button onclick="document.getElementById('feature-blocked-overlay').style.display='none';" style="background:#1a3260;color:#fff;border:none;border-radius:8px;padding:.6rem 1.4rem;font-size:.85rem;font-weight:700;cursor:pointer;">Got it</button>
+  </div>
+</div>
+
 <div id="home-screen" class="screen">
   <div id="impersonation-banner" style="display:none;width:100%;max-width:760px;margin:0 auto .6rem;background:#b45309;color:#fff;border-radius:10px;padding:.6rem .9rem;font-size:.8rem;font-weight:700;display:none;align-items:center;justify-content:space-between;gap:.6rem;">
     <span>🕵️ Viewing as <span id="impersonation-banner-username">student</span> (Faculty Mode)</span>
@@ -1617,9 +1779,9 @@
     <span id="offline-pending-badge" style="display:none;font-size:.72rem;font-weight:700;color:#92400e;background:var(--amber-light,#fef3c7);border:1.5px solid var(--amber,#f59e0b);border-radius:20px;padding:.25rem .7rem;white-space:nowrap;">📴 0 attempts waiting to sync</span>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
       <button id="openHelpBtn" onclick="openHelpPage()" title="How everything on this platform works" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">❓ Help</button>
-      <button id="offline-mode-toggle-btn" onclick="toggleOfflineMode()" title="Prime the app for offline use, then stop trying to reach the server until you turn this back off." style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">📴 Go offline</button>
-      <button id="changeUnameHomeBtn" data-offline-hide="1" onclick="openStudentChangeUnameDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">✏️ Change Username</button>
-      <button data-offline-hide="1" onclick="openStudentChangePwDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">🔑 Change Password</button>
+      <button id="offline-mode-toggle-btn" data-feature="offline_mode" onclick="toggleOfflineMode()" title="Prime the app for offline use, then stop trying to reach the server until you turn this back off." style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">📴 Go offline</button>
+      <button id="changeUnameHomeBtn" data-offline-hide="1" data-feature="change_username" onclick="openStudentChangeUnameDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">✏️ Change Username</button>
+      <button data-offline-hide="1" data-feature="change_password" onclick="openStudentChangePwDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">🔑 Change Password</button>
       <button id="home-logout-btn" onclick="handleLogout()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">Log out</button>
       <button id="home-impersonate-back-btn" onclick="exitStudentImpersonation()" style="display:none;background:#b45309;border:2px solid #b45309;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:700;color:#fff;cursor:pointer;">← Back to Faculty Mode</button>
     </div>
@@ -1629,7 +1791,7 @@
   <div class="home-side-col">
 
   <!-- YOUR SNAPSHOT: quick mastery/level/streak/milestones overview, fills the sidebar and links onward -->
-  <div id="home-snapshot-card" class="home-snapshot-card" data-offline-hide="1" style="display:none;">
+  <div id="home-snapshot-card" class="home-snapshot-card" data-offline-hide="1" data-feature-hide="snapshot" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;">
       <div>
         <div style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:700;margin-bottom:.25rem;">Your Snapshot</div>
@@ -1638,7 +1800,7 @@
           <span id="snapshot-mastery-pct" style="font-size:.8rem;color:rgba(255,255,255,.85);font-weight:600;">0% mastery</span>
         </div>
       </div>
-      <button data-offline-hide="1" onclick="openLeaderboard()" style="background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;padding:.35rem .7rem;font-size:.7rem;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;">🏆 Board</button>
+      <button data-offline-hide="1" data-feature="leaderboards" onclick="openLeaderboard()" style="background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;padding:.35rem .7rem;font-size:.7rem;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;">🏆 Board</button>
     </div>
     <div class="home-snapshot-stats">
       <div class="home-snapshot-stat"><span class="val" id="snapshot-streak-val">0</span><span class="lbl">Day streak</span></div>
@@ -1649,7 +1811,7 @@
 
   <!-- ENGAGEMENT CARD: streak + weakest-topic nudge. Hidden entirely until data loads. -->
   <div id="engagement-card" data-offline-hide="1" style="width:100%;display:none;flex-wrap:wrap;gap:.6rem;box-sizing:border-box;">
-    <div id="streak-pill" style="display:none;align-items:center;gap:.5rem;background:linear-gradient(135deg,#fff7ed 0%,#fff 100%);border:2px solid #fb923c;border-radius:12px;padding:.65rem 1rem;font-size:.85rem;font-weight:700;color:#9a3412;width:100%;">
+    <div id="streak-pill" data-feature-hide="daily_streaks" style="display:none;align-items:center;gap:.5rem;background:linear-gradient(135deg,#fff7ed 0%,#fff 100%);border:2px solid #fb923c;border-radius:12px;padding:.65rem 1rem;font-size:.85rem;font-weight:700;color:#9a3412;width:100%;">
       <span id="streak-emoji" style="font-size:1.2rem;">🔥</span>
       <span id="streak-text">0 day streak</span>
     </div>
@@ -1658,14 +1820,14 @@
         <div style="font-size:.82rem;font-weight:800;color:#854d0e;" id="weak-topic-title">🎯 Bounty available</div>
         <div style="font-size:.74rem;color:#a16207;" id="weak-topic-desc">Loading…</div>
       </div>
-      <button class="start-btn" style="width:auto;white-space:nowrap;padding:.5rem 1rem;margin:0;font-size:.78rem;background:linear-gradient(135deg,#eab308 0%,#ca8a04 100%);" onclick="startWeakTopicDrill()" id="weak-topic-btn">Claim it →</button>
+      <button class="start-btn" data-feature="bounty" style="width:auto;white-space:nowrap;padding:.5rem 1rem;margin:0;font-size:.78rem;background:linear-gradient(135deg,#eab308 0%,#ca8a04 100%);" onclick="startWeakTopicDrill()" id="weak-topic-btn">Claim it →</button>
     </div>
   </div>
 
   <!-- DAILY WARM-UP PILL: shows completion status, opens the warm-up modal -->
   <div id="warmup-pill-wrap" style="width:100%;display:none;box-sizing:border-box;">
     <div style="display:flex;align-items:stretch;gap:.5rem;width:100%;">
-      <button id="warmup-pill" onclick="openDailyWarmup()" style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex:1;min-width:0;background:linear-gradient(135deg,#ecfdf5 0%,#fff 100%);border:2px solid #34d399;border-radius:12px;padding:.65rem 1rem;font-size:.85rem;font-weight:700;color:#065f46;cursor:pointer;font-family:inherit;text-align:left;">
+      <button id="warmup-pill" data-feature="daily_warmup" onclick="openDailyWarmup()" style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex:1;min-width:0;background:linear-gradient(135deg,#ecfdf5 0%,#fff 100%);border:2px solid #34d399;border-radius:12px;padding:.65rem 1rem;font-size:.85rem;font-weight:700;color:#065f46;cursor:pointer;font-family:inherit;text-align:left;">
         <span><span id="warmup-pill-emoji">⚡</span> <span id="warmup-pill-text">Today's warm-up waiting — 30 seconds</span></span>
         <span style="font-size:.78rem;font-weight:600;color:#059669;">Go →</span>
       </button>
@@ -1675,14 +1837,14 @@
 
   <!-- LEADERBOARD ENTRY BUTTON -->
   <div style="width:100%;box-sizing:border-box;">
-    <button data-offline-hide="1" onclick="openLeaderboard()" style="display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:linear-gradient(135deg,#0f766e 0%,#134e4a 100%);color:#fff;border:none;border-radius:12px;padding:.75rem 1rem;font-size:.88rem;font-weight:700;cursor:pointer;">
+    <button data-offline-hide="1" data-feature="leaderboards" onclick="openLeaderboard()" style="display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:linear-gradient(135deg,#0f766e 0%,#134e4a 100%);color:#fff;border:none;border-radius:12px;padding:.75rem 1rem;font-size:.88rem;font-weight:700;cursor:pointer;">
       🏆 View Leaderboard
     </button>
   </div>
 
   <!-- BATTLE MODE ENTRY BUTTON (badge shows count of battles waiting on me) -->
   <div style="width:100%;box-sizing:border-box;">
-    <button data-offline-hide="1" onclick="openBattleHub()" style="position:relative;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:linear-gradient(135deg,#7c2d12 0%,#b91c1c 100%);color:#fff;border:none;border-radius:12px;padding:.75rem 1rem;font-size:.88rem;font-weight:700;cursor:pointer;">
+    <button data-offline-hide="1" data-feature="battle_mode" onclick="openBattleHub()" style="position:relative;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:linear-gradient(135deg,#7c2d12 0%,#b91c1c 100%);color:#fff;border:none;border-radius:12px;padding:.75rem 1rem;font-size:.88rem;font-weight:700;cursor:pointer;">
       ⚔️ Battle Mode
       <span id="battle-pending-badge" style="display:none;background:#fbbf24;color:#78350f;font-size:.72rem;font-weight:800;border-radius:999px;padding:.15rem .55rem;">0</span>
     </button>
@@ -1690,7 +1852,7 @@
 
   <!-- STUDY GROUPS ENTRY BUTTON (badge shows count of pending invites for me) -->
   <div style="width:100%;box-sizing:border-box;">
-    <button data-offline-hide="1" onclick="openGroupsHub()" style="position:relative;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:linear-gradient(135deg,#6d28d9 0%,#4338ca 100%);color:#fff;border:none;border-radius:12px;padding:.75rem 1rem;font-size:.88rem;font-weight:700;cursor:pointer;">
+    <button data-offline-hide="1" data-feature="study_groups" onclick="openGroupsHub()" style="position:relative;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:linear-gradient(135deg,#6d28d9 0%,#4338ca 100%);color:#fff;border:none;border-radius:12px;padding:.75rem 1rem;font-size:.88rem;font-weight:700;cursor:pointer;">
       👥 Study Groups
       <span id="group-invite-badge" style="display:none;background:#fbbf24;color:#78350f;font-size:.72rem;font-weight:800;border-radius:999px;padding:.15rem .55rem;">0</span>
     </button>
@@ -1698,7 +1860,7 @@
 
   <!-- TASKS & GOALS ENTRY BUTTON (badge shows count of currently-open tasks for me) -->
   <div style="width:100%;box-sizing:border-box;">
-    <button onclick="openStudentTasksPage()" style="position:relative;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:linear-gradient(135deg,#9a3412 0%,#ea580c 100%);color:#fff;border:none;border-radius:12px;padding:.75rem 1rem;font-size:.88rem;font-weight:700;cursor:pointer;">
+    <button data-feature="tasks_goals" onclick="openStudentTasksPage()" style="position:relative;display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:linear-gradient(135deg,#9a3412 0%,#ea580c 100%);color:#fff;border:none;border-radius:12px;padding:.75rem 1rem;font-size:.88rem;font-weight:700;cursor:pointer;">
       📌 Tasks &amp; Goals
       <span id="my-tasks-open-badge" style="display:none;background:#fbbf24;color:#78350f;font-size:.72rem;font-weight:800;border-radius:999px;padding:.15rem .55rem;">0</span>
     </button>
@@ -1716,7 +1878,7 @@
           <span id="exam-countdown-big-label" style="font-size:.82rem;font-weight:700;color:rgba(255,255,255,.9);">days to go</span>
         </div>
         <div id="exam-countdown-sub" style="font-size:.76rem;color:rgba(255,255,255,.75);margin-top:.25rem;"></div>
-        <button id="exam-countdown-btn" onclick="toggleExamDateEditor()" style="margin-top:.8rem;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.35);border-radius:8px;padding:.45rem .85rem;font-size:.75rem;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;width:100%;">📅 Set exam date</button>
+        <button id="exam-countdown-btn" data-feature="exam_date" onclick="toggleExamDateEditor()" style="margin-top:.8rem;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.35);border-radius:8px;padding:.45rem .85rem;font-size:.75rem;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;width:100%;">📅 Set exam date</button>
       </div>
       <div id="exam-countdown-progress-wrap" style="display:none;margin-top:.9rem;">
         <div style="display:flex;justify-content:space-between;font-size:.68rem;color:rgba(255,255,255,.7);font-weight:600;margin-bottom:.3rem;">
@@ -1742,7 +1904,7 @@
 
   <!-- MOCK-1 REPORT ENTRY POINT -->
   <div id="mock1-report-entry" data-offline-hide="1" style="width:100%;box-sizing:border-box;display:none;">
-    <button onclick="openStudentMockReport()" style="width:100%;padding:1rem;background:linear-gradient(135deg,#9d174d 0%,#831843 100%);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(131,24,67,.25);">📊 View Mock-1 Report</button>
+    <button data-feature="mock_report" onclick="openStudentMockReport()" style="width:100%;padding:1rem;background:linear-gradient(135deg,#9d174d 0%,#831843 100%);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(131,24,67,.25);">📊 View Mock-1 Report</button>
   </div>
 
   </div>
@@ -1863,22 +2025,22 @@
         </div>
         <p id="custom-timer-error" style="color:var(--red);font-size:.78rem;margin-top:.3rem;display:none;width:100%;">Please enter a number of minutes between 1 and 600.</p>
       </div>
-      <button class="start-btn" onclick="startExam()">Start Session →</button>
+      <button class="start-btn" data-feature="practice_session" onclick="startExam()">Start Session →</button>
     </div>
   </div>
   <!-- QUICK-ACCESS ENTRY CARDS: mistakes / past attempts / ghost now live on their own pages -->
   <div id="quick-access-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:1.5rem;box-sizing:border-box;">
-    <button id="mistakes-entry-btn" onclick="openMistakesPage()" style="display:none;flex-direction:column;align-items:flex-start;gap:.3rem;text-align:left;background:linear-gradient(135deg,#eff6ff 0%,#fff 100%);border:2px solid #93c5fd;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;font-family:inherit;">
+    <button id="mistakes-entry-btn" data-feature="redo_mistakes" onclick="openMistakesPage()" style="display:none;flex-direction:column;align-items:flex-start;gap:.3rem;text-align:left;background:linear-gradient(135deg,#eff6ff 0%,#fff 100%);border:2px solid #93c5fd;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;font-family:inherit;">
       <span style="font-size:1.3rem;">🔁</span>
       <span style="font-size:.88rem;font-weight:700;color:var(--navy);">Redo My Mistakes</span>
       <span id="mistakes-entry-sub" style="font-size:.72rem;color:var(--text-muted);">See what needs work</span>
     </button>
-    <button id="ghost-entry-btn" onclick="openGhostPage()" style="display:none;flex-direction:column;align-items:flex-start;gap:.3rem;text-align:left;background:linear-gradient(135deg,#faf5ff 0%,#fff 100%);border:2px solid #c4b5fd;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;font-family:inherit;">
+    <button id="ghost-entry-btn" data-feature="ghosts" onclick="openGhostPage()" style="display:none;flex-direction:column;align-items:flex-start;gap:.3rem;text-align:left;background:linear-gradient(135deg,#faf5ff 0%,#fff 100%);border:2px solid #c4b5fd;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;font-family:inherit;">
       <span style="font-size:1.3rem;">👻</span>
       <span style="font-size:.88rem;font-weight:700;color:var(--navy);">Ghost of Past You</span>
       <span style="font-size:.72rem;color:var(--text-muted);">Track your progress by topic</span>
     </button>
-    <button id="past-attempts-entry-btn" data-offline-hide="1" onclick="openPastAttemptsPage()" style="grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;gap:.75rem;text-align:left;background:var(--white);border:2px solid var(--border);border-radius:14px;padding:1rem 1.2rem;cursor:pointer;font-family:inherit;">
+    <button id="past-attempts-entry-btn" data-offline-hide="1" data-feature="past_attempts" onclick="openPastAttemptsPage()" style="grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;gap:.75rem;text-align:left;background:var(--white);border:2px solid var(--border);border-radius:14px;padding:1rem 1.2rem;cursor:pointer;font-family:inherit;">
       <span style="display:flex;align-items:center;gap:.7rem;">
         <span style="font-size:1.3rem;">📚</span>
         <span>
@@ -1894,7 +2056,7 @@
   <div id="milestones-dashboard-section" class="home-card" data-offline-hide="1" style="margin-top:1.5rem;display:none;padding:1.5rem 2rem 1.8rem;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.2rem;">
       <div style="font-size:1.05rem;font-weight:700;color:var(--navy);">🏅 Your Milestones</div>
-      <button onclick="openMilestonesPage()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.35rem .8rem;font-size:.74rem;font-weight:700;color:var(--slate);cursor:pointer;white-space:nowrap;">View all →</button>
+      <button data-feature="milestones" onclick="openMilestonesPage()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.35rem .8rem;font-size:.74rem;font-weight:700;color:var(--slate);cursor:pointer;white-space:nowrap;">View all →</button>
     </div>
     <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.1rem;">Everything you've earned so far, plus what's within reach.</div>
     <div id="milestones-earned-wrap" style="margin-bottom:1.1rem;">
@@ -2187,6 +2349,7 @@
     </div>
   </div>
   <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+  <div id="practice-exception-banner" style="display:none;background:#fef3c7;border-bottom:2px solid #fde68a;color:#92400e;font-size:.78rem;font-weight:700;text-align:center;padding:.5rem .8rem;">🛠 This category is under maintenance — you can practice normally, but this attempt will NOT be saved.</div>
   <div class="quiz-body">
     <div class="q-nav" id="q-nav" style="display:none;"></div>
     <div class="quiz-progress-bar-wrap" id="quiz-progress-wrap">
@@ -8558,6 +8721,7 @@ CATEGORIES.forEach(cat => cat.ids.forEach(id => { QUESTION_ID_TO_CATEGORY[id] = 
 // ══════════════════════════════════════════════════════════
 let lockedCategoryIds = new Set();
 let lockedCategoryNotices = {}; // categoryId -> notice_text (optional teacher message)
+let lockedCategoryExceptions = {}; // categoryId -> Set<userId> exempted from this category's lock
 
 // Refreshes lockedCategoryIds/lockedCategoryNotices from Supabase. Auto-
 // expired locks (auto_off_at in the past) are treated as inactive here on
@@ -8568,37 +8732,66 @@ let lockedCategoryNotices = {}; // categoryId -> notice_text (optional teacher m
 // broken lock check must never itself block students from practicing.
 async function refreshLockedCategories(){
   try{
-    const {data,error}=await sb.from('category_maintenance').select('category_id,auto_off_at,notice_text').eq('is_active',true);
-    if(error||!Array.isArray(data)){ lockedCategoryIds=new Set(); lockedCategoryNotices={}; return; }
+    const {data,error}=await sb.from('category_maintenance').select('category_id,auto_off_at,notice_text,exception_user_ids').eq('is_active',true);
+    if(error||!Array.isArray(data)){ lockedCategoryIds=new Set(); lockedCategoryNotices={}; lockedCategoryExceptions={}; return; }
     const now=Date.now();
     const ids=new Set();
     const notices={};
+    const exceptions={};
     data.forEach(r=>{
       if(r.auto_off_at && new Date(r.auto_off_at).getTime()<=now) return; // expired — treat as unlocked
       ids.add(r.category_id);
       if(r.notice_text) notices[r.category_id]=r.notice_text;
+      exceptions[r.category_id]=new Set(Array.isArray(r.exception_user_ids)?r.exception_user_ids:[]);
     });
     lockedCategoryIds=ids;
     lockedCategoryNotices=notices;
-  }catch(e){ lockedCategoryIds=new Set(); lockedCategoryNotices={}; /* fail open */ }
+    lockedCategoryExceptions=exceptions;
+  }catch(e){ lockedCategoryIds=new Set(); lockedCategoryNotices={}; lockedCategoryExceptions={}; /* fail open */ }
 }
 function isCategoryLocked(catId){ return lockedCategoryIds.has(catId); }
+// A category-maintenance EXCEPTION means the student can still see, select,
+// attempt, and review questions in that locked category exactly like normal
+// — the only difference is their attempt is never saved (see
+// isCategoryPracticeOnly / saveAttemptToSupabase). This is deliberately
+// different from the general-maintenance exception (which restores full,
+// normal, saved access) — category-level exceptions are a "look but don't
+// save" allowance, per spec.
+function isCategoryExempt(catId){
+  if(!currentUser) return false;
+  const set=lockedCategoryExceptions[catId];
+  return !!(set && set.has(currentUser.id));
+}
+// True when this category is locked AND the current student has been
+// granted an exception for it — i.e. in Practice mode they can still
+// practice, but nothing saves. This never applies outside Practice mode
+// (Quiz, Test, Battle, Redo My Mistakes, drills all stay fully blocked
+// regardless of any exception) — callers decide that, this just reports
+// the underlying exception state.
+function isCategoryPracticeOnly(catId){
+  return isCategoryLocked(catId) && isCategoryExempt(catId);
+}
 // A question is locked if its OWNING category (per QUESTION_ID_TO_CATEGORY)
 // is currently locked. Questions belonging to no known category (shouldn't
 // normally happen) are never locked by this check.
-function isQuestionLocked(qid){
+function isQuestionLocked(qid, allowPracticeException){
   const catId=QUESTION_ID_TO_CATEGORY[qid];
-  return catId ? lockedCategoryIds.has(catId) : false;
+  if(!catId) return false;
+  if(allowPracticeException && isCategoryPracticeOnly(catId)) return false;
+  return isCategoryLocked(catId);
 }
 // Strips any locked question out of a list of question objects/ids — the
 // single shared filter used by every session-starting path (practice,
 // battle, Redo My Mistakes, weak-topic drill, remaining-drill) so a locked
 // category's questions can never be loaded anywhere, even via a synthetic
-// pool that spans multiple categories.
-function filterOutLockedQuestions(qList){
+// pool that spans multiple categories. Pass allowPracticeException=true ONLY
+// from genuine Practice-mode sessions — every other caller (Battle, Redo My
+// Mistakes, drills, Quiz, Test) must omit it so a category exception never
+// softens anything outside Practice mode, per spec.
+function filterOutLockedQuestions(qList, allowPracticeException){
   return (qList||[]).filter(q=>{
     const qid=(q&&q.id!=null)?q.id:q;
-    return !isQuestionLocked(qid);
+    return !isQuestionLocked(qid, allowPracticeException);
   });
 }
 
@@ -8648,6 +8841,160 @@ function buildBattleMetaCategories(){
   return metas;
 }
 const BATTLE_META_CATEGORIES = buildBattleMetaCategories();
+
+// ══════════════════════════════════════════════════════════
+// FEATURE MAINTENANCE MODE — block/unblock individual platform features
+// (Practice, Battle Mode, Leaderboards, etc.) independently of the
+// whole-platform lock (platform_maintenance) and the per-category lock
+// (category_maintenance) above. Same shape/pattern as category maintenance:
+// a feature_maintenance table (anon-readable, faculty-writable), one row
+// per currently-blocked feature, each with its own optional auto_off_at
+// timer, notice_text, and exception_user_ids list.
+//
+// FEATURE_REGISTRY is the single source of truth for what counts as a
+// "feature" here — add an entry and it automatically shows up in the
+// faculty block-setup checklist. `key` is the stable id stored in
+// feature_maintenance.feature_key; `guard` (when present) is called by
+// gateFeature() before the feature's real action runs.
+// ══════════════════════════════════════════════════════════
+const FEATURE_REGISTRY = [
+  { key:'practice_session', label:'📖 Practice Session (Practice/Quiz/Test modes)' },
+  { key:'tasks_goals',      label:'🎯 Tasks & Goals' },
+  { key:'study_groups',     label:'👥 Study Groups' },
+  { key:'battle_mode',      label:'⚔️ Battle Mode' },
+  { key:'leaderboards',     label:'🏆 Leaderboards' },
+  { key:'milestones',       label:'🏅 Milestones (view + contribute)' },
+  { key:'redo_mistakes',    label:'🔁 Redo My Mistakes' },
+  { key:'daily_warmup',     label:'☀️ Daily Warm-Up' },
+  { key:'daily_streaks',    label:'🔥 Daily Streaks (display)' },
+  { key:'change_username',  label:'✏️ Change Username' },
+  { key:'change_password',  label:'🔑 Change Password' },
+  { key:'exam_date',        label:'📅 Exam Date Countdown' },
+  { key:'snapshot',         label:'📊 Snapshot' },
+  { key:'bounty',           label:'🎁 Bounty' },
+  { key:'past_attempts',    label:'📚 Past Attempts' },
+  { key:'offline_mode',     label:'📴 Offline Mode' },
+  { key:'ghosts',           label:'👻 Ghosts of Past Attempts' },
+  { key:'mock_report',      label:'📊 View Mock-1 Report' },
+];
+const FEATURE_LABEL_BY_KEY = Object.fromEntries(FEATURE_REGISTRY.map(f=>[f.key,f.label]));
+
+let blockedFeatureKeys = new Set();
+let blockedFeatureNotices = {};    // featureKey -> notice_text
+let blockedFeatureExceptions = {}; // featureKey -> Set<userId>
+
+// Refreshes blockedFeatureKeys/Notices/Exceptions from Supabase. Same
+// fail-open behaviour as refreshLockedCategories(): any read error leaves
+// every feature unblocked rather than accidentally locking students out.
+async function refreshBlockedFeatures(){
+  try{
+    const {data,error}=await sb.from('feature_maintenance').select('feature_key,auto_off_at,notice_text,exception_user_ids').eq('is_active',true);
+    if(error||!Array.isArray(data)){ blockedFeatureKeys=new Set(); blockedFeatureNotices={}; blockedFeatureExceptions={}; return; }
+    const now=Date.now();
+    const keys=new Set(); const notices={}; const exceptions={};
+    data.forEach(r=>{
+      if(r.auto_off_at && new Date(r.auto_off_at).getTime()<=now) return; // expired — treat as unblocked
+      keys.add(r.feature_key);
+      if(r.notice_text) notices[r.feature_key]=r.notice_text;
+      exceptions[r.feature_key]=new Set(Array.isArray(r.exception_user_ids)?r.exception_user_ids:[]);
+    });
+    blockedFeatureKeys=keys; blockedFeatureNotices=notices; blockedFeatureExceptions=exceptions;
+  }catch(e){ blockedFeatureKeys=new Set(); blockedFeatureNotices={}; blockedFeatureExceptions={}; /* fail open */ }
+}
+function isFeatureBlocked(key){ return blockedFeatureKeys.has(key); }
+function isFeatureExempt(key){
+  if(!currentUser) return false;
+  const set=blockedFeatureExceptions[key];
+  return !!(set && set.has(currentUser.id));
+}
+// True when this feature should actually be stopped for the current user
+// right now: blocked AND no personal exception.
+function isFeatureBlockedForMe(key){ return isFeatureBlocked(key) && !isFeatureExempt(key); }
+
+// Shows the "temporarily disabled" popup with any teacher-set notice text.
+function showFeatureBlockedNotice(key){
+  const msgEl=document.getElementById('feature-blocked-message');
+  const noticeEl=document.getElementById('feature-blocked-notice');
+  msgEl.textContent='This feature is temporarily disabled because maintenance work is going on. Please check back later.';
+  const notice=blockedFeatureNotices[key];
+  if(notice && notice.trim()){ noticeEl.textContent=notice.trim(); noticeEl.style.display='block'; }
+  else{ noticeEl.style.display='none'; }
+  document.getElementById('feature-blocked-overlay').style.display='flex';
+}
+// The single shared gate every feature entry point calls first. Returns
+// true (and lets the caller proceed) when the feature is usable; returns
+// false (and shows the popup) when it's blocked for this student. Using one
+// shared function means the "unclickable button" styling and this runtime
+// check can never drift out of sync with each other.
+function gateFeature(key){
+  if(isFeatureBlockedForMe(key)){ showFeatureBlockedNotice(key); return false; }
+  return true;
+}
+// Applies/removes the .feature-blocked visual+click lockdown to every DOM
+// element tagged with data-feature="<key>" for a given feature key, so a
+// single call after refreshBlockedFeatures() keeps every button/card/nav
+// link for that feature in sync everywhere it appears on the page (home
+// grid, quick-access cards, bottom nav, sidebar, etc.) without hand-wiring
+// each one.
+function applyFeatureBlockLockdownToDom(){
+  document.querySelectorAll('[data-feature]').forEach(el=>{
+    const key=el.dataset.feature;
+    const blocked=isFeatureBlockedForMe(key);
+    el.classList.toggle('feature-blocked', blocked);
+    if(el.tagName==='BUTTON'||el.tagName==='INPUT'||el.tagName==='SELECT'||el.tagName==='TEXTAREA'){
+      el.disabled=blocked;
+    }
+    // Bottom-nav buttons show a compact 🛠 badge instead of the full-text
+    // one (no room down there) — make the hover title spell it out instead,
+    // and restore the original title once unblocked again.
+    if(el.closest('#mobile-bottom-nav')){
+      if(blocked){
+        if(!el.dataset.origTitle) el.dataset.origTitle=el.getAttribute('title')||'';
+        el.setAttribute('title', (el.dataset.origTitle?el.dataset.origTitle+' — ':'')+'Temporarily disabled');
+      }else if(el.dataset.origTitle!==undefined){
+        el.setAttribute('title', el.dataset.origTitle);
+      }
+    }
+  });
+  // Hide-mode: purely informational/display elements (Daily Streaks pill,
+  // Snapshot card) have no click action to disable — while their feature is
+  // blocked, they're simply hidden from the student entirely rather than
+  // greyed out, since a greyed-out non-interactive stat would be confusing.
+  // Only touches display:none/'' — never overrides other visibility logic
+  // (e.g. these elements starting hidden until their data loads) because it
+  // only sets display:none when blocked, and otherwise leaves whatever the
+  // normal data-loading code already set.
+  document.querySelectorAll('[data-feature-hide]').forEach(el=>{
+    const key=el.dataset.featureHide;
+    if(isFeatureBlockedForMe(key)) el.style.display='none';
+  });
+}
+// Convenience: refresh state from Supabase, then re-apply DOM lockdown —
+// the pair almost every call site actually wants.
+async function refreshAndApplyFeatureBlocks(){
+  await refreshBlockedFeatures();
+  applyFeatureBlockLockdownToDom();
+}
+
+// THIRD, CSS-INDEPENDENT LAYER: a capture-phase document click listener
+// that swallows any click landing on (or inside) a .feature-blocked element
+// before it can reach that element's own onclick handler. This exists
+// purely as a backstop — the primary defenses are (1) the CSS
+// pointer-events:none/disabled state, and (2) each feature's own action
+// function calling gateFeature() itself — but capturing here means even a
+// stale-DOM edge case (blocked state changed but this particular button's
+// class/disabled attr hasn't been re-synced yet) still can't slip a click
+// through to a blocked feature.
+document.addEventListener('click', function(ev){
+  const blockedEl = ev.target.closest && ev.target.closest('.feature-blocked');
+  if(blockedEl){
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+    const key = blockedEl.dataset.feature;
+    if(key) showFeatureBlockedNotice(key);
+  }
+}, true); // capture phase — runs before the element's own onclick
 
 // ── SUPABASE SETUP ───────────────────────────────────────
 const SUPABASE_URL = 'https://vriermetzisuwwzvbtcq.supabase.co';
@@ -9821,6 +10168,7 @@ async function checkMock1ReportAvailable(){
     hasReport = !error && !!data;
   }catch(e){ hasReport=false; }
   if(entry) entry.style.display = hasReport ? 'block' : 'none';
+  applyFeatureBlockLockdownToDom();
   // Once a student has a mock report actually linked to their account (i.e.
   // their gmail-based username matches an existing mock_reports row), the
   // "change username" flow no longer applies to them — they're already on
@@ -9833,6 +10181,7 @@ async function checkMock1ReportAvailable(){
 }
 
 async function openStudentMockReport(){
+  if(!gateFeature('mock_report')) return;
   showScreen('student-mock1-report-screen');
   const bodyEl=document.getElementById('student-mock1-report-body');
   bodyEl.innerHTML='Loading…';
@@ -10545,10 +10894,13 @@ async function loadFacultyCategoryMaintenanceList(){
     return loadFacultyCategoryMaintenanceList();
   }
   const live=rows.filter(r=>!(r.auto_off_at && new Date(r.auto_off_at).getTime()<=now));
+  const unlockAllWrap=document.getElementById('faculty-catmaint-unlockall-wrap');
   if(live.length===0){
     listEl.innerHTML='<div style="font-size:.85rem;color:#166534;font-weight:700;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;padding:1rem;">✅ No categories are currently locked. Students can practice, battle, and drill on every category normally.</div>';
+    if(unlockAllWrap) unlockAllWrap.style.display='none';
     return;
   }
+  if(unlockAllWrap) unlockAllWrap.style.display=live.length>1?'block':'none';
   listEl.innerHTML=live.map(r=>{
     let timerLine='Locked until you turn it off manually.';
     if(r.auto_off_at) timerLine='Unlocks automatically at '+new Date(r.auto_off_at).toLocaleString()+'.';
@@ -10559,8 +10911,12 @@ async function loadFacultyCategoryMaintenanceList(){
             <div style="font-weight:700;color:#92400e;font-size:.9rem;">🛠 ${escapeHtml(r.category_name)}</div>
             <div style="font-size:.78rem;color:#78350f;margin-top:.25rem;">${timerLine}</div>
             ${r.notice_text?`<div style="font-size:.78rem;color:#78350f;margin-top:.35rem;border-top:1px solid #fde68a;padding-top:.35rem;"><b>Notice shown to students:</b> ${escapeHtml(r.notice_text)}</div>`:''}
+            <div style="font-size:.76rem;color:#78350f;margin-top:.35rem;">${(r.exception_user_ids||[]).length} exception${(r.exception_user_ids||[]).length!==1?'s':''} — ${(r.exception_user_ids||[]).length?'these students can still practice (unsaved).':'every student is locked out.'}</div>
           </div>
-          <button onclick="turnOffCategoryMaintenance('${escAttr(r.id)}')" style="background:#059669;color:#fff;border:none;border-radius:8px;padding:.5rem .9rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ Unlock Now</button>
+          <div style="display:flex;flex-direction:column;gap:.4rem;flex-shrink:0;">
+            <button onclick="turnOffCategoryMaintenance('${escAttr(r.id)}')" style="background:#059669;color:#fff;border:none;border-radius:8px;padding:.5rem .9rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">✅ Unlock Now</button>
+            <button onclick="openCatMaintExceptionsScreen('${escAttr(r.id)}','${escAttr(r.category_name)}')" style="background:#fff;color:#92400e;border:2px solid #b45309;border-radius:8px;padding:.45rem .9rem;font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap;">🧑‍🎓 Exceptions</button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -10587,6 +10943,128 @@ async function turnOffCategoryMaintenance(id){
   }catch(e){ alert(e.message); }
 }
 
+// ── Per-category Exceptions screen ──────────────────────────
+// Reuses the same "fetch every registered user, check the ones exempted"
+// pattern as the general-maintenance exceptions checklist, but scoped to a
+// single category_maintenance row (identified by catMaintExcRowId) instead
+// of the single platform_maintenance row. Saved to that row's
+// exception_user_ids column.
+let catMaintExcRowId=null;
+function openCatMaintExceptionsScreen(rowId, categoryName){
+  if(!requireFacultyKey()) return;
+  catMaintExcRowId=rowId;
+  document.getElementById('catmaint-exc-category-label').textContent='🛠 '+categoryName;
+  document.getElementById('catmaint-exc-error').style.display='none';
+  showScreen('faculty-catmaint-exceptions-screen');
+  loadCatMaintExceptionsChecklist(rowId);
+}
+
+async function loadCatMaintExceptionsChecklist(rowId){
+  const subEl=document.getElementById('catmaint-exc-sub');
+  const listEl=document.getElementById('catmaint-exc-list');
+  subEl.textContent='Loading users…';
+  listEl.innerHTML='';
+  try{
+    // Get the current exception list for this specific row first, so the
+    // checklist opens pre-checked with whoever's already exempted.
+    const rowRes=await fetch(SUPABASE_URL+'/rest/v1/category_maintenance?id=eq.'+encodeURIComponent(rowId)+'&select=exception_user_ids',{headers:facultyAuthHeaders()});
+    const rowData=await rowRes.json();
+    const currentExceptions=new Set((Array.isArray(rowData)&&rowData[0]&&Array.isArray(rowData[0].exception_user_ids))?rowData[0].exception_user_ids:[]);
+
+    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
+    const data=await res.json();
+    const users=(data.users||[]).map(u=>({
+      id:u.id,
+      label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
+    })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+    if(!users.length){ subEl.textContent='No registered users found.'; return; }
+    subEl.textContent=users.length+' registered user'+(users.length!==1?'s':'')+'. Check anyone who should be able to practice this locked category (unsaved).';
+    listEl.innerHTML=users.map(u=>`
+      <label style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;color:#334155;cursor:pointer;">
+        <input type="checkbox" class="catmaint-exc-checkbox" value="${u.id}" ${currentExceptions.has(u.id)?'checked':''}>
+        ${escapeHtml(u.label)}
+      </label>
+    `).join('');
+    document.getElementById('catmaint-exc-selectall-btn').onclick=()=>{
+      const boxes=[...listEl.querySelectorAll('.catmaint-exc-checkbox')];
+      const allChecked=boxes.every(b=>b.checked);
+      boxes.forEach(b=>b.checked=!allChecked);
+    };
+  }catch(err){
+    subEl.textContent='Error loading users. Check your service_role key is correct.';
+  }
+}
+
+// Same student-list fetch as above, but for the Lock Categories setup screen
+// — there's no existing category_maintenance row yet at this point (the
+// categories haven't been locked yet), so nobody starts pre-checked. The
+// exception IDs chosen here get applied to every category row created by
+// confirmActivateCategoryMaintenance() below, in a single batch.
+async function loadCatMaintSetupExceptionsChecklist(){
+  const subEl=document.getElementById('catmaint-setup-exc-sub');
+  const listEl=document.getElementById('catmaint-setup-exc-list');
+  subEl.textContent='Loading users…';
+  listEl.innerHTML='';
+  try{
+    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
+    const data=await res.json();
+    const users=(data.users||[]).map(u=>({
+      id:u.id,
+      label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
+    })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+    if(!users.length){ subEl.textContent='No registered users found.'; return; }
+    subEl.textContent=users.length+' registered user'+(users.length!==1?'s':'')+'. Check anyone who should be able to practice these categories (unsaved) once locked.';
+    listEl.innerHTML=users.map(u=>`
+      <label style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;color:#334155;cursor:pointer;">
+        <input type="checkbox" class="catmaint-setup-exc-checkbox" value="${u.id}">
+        ${escapeHtml(u.label)}
+      </label>
+    `).join('');
+    document.getElementById('catmaint-setup-exc-selectall-btn').onclick=()=>{
+      const boxes=[...listEl.querySelectorAll('.catmaint-setup-exc-checkbox')];
+      const allChecked=boxes.every(b=>b.checked);
+      boxes.forEach(b=>b.checked=!allChecked);
+    };
+  }catch(err){
+    subEl.textContent='Error loading users. Check your service_role key is correct.';
+  }
+}
+
+async function saveCategoryMaintExceptions(){
+  if(!catMaintExcRowId) return;
+  const btn=document.getElementById('catmaint-exc-save-btn');
+  const errEl=document.getElementById('catmaint-exc-error');
+  errEl.style.display='none';
+  const exceptionIds=[...document.querySelectorAll('.catmaint-exc-checkbox:checked')].map(b=>b.value);
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    await writeCategoryMaintenanceRow(catMaintExcRowId,{exception_user_ids:exceptionIds});
+    showScreen('faculty-category-maintenance-screen');
+    loadFacultyCategoryMaintenanceList();
+  }catch(e){
+    errEl.textContent='Could not save exceptions: '+e.message;
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='💾 Save Exceptions';
+  }
+}
+
+// Bulk-unlock every currently-locked category in one confirm step, instead of
+// making the teacher click "Unlock Now" on each row individually.
+async function unlockAllCategoryMaintenance(){
+  const {missing,rows}=await fetchActiveCategoryMaintenanceRows();
+  if(missing || !rows || rows.length===0) return;
+  const now=Date.now();
+  const live=rows.filter(r=>!(r.auto_off_at && new Date(r.auto_off_at).getTime()<=now));
+  if(live.length===0) return;
+  const ok=await appConfirm({title:'Unlock all '+live.length+' categories?',message:'Students will be able to practice, battle, and drill on all of them again immediately.',icon:'✅',confirmText:'Unlock All',cancelText:'Cancel'});
+  if(!ok) return;
+  try{
+    await Promise.all(live.map(r=>writeCategoryMaintenanceRow(r.id,{is_active:false})));
+    loadFacultyCategoryMaintenanceList();
+  }catch(e){ alert(e.message); }
+}
+
 // ── Setup screen: pick categories (individually or whole chapters at once) + timer ──
 function openFacultyCategoryMaintenanceSetupScreen(){
   if(!requireFacultyKey()) return;
@@ -10598,6 +11076,7 @@ function openFacultyCategoryMaintenanceSetupScreen(){
   updateCatMaintTimerInputState();
   showScreen('faculty-category-maintenance-setup-screen');
   loadCatMaintCategoryChecklist();
+  loadCatMaintSetupExceptionsChecklist();
 }
 function updateCatMaintTimerInputState(){
   const isTimer=document.querySelector('input[name="catmaint-duration-mode"]:checked').value==='timer';
@@ -10682,6 +11161,7 @@ async function confirmActivateCategoryMaintenance(){
     autoOffAt=new Date(Date.now()+ms).toISOString();
   }
   const notice=document.getElementById('catmaint-notice-text').value.trim();
+  const exceptionIds=[...document.querySelectorAll('.catmaint-setup-exc-checkbox:checked')].map(b=>b.value);
   btn.disabled=true; btn.textContent='Locking…';
   try{
     const rows=checked.map(box=>({
@@ -10689,7 +11169,8 @@ async function confirmActivateCategoryMaintenance(){
       category_name: box.dataset.name,
       is_active: true,
       auto_off_at: autoOffAt,
-      notice_text: notice
+      notice_text: notice,
+      exception_user_ids: exceptionIds
     }));
     const res=await fetch(SUPABASE_URL+'/rest/v1/category_maintenance',{
       method:'POST',
@@ -10709,6 +11190,294 @@ async function confirmActivateCategoryMaintenance(){
     errEl.style.display='block';
   }finally{
     btn.disabled=false; btn.textContent='🛠 Lock Selected Categories';
+  }
+}
+
+// ── FACULTY: FEATURE MAINTENANCE (block/unblock individual features) ──
+// Same read/write pattern as category_maintenance above, but keyed per
+// feature (multiple rows can be active at once) via the feature_maintenance
+// table. See migration_feature_maintenance.sql for the table + RLS.
+function openFeatureBlockScreen(){
+  if(!requireFacultyKey()) return;
+  showScreen('faculty-feature-block-screen');
+  loadFacultyFeatureBlockList();
+}
+
+async function fetchActiveFeatureBlockRows(){
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/feature_maintenance?is_active=eq.true&select=*&order=created_at.desc',{headers:facultyAuthHeaders()});
+    if(!res.ok) return {missing:true};
+    const rows=await res.json();
+    if(rows && rows.error) return {missing:true};
+    return {missing:false, rows:Array.isArray(rows)?rows:[]};
+  }catch(e){ return {missing:true}; }
+}
+
+async function loadFacultyFeatureBlockList(){
+  const listEl=document.getElementById('faculty-featblock-list');
+  listEl.innerHTML='Loading…';
+  const {missing,rows}=await fetchActiveFeatureBlockRows();
+  if(missing){
+    listEl.innerHTML='⚠️ Feature Maintenance isn\'t set up yet — the <code>feature_maintenance</code> table is missing. Run <code>migration_feature_maintenance.sql</code> in the Supabase SQL Editor, then reload this page.';
+    return;
+  }
+  const now=Date.now();
+  const expired=rows.filter(r=>r.auto_off_at && new Date(r.auto_off_at).getTime()<=now);
+  if(expired.length){
+    await Promise.all(expired.map(r=>writeFeatureBlockRow(r.id,{is_active:false})));
+    return loadFacultyFeatureBlockList();
+  }
+  const live=rows.filter(r=>!(r.auto_off_at && new Date(r.auto_off_at).getTime()<=now));
+  const unblockAllWrap=document.getElementById('faculty-featblock-unblockall-wrap');
+  if(live.length===0){
+    listEl.innerHTML='<div style="font-size:.85rem;color:#166534;font-weight:700;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;padding:1rem;">✅ No features are currently blocked. Students can use every feature normally.</div>';
+    if(unblockAllWrap) unblockAllWrap.style.display='none';
+    return;
+  }
+  if(unblockAllWrap) unblockAllWrap.style.display=live.length>1?'block':'none';
+  listEl.innerHTML=live.map(r=>{
+    let timerLine='Blocked until you turn it off manually.';
+    if(r.auto_off_at) timerLine='Unblocks automatically at '+new Date(r.auto_off_at).toLocaleString()+'.';
+    const label=FEATURE_LABEL_BY_KEY[r.feature_key]||r.feature_key;
+    return `
+      <div style="border:2px solid #fde68a;background:#fef3c7;border-radius:12px;padding:1rem 1.1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem;">
+          <div style="min-width:0;">
+            <div style="font-weight:700;color:#92400e;font-size:.9rem;">🧩 ${escapeHtml(label)}</div>
+            <div style="font-size:.78rem;color:#78350f;margin-top:.25rem;">${timerLine}</div>
+            ${r.notice_text?`<div style="font-size:.78rem;color:#78350f;margin-top:.35rem;border-top:1px solid #fde68a;padding-top:.35rem;"><b>Notice shown to students:</b> ${escapeHtml(r.notice_text)}</div>`:''}
+            <div style="font-size:.76rem;color:#78350f;margin-top:.35rem;">${(r.exception_user_ids||[]).length} exception${(r.exception_user_ids||[]).length!==1?'s':''} — ${(r.exception_user_ids||[]).length?'these students can still use it normally.':'every student is blocked.'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.4rem;flex-shrink:0;">
+            <button onclick="turnOffFeatureBlock('${escAttr(r.id)}')" style="background:#059669;color:#fff;border:none;border-radius:8px;padding:.5rem .9rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">✅ Unblock Now</button>
+            <button onclick="openFeatBlockExceptionsScreen('${escAttr(r.id)}','${escAttr(label)}')" style="background:#fff;color:#92400e;border:2px solid #b45309;border-radius:8px;padding:.45rem .9rem;font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap;">🧑‍🎓 Exceptions</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function writeFeatureBlockRow(id,patch){
+  const res=await fetch(SUPABASE_URL+'/rest/v1/feature_maintenance?id=eq.'+encodeURIComponent(id),{
+    method:'PATCH',
+    headers: Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'}, facultyAuthHeaders()),
+    body: JSON.stringify(Object.assign({}, patch, { updated_at:new Date().toISOString() }))
+  });
+  if(!res.ok){
+    const t=await res.text();
+    throw new Error('Failed to update feature maintenance: '+t);
+  }
+}
+
+async function turnOffFeatureBlock(id){
+  const ok=await appConfirm({title:'Unblock this feature?',message:'Students will be able to use it again immediately.',icon:'✅',confirmText:'Unblock',cancelText:'Cancel'});
+  if(!ok) return;
+  try{
+    await writeFeatureBlockRow(id,{is_active:false});
+    loadFacultyFeatureBlockList();
+  }catch(e){ alert(e.message); }
+}
+
+// ── Per-feature Exceptions screen ──────────────────────────
+let featBlockExcRowId=null;
+function openFeatBlockExceptionsScreen(rowId, featureLabel){
+  if(!requireFacultyKey()) return;
+  featBlockExcRowId=rowId;
+  document.getElementById('featblock-exc-feature-label').textContent='🧩 '+featureLabel;
+  document.getElementById('featblock-exc-error').style.display='none';
+  showScreen('faculty-featblock-exceptions-screen');
+  loadFeatBlockExceptionsChecklist(rowId);
+}
+
+async function loadFeatBlockExceptionsChecklist(rowId){
+  const subEl=document.getElementById('featblock-exc-sub');
+  const listEl=document.getElementById('featblock-exc-list');
+  subEl.textContent='Loading users…';
+  listEl.innerHTML='';
+  try{
+    const rowRes=await fetch(SUPABASE_URL+'/rest/v1/feature_maintenance?id=eq.'+encodeURIComponent(rowId)+'&select=exception_user_ids',{headers:facultyAuthHeaders()});
+    const rowData=await rowRes.json();
+    const currentExceptions=new Set((Array.isArray(rowData)&&rowData[0]&&Array.isArray(rowData[0].exception_user_ids))?rowData[0].exception_user_ids:[]);
+
+    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
+    const data=await res.json();
+    const users=(data.users||[]).map(u=>({
+      id:u.id,
+      label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
+    })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+    if(!users.length){ subEl.textContent='No registered users found.'; return; }
+    subEl.textContent=users.length+' registered user'+(users.length!==1?'s':'')+'. Check anyone who should be able to keep using this blocked feature normally.';
+    listEl.innerHTML=users.map(u=>`
+      <label style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;color:#334155;cursor:pointer;">
+        <input type="checkbox" class="featblock-exc-checkbox" value="${u.id}" ${currentExceptions.has(u.id)?'checked':''}>
+        ${escapeHtml(u.label)}
+      </label>
+    `).join('');
+    document.getElementById('featblock-exc-selectall-btn').onclick=()=>{
+      const boxes=[...listEl.querySelectorAll('.featblock-exc-checkbox')];
+      const allChecked=boxes.every(b=>b.checked);
+      boxes.forEach(b=>b.checked=!allChecked);
+    };
+  }catch(err){
+    subEl.textContent='Error loading users. Check your service_role key is correct.';
+  }
+}
+
+async function loadFeatBlockSetupExceptionsChecklist(){
+  const subEl=document.getElementById('featblock-setup-exc-sub');
+  const listEl=document.getElementById('featblock-setup-exc-list');
+  subEl.textContent='Loading users…';
+  listEl.innerHTML='';
+  try{
+    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
+    const data=await res.json();
+    const users=(data.users||[]).map(u=>({
+      id:u.id,
+      label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
+    })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+    if(!users.length){ subEl.textContent='No registered users found.'; return; }
+    subEl.textContent=users.length+' registered user'+(users.length!==1?'s':'')+'. Check anyone who should keep using these features normally once blocked.';
+    listEl.innerHTML=users.map(u=>`
+      <label style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;color:#334155;cursor:pointer;">
+        <input type="checkbox" class="featblock-setup-exc-checkbox" value="${u.id}">
+        ${escapeHtml(u.label)}
+      </label>
+    `).join('');
+    document.getElementById('featblock-setup-exc-selectall-btn').onclick=()=>{
+      const boxes=[...listEl.querySelectorAll('.featblock-setup-exc-checkbox')];
+      const allChecked=boxes.every(b=>b.checked);
+      boxes.forEach(b=>b.checked=!allChecked);
+    };
+  }catch(err){
+    subEl.textContent='Error loading users. Check your service_role key is correct.';
+  }
+}
+
+async function saveFeatureBlockExceptions(){
+  if(!featBlockExcRowId) return;
+  const btn=document.getElementById('featblock-exc-save-btn');
+  const errEl=document.getElementById('featblock-exc-error');
+  errEl.style.display='none';
+  const exceptionIds=[...document.querySelectorAll('.featblock-exc-checkbox:checked')].map(b=>b.value);
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    await writeFeatureBlockRow(featBlockExcRowId,{exception_user_ids:exceptionIds});
+    showScreen('faculty-feature-block-screen');
+    loadFacultyFeatureBlockList();
+  }catch(e){
+    errEl.textContent='Could not save exceptions: '+e.message;
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='💾 Save Exceptions';
+  }
+}
+
+async function unblockAllFeatures(){
+  const {missing,rows}=await fetchActiveFeatureBlockRows();
+  if(missing || !rows || rows.length===0) return;
+  const now=Date.now();
+  const live=rows.filter(r=>!(r.auto_off_at && new Date(r.auto_off_at).getTime()<=now));
+  if(live.length===0) return;
+  const ok=await appConfirm({title:'Unblock all '+live.length+' features?',message:'Students will be able to use all of them again immediately.',icon:'✅',confirmText:'Unblock All',cancelText:'Cancel'});
+  if(!ok) return;
+  try{
+    await Promise.all(live.map(r=>writeFeatureBlockRow(r.id,{is_active:false})));
+    loadFacultyFeatureBlockList();
+  }catch(e){ alert(e.message); }
+}
+
+// ── Setup screen: pick features (individually or several at once) + timer ──
+function openFeatureBlockSetupScreen(){
+  if(!requireFacultyKey()) return;
+  document.getElementById('featblock-timer-value').value=60;
+  document.getElementById('featblock-timer-unit').value='minutes';
+  document.querySelector('input[name="featblock-duration-mode"][value="manual"]').checked=true;
+  document.getElementById('featblock-notice-text').value='';
+  document.getElementById('featblock-setup-error').style.display='none';
+  updateFeatBlockTimerInputState();
+  showScreen('faculty-feature-block-setup-screen');
+  loadFeatBlockFeatureChecklist();
+  loadFeatBlockSetupExceptionsChecklist();
+}
+function updateFeatBlockTimerInputState(){
+  const isTimer=document.querySelector('input[name="featblock-duration-mode"]:checked').value==='timer';
+  document.getElementById('featblock-timer-value').disabled=!isTimer;
+  document.getElementById('featblock-timer-unit').disabled=!isTimer;
+}
+
+// Builds the checklist from FEATURE_REGISTRY, excluding already-blocked
+// features (managed from the status screen instead) so a teacher can't
+// accidentally create a second, conflicting block row on one that's already
+// active.
+async function loadFeatBlockFeatureChecklist(){
+  const listEl=document.getElementById('featblock-feature-list');
+  listEl.innerHTML='Loading…';
+  await refreshBlockedFeatures(); // make sure we exclude anything already blocked
+  const available=FEATURE_REGISTRY.filter(f=>!isFeatureBlocked(f.key));
+  if(available.length===0){
+    listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">Every feature is already blocked.</div>';
+    return;
+  }
+  listEl.innerHTML=available.map(f=>`
+    <label style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;font-size:.85rem;color:#334155;cursor:pointer;border-bottom:1px solid #f1f5f9;">
+      <input type="checkbox" class="featblock-feat-checkbox" value="${escAttr(f.key)}" data-label="${escAttr(f.label)}">
+      ${escHTML(f.label)}
+    </label>`).join('');
+  document.getElementById('featblock-selectall-btn').onclick=()=>{
+    const boxes=[...document.querySelectorAll('.featblock-feat-checkbox')];
+    const allChecked=boxes.every(b=>b.checked);
+    boxes.forEach(b=>b.checked=!allChecked);
+  };
+}
+
+async function confirmActivateFeatureBlock(){
+  const btn=document.getElementById('featblock-activate-confirm-btn');
+  const errEl=document.getElementById('featblock-setup-error');
+  errEl.style.display='none';
+  const checked=[...document.querySelectorAll('.featblock-feat-checkbox:checked')];
+  if(checked.length===0){
+    errEl.textContent='Select at least one feature to block.';
+    errEl.style.display='block';
+    return;
+  }
+  const isTimer=document.querySelector('input[name="featblock-duration-mode"]:checked').value==='timer';
+  let autoOffAt=null;
+  if(isTimer){
+    const val=parseFloat(document.getElementById('featblock-timer-value').value);
+    const unit=document.getElementById('featblock-timer-unit').value;
+    if(!val||val<=0){ errEl.textContent='Please enter a valid duration.'; errEl.style.display='block'; return; }
+    const ms = unit==='minutes'?val*60000 : unit==='hours'?val*3600000 : val*86400000;
+    autoOffAt=new Date(Date.now()+ms).toISOString();
+  }
+  const notice=document.getElementById('featblock-notice-text').value.trim();
+  const exceptionIds=[...document.querySelectorAll('.featblock-setup-exc-checkbox:checked')].map(b=>b.value);
+  btn.disabled=true; btn.textContent='Blocking…';
+  try{
+    const rows=checked.map(box=>({
+      feature_key: box.value,
+      is_active: true,
+      auto_off_at: autoOffAt,
+      notice_text: notice,
+      exception_user_ids: exceptionIds
+    }));
+    const res=await fetch(SUPABASE_URL+'/rest/v1/feature_maintenance',{
+      method:'POST',
+      headers: Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'}, facultyAuthHeaders()),
+      body: JSON.stringify(rows)
+    });
+    if(!res.ok){
+      const t=await res.text();
+      errEl.textContent='Could not block features: '+t;
+      errEl.style.display='block';
+      return;
+    }
+    showScreen('faculty-feature-block-screen');
+    loadFacultyFeatureBlockList();
+  }catch(e){
+    errEl.textContent='Network error while blocking features.';
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='🧩 Block Selected Features';
   }
 }
 
@@ -12472,6 +13241,7 @@ function showUnknowingContributionBanner(message, taskId){
 let studentTasksCache=null; // {tasks, myAttempts, completedTaskIds} — reused across tab switches
 let studentTasksActiveTab='open';
 function openStudentTasksPage(){
+  if(!gateFeature('tasks_goals')) return;
   showScreen('student-tasks-screen');
   studentTasksActiveTab='open';
   document.querySelectorAll('.st-tab').forEach(b=>{
@@ -13941,6 +14711,7 @@ async function facultyDeleteUser(userId, username, cardEl){
 // rename (same logic as doChangeUsername for teacher-initiated renames).
 function openStudentChangeUnameDialog(){
   if(!currentUser) return;
+  if(!gateFeature('change_username')) return;
   if(currentUser.hasLinkedMockReport){
     alert('Your account is already linked to your mock report, so there\'s no further username change available.');
     return;
@@ -14286,6 +15057,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(window.refreshUnameReqBadgeNow, 15000);
 });
 
+// Keep feature-block state fresh in the background: catches auto-timer
+// expiry (a feature unblocking itself) and a teacher blocking/unblocking
+// something while a student is already mid-session, without requiring the
+// student to navigate anywhere. Every 2 minutes is frequent enough to feel
+// live without hammering Supabase. Only runs once currentUser exists —
+// no point polling before login.
+setInterval(()=>{ if(currentUser) refreshAndApplyFeatureBlocks(); }, 120000);
+
+
 // ── STUDENT: SELF-SERVICE PASSWORD CHANGE (no approval needed) ───────────
 // Unlike username changes, a student already has full control over their own
 // password via Supabase Auth (anon key + their own session), so this is
@@ -14295,6 +15075,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // new password. From then on only the new password will work at login.
 function openStudentChangePwDialog(){
   if(!currentUser) return;
+  if(!gateFeature('change_password')) return;
   document.getElementById('studentChangePwUsername').value=currentUser.username;
   document.getElementById('studentChangePwCurrent').value='';
   document.getElementById('studentChangePwNew').value='';
@@ -14581,6 +15362,11 @@ async function completeLogin(userId, username, isResume){
   // the category picker with them so a student never sees stale (unlocked)
   // state after logging in while a lock is already active.
   refreshLockedCategories().then(populateCategories);
+  // Same idea for Feature Maintenance: pick up any currently-blocked
+  // features right at login and grey out/disable their buttons immediately,
+  // so a student never sees a clickable button for something that's
+  // actually blocked.
+  refreshAndApplyFeatureBlocks();
   // Prefer greeting by full name if this student's profile has one on file
   // (populated from mock-1 data); falls back to username otherwise.
   try{
@@ -15364,6 +16150,7 @@ async function loadEngagementCard(){
 
 function startWeakTopicDrill(){
   if(!weakTopicPool) return;
+  if(!gateFeature('bounty')) return;
   mode='practice';
   document.getElementById('card-practice').classList.add('selected');
   document.getElementById('card-quiz').classList.remove('selected');
@@ -15388,6 +16175,8 @@ const MILESTONE_TOAST_MS=5000;
 // loadMilestonesDashboard runs, read only at click-time.
 let categoryRemainingCache={};
 function startCategoryRemainingDrill(catId){
+  if(!gateFeature('milestones')) return;
+  if(!gateFeature('practice_session')) return;
   const entry=categoryRemainingCache[catId];
   if(!entry || !entry.ids || entry.ids.length===0) return;
   mode='practice';
@@ -15564,7 +16353,7 @@ async function computeMilestoneStats(){
 // adds the "Who else has this?" button used on the standalone Milestones page.
 function renderMilestoneProgressCard(m, withAchieversBtn){
   const btn = m.catId && m.remainingIds && m.remainingIds.length>0
-    ? `<button class="start-btn" style="width:auto;white-space:nowrap;padding:.4rem .85rem;margin:0;font-size:.74rem;flex-shrink:0;" onclick="startCategoryRemainingDrill('${m.catId}')">Practice remaining (${m.remainingIds.length}) →</button>`
+    ? `<button class="start-btn" data-feature="milestones" style="width:auto;white-space:nowrap;padding:.4rem .85rem;margin:0;font-size:.74rem;flex-shrink:0;" onclick="startCategoryRemainingDrill('${m.catId}')">Practice remaining (${m.remainingIds.length}) →</button>`
     : '';
   const achieversBtn = withAchieversBtn
     ? `<button onclick='openMilestoneAchieversModal(${JSON.stringify(m.key)},${JSON.stringify(m.emoji)},${JSON.stringify(m.label)})' style="background:none;border:1.5px solid #cbd5e1;border-radius:7px;padding:.28rem .6rem;font-size:.68rem;font-weight:700;color:#475569;cursor:pointer;white-space:nowrap;">👥 Who's got this?</button>`
@@ -15643,6 +16432,13 @@ async function loadMilestonesDashboard(){
     if(earned.length===0 && close.length===0){
       section.innerHTML='<div style="font-size:.85rem;color:var(--text-muted);text-align:center;padding:.5rem 0;">Complete a session to start earning milestones!</div>';
     }
+    // The "Practice remaining" buttons above were just injected fresh via
+    // innerHTML, so any earlier applyFeatureBlockLockdownToDom() pass never
+    // saw them. Re-fetch current block state AND re-apply it — not just
+    // re-apply, since blockedFeatureKeys could still be stale/empty this
+    // early (e.g. this render racing ahead of the login-time fetch) and a
+    // stale-empty Set would wrongly leave a genuinely-blocked button live.
+    await refreshAndApplyFeatureBlocks();
   }catch(err){
     section.style.display='none';
   }
@@ -15700,6 +16496,7 @@ async function loadMilestonesPageDetail(){
       farWrap.style.display='block';
       farEl.innerHTML=far.map(m=>renderMilestoneProgressCard(m,true)).join('');
     }
+    await refreshAndApplyFeatureBlocks();
   }catch(err){ /* leave whatever was already rendered */ }
 }
 
@@ -16270,6 +17067,7 @@ function hideWarmupPillUntilNext(evt){
 
 function openDailyWarmup(){
   if(!warmupQuestion) return;
+  if(!gateFeature('daily_warmup')) return;
   const overlay=document.getElementById('warmup-modal-overlay');
   const qText=document.getElementById('warmup-question-text');
   const optsList=document.getElementById('warmup-options-list');
@@ -16485,7 +17283,7 @@ function toggleLevelExplainer(context){
       <li>Attempting a question only once and getting it right contributes a full <strong>1.0</strong>; attempting it once and getting it wrong contributes <strong>0</strong>.</li>
       <li>Attempt more of the question bank — an unattempted question contributes 0, so working through new categories raises your mastery directly.</li>
       <li>Use <strong>Redo My Mistakes</strong> on the home screen — since scoring is an average across all your attempts on a question, getting it right on a retry raises that question's average (though attempting it and getting it wrong again would lower it).</li>
-      <li>Completing a task your teacher assigned (with "Count this task toward leaderboards" checked, and meeting the required accuracy) gives a small extra boost to every question in that task you currently have correct — on top of its normal average.</li>
+      <li>Completing a task your teacher assigned (with "Count this task toward leaderboards" checked) gives a small extra boost to every question in that task you currently have correct — on top of its normal average. This boost has its own accuracy bar: your teacher's minimum if they set one, otherwise a default 50% — separate from whatever accuracy bar decided the task counted as completed.</li>
     </ul>
     <div style="font-size:.74rem;color:#94a3b8;">Your level updates automatically the moment your mastery % crosses into a new band — no need to refresh.</div>`;
   body.style.display='block';
@@ -16742,6 +17540,9 @@ function toggleExamDateEditor(){
     editor.style.display='none';
     return;
   }
+  if(!gateFeature('exam_date')){
+    return;
+  }
   document.getElementById('exam-date-input').value=examCountdownDate||'';
   document.getElementById('exam-date-clear-btn').style.display=examCountdownDate?'inline':'none';
   document.getElementById('exam-date-error').style.display='none';
@@ -16788,6 +17589,7 @@ async function clearExamDate(){
 
 async function openLeaderboard(){
   if(!currentUser) return;
+  if(!gateFeature('leaderboards')) return;
   showScreen('leaderboard-screen');
   await loadLeaderboardData();
   subscribeLeaderboardRealtime();
@@ -17405,6 +18207,7 @@ let groupLeaderboardRealtimeChannel=null;
 
 async function openGroupsHub(){
   if(!currentUser) return;
+  if(!gateFeature('study_groups')) return;
   showScreen('groups-hub-screen');
   await loadGroupsHubData();
   subscribeGroupLeaderboardRealtime();
@@ -17923,6 +18726,7 @@ let viewingBattleReview=false; // true when results/review screens were opened f
 
 async function openBattleHub(){
   if(!currentUser) return;
+  if(!gateFeature('battle_mode')) return;
   showScreen('battle-hub-screen');
   await refreshLockedCategories(); // pick up any category maintenance lock before showing the category picker
   populateBattleCategoryDropdown();
@@ -18557,6 +19361,17 @@ function subscribeBattleRealtime(){
 
 async function saveAttemptToSupabase(wasPartial){
   if(!currentUser){ console.warn('saveAttemptToSupabase: no currentUser, skipping save'); return null; }
+  // CATEGORY MAINTENANCE EXCEPTION: this session was started in a locked
+  // category only because the student has a practice-only exception for
+  // it. Per spec they get the full practice/quiz experience — questions,
+  // instant feedback, review, results screen — but nothing about the
+  // attempt is ever written to the DB (no attempts row, no leaderboard
+  // update, no task/mistake-pool credit) until the category is unlocked.
+  // Every caller already handles a null/falsy return gracefully.
+  if(currentSessionIsPracticeException){
+    console.log('Attempt not saved: category is under maintenance (practice-only exception).');
+    return null;
+  }
   const total=shuffledQ.length;
   const attempted=Object.keys(answers).length;
   const correct=Object.values(answers).filter(a=>a.isCorrect).length;
@@ -18788,7 +19603,9 @@ function updateOfflineModeUI(){
   updateOfflinePendingBadge();
 }
 function toggleOfflineMode(){
-  if(isOfflineModeOn()) disableOfflineMode(); else enableOfflineMode();
+  if(isOfflineModeOn()){ disableOfflineMode(); return; }
+  if(!gateFeature('offline_mode')) return;
+  enableOfflineMode();
 }
 // A real disconnection (student didn't touch the toggle, connectivity just
 // dropped) should apply the exact same lockdown as the manual toggle, and
@@ -18984,7 +19801,9 @@ async function quitSessionEarly(){
     if(currentUser){ loadPastAttempts(); loadMistakesBreakdown(); loadEngagementCard(); refreshMyTasksBadge(); loadMilestonesDashboard(); checkDailyWarmupStatus(); refreshBattleBadgeOnly(); refreshGroupInviteBadgeOnly(); loadExamCountdown(); }
     return;
   }
-  if(!confirm('Quit this session now? Your progress so far ('+attempted+' question'+(attempted===1?'':'s')+' answered) will be saved as an attempt.')) return;
+  if(!confirm(currentSessionIsPracticeException
+    ? 'Quit this session now? This category is under maintenance, so your progress will NOT be saved as an attempt.'
+    : 'Quit this session now? Your progress so far ('+attempted+' question'+(attempted===1?'':'s')+' answered) will be saved as an attempt.')) return;
   if(timerInterval) clearInterval(timerInterval);
   const quitBtn=document.getElementById('quiz-quit-btn');
   if(quitBtn){ quitBtn.disabled=true; quitBtn.textContent='Saving…'; }
@@ -19300,7 +20119,22 @@ function resumeLiveAttemptIfAny(){
 }
 
 // ── HELPERS ────────────────────────────────────────────
+// Guards against accidentally abandoning an in-progress session (any mode —
+// practice, quiz, test, redo-my-mistakes, battle, assignment/task, etc. all
+// route through the single `inLiveAttempt` flag) via the bottom nav bar or
+// any other quick-nav shortcut. Rather than re-deriving its own save logic,
+// this reuses quitSessionEarly()'s existing confirm/partial-save/resume-
+// elsewhere pipeline exactly — so a "quit via bottom nav" and a "quit via the
+// in-quiz Quit button" behave identically and land in the same place. Only
+// showScreen('quiz-screen') itself (i.e. resuming/continuing the SAME
+// session) bypasses this — everything else while inLiveAttempt is true is
+// treated as a request to leave.
 function showScreen(id){
+  if(inLiveAttempt && id!=='quiz-screen'){
+    if(!confirm("You're in the middle of a session. Are you sure you want to quit? Your progress so far will be saved as a part attempt, and you can continue it later.")) return;
+    quitSessionEarly();
+    return;
+  }
   // Safety net: if we're navigating AWAY from Battle Mode or Leaderboard (by
   // any route — dedicated close button, bottom nav bar, browser back button,
   // etc.) always tear down their realtime channels first. This exists
@@ -19312,14 +20146,15 @@ function showScreen(id){
   if(leavingBattle){ sb.removeChannel(battleRealtimeChannel); battleRealtimeChannel=null; }
   if(leavingLeaderboard){ sb.removeChannel(leaderboardRealtimeChannel); leaderboardRealtimeChannel=null; }
   if(leavingGroupsHub){ sb.removeChannel(groupLeaderboardRealtimeChannel); groupLeaderboardRealtimeChannel=null; }
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);updateStickyOffsets()
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);updateStickyOffsets();
+  applyFeatureBlockLockdownToDom(); // re-sync any newly-rendered buttons/cards on this screen with current block state
 }
 
 // ── Standalone entry pages (moved off the homepage) ────────────
-function openMistakesPage(){ showScreen('mistakes-screen'); loadMistakesBreakdown(); }
-function openGhostPage(){ showScreen('ghost-screen'); loadGhostSection(); }
-async function openPastAttemptsPage(){ showScreen('past-attempts-screen'); await loadPastAttempts(); }
-function openMilestonesPage(){ showScreen('milestones-screen'); loadMilestonesPageDetail(); }
+function openMistakesPage(){ if(!gateFeature('redo_mistakes')) return; showScreen('mistakes-screen'); loadMistakesBreakdown(); }
+function openGhostPage(){ if(!gateFeature('ghosts')) return; showScreen('ghost-screen'); loadGhostSection(); }
+async function openPastAttemptsPage(){ if(!gateFeature('past_attempts')) return; showScreen('past-attempts-screen'); await loadPastAttempts(); }
+function openMilestonesPage(){ if(!gateFeature('milestones')) return; showScreen('milestones-screen'); loadMilestonesPageDetail(); }
 function openHelpPage(){ showScreen('help-screen'); }
 
 // Accordion toggle for the Help screen — same expand/collapse pattern as the
@@ -19605,13 +20440,19 @@ function populateCategories(){
     const itemsWrap=document.createElement('div');
     itemsWrap.className='cat-dd-group-items';
     catsInGroup.forEach(cat=>{
-      const locked=isCategoryLocked(cat.id);
+      // Exceptions only ever soften a lock in Practice mode (per spec —
+      // Quiz/Test/Battle/Redo My Mistakes stay fully blocked regardless of
+      // any exception). So outside Practice mode, treat any lock as a full
+      // block even for an exempted student.
+      const practiceOnly=mode==='practice' && isCategoryPracticeOnly(cat.id);
+      const blocked=isCategoryLocked(cat.id) && !practiceOnly;
       const item=document.createElement('button');
       item.type='button';
-      item.className='cat-dd-item'+(cat.id===selectedCategory.id?' selected':'')+(locked?' cat-dd-item-locked':'');
+      item.className='cat-dd-item'+(cat.id===selectedCategory.id?' selected':'')+(blocked?' cat-dd-item-locked':'');
       item.innerHTML=`<span>${escHTML(cat.name)} (${cat.ids.length} questions)</span>`
-        + (locked ? `<span class="cat-dd-locked-tag">🛠 Temporarily disabled — under maintenance</span>` : '');
-      if(locked){
+        + (blocked ? `<span class="cat-dd-locked-tag">🛠 Temporarily disabled — under maintenance</span>`
+          : practiceOnly ? `<span class="cat-dd-locked-tag" style="color:#b45309;">🛠 Temporarily disabled — practice only, not saved</span>` : '');
+      if(blocked){
         item.disabled=true;
         item.style.cssText='opacity:.55;cursor:not-allowed;';
       }else{
@@ -19706,6 +20547,7 @@ function toggleCustomTimerBox(){
 }
 
 function startExam(){
+  if(!gateFeature('practice_session')) return;
   const inp=document.getElementById('q-count-input');
   const errEl=document.getElementById('q-count-error');
   // CATEGORY MAINTENANCE GATE: block starting a session in a locked category
@@ -19713,13 +20555,20 @@ function startExam(){
   // stays VISIBLE and selectable in the picker — only actually starting a
   // session from it is blocked, with a clear reason shown inline where the
   // start button already lives.
-  if(isCategoryLocked(selectedCategory.id)){
+  // CATEGORY MAINTENANCE GATE: block starting a session in a locked category
+  // outright, before any question-count validation, UNLESS this is Practice
+  // mode and the student has an exception for this category — in that case
+  // the session starts normally but the attempt is never saved (handled in
+  // saveAttemptToSupabase). Quiz/Test never get this softening, even with
+  // an exception — only Practice mode does, per spec.
+  const practiceException = mode==='practice' && isCategoryPracticeOnly(selectedCategory.id);
+  if(isCategoryLocked(selectedCategory.id) && !practiceException){
     const notice=lockedCategoryNotices[selectedCategory.id];
     errEl.textContent='🛠 This category is temporarily disabled for maintenance.'+(notice?(' '+notice):'');
     errEl.style.display='block';
     return;
   }
-  const catQuestions=filterOutLockedQuestions(selectedCategory.ids.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean));
+  const catQuestions=filterOutLockedQuestions(selectedCategory.ids.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean), practiceException);
   const catSize=catQuestions.length;
   const n=parseInt(inp.value,10);
   if(!n||n<1||n>catSize){errEl.textContent=`Please enter a number between 1 and ${catSize}.`;errEl.style.display='block';return}
@@ -19741,7 +20590,7 @@ function startExam(){
   // simply truncated to the first n if a subset is requested.
   const randomizeOrder = mode==='test' || document.getElementById('randomize-order-input').checked;
   const selected = randomizeOrder ? shuffle([...catQuestions]).slice(0,n) : catQuestions.slice(0,n);
-  beginSessionWithQuestions(selected, useCustomTimer?customMinutes:null);
+  beginSessionWithQuestions(selected, useCustomTimer?customMinutes:null, practiceException);
 }
 
 // Shared session-start logic used by both the normal category flow (startExam)
@@ -19761,14 +20610,23 @@ function startExam(){
 // filtering empties the list entirely (e.g. every mistake happened to be in
 // a category now under maintenance), show a plain alert and bail rather
 // than launching an empty/broken quiz screen.
-async function beginSessionWithQuestions(qList, timerMinutesOverride){
-  const filtered=filterOutLockedQuestions(qList);
+// True only for the current live session when it was started under a
+// category-maintenance exception (Practice mode + student is exempted for
+// the locked category). Read by saveAttemptToSupabase to skip the DB write
+// entirely — the student practices normally, sees results/review normally,
+// nothing is ever persisted for this attempt.
+let currentSessionIsPracticeException=false;
+async function beginSessionWithQuestions(qList, timerMinutesOverride, allowPracticeException){
+  const filtered=filterOutLockedQuestions(qList, allowPracticeException);
   if(filtered.length===0){
     alert('🛠 All the questions in this session are temporarily disabled for maintenance. Please try again later.');
     return;
   }
   qList=filtered;
   shuffledQ = qList;
+  currentSessionIsPracticeException=!!allowPracticeException;
+  const excBanner=document.getElementById('practice-exception-banner');
+  if(excBanner) excBanner.style.display=currentSessionIsPracticeException?'block':'none';
   _qcNavCollapsed=false; _qcMenuCollapsed=false; // start each session with both bars expanded
   currentIdx=0; answers={}; pendingTF={}; pendingMCQ={}; pendingNum={}; pendingToken={}; pendingCheckbox={}; pendingMatch={}; shuffledPoolCache={}; pendingPairs={}; armedLeft={}; pendingDrag={}; armedChip={}; pendingMulti={};
   totalMarksSelected=shuffledQ.reduce((s,q)=>s+(q.noMark?2:(q.marks||2)),0);
@@ -20527,6 +21385,16 @@ function showResults(savedAttempt){
   if(deleteBtn) deleteBtn.style.display=viewingAsFaculty?'inline-flex':'none';
   const existingBanner=document.getElementById('save-attempt-error-banner');
   if(existingBanner) existingBanner.style.display='none';
+  let notSavedBanner=document.getElementById('practice-exception-results-banner');
+  if(!notSavedBanner){
+    notSavedBanner=document.createElement('div');
+    notSavedBanner.id='practice-exception-results-banner';
+    notSavedBanner.style.cssText='background:#fef3c7;border:2px solid #fde68a;color:#92400e;font-size:.82rem;font-weight:700;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;';
+    const scoreEl=document.getElementById('results-score');
+    if(scoreEl && scoreEl.parentNode) scoreEl.parentNode.insertBefore(notSavedBanner, scoreEl);
+  }
+  notSavedBanner.style.display=currentSessionIsPracticeException?'block':'none';
+  notSavedBanner.textContent='🛠 This category is under maintenance — this attempt was not saved.';
   const ghostCard=document.getElementById('ghost-card');
   if(ghostCard) ghostCard.style.display='none'; // hidden until (and unless) loadGhostOfPastYou finds enough history
   const total=shuffledQ.length;
@@ -21468,18 +22336,18 @@ function appConfirm({title='Are you sure?',message='',icon='❓',confirmText='Co
   <button onclick="showScreen('home-screen')" title="Practice">
     <span class="mbn-icon">🏠</span><span class="mbn-label">Practice</span>
   </button>
-  <button onclick="openLeaderboard()" title="Leaderboard">
+  <button data-feature="leaderboards" onclick="openLeaderboard()" title="Leaderboard">
     <span class="mbn-icon">🏆</span><span class="mbn-label">Board</span>
   </button>
-  <button onclick="openBattleHub()" title="Battle Mode">
+  <button data-feature="battle_mode" onclick="openBattleHub()" title="Battle Mode">
     <span class="mbn-icon">⚔️</span><span class="mbn-label">Battle</span>
     <span class="mbn-badge" id="mbn-battle-badge">0</span>
   </button>
-  <button onclick="openGroupsHub()" title="Study Groups">
+  <button data-feature="study_groups" onclick="openGroupsHub()" title="Study Groups">
     <span class="mbn-icon">👥</span><span class="mbn-label">Groups</span>
     <span class="mbn-badge" id="mbn-groups-badge">0</span>
   </button>
-  <button onclick="openStudentTasksPage()" title="Tasks & Goals">
+  <button data-feature="tasks_goals" onclick="openStudentTasksPage()" title="Tasks & Goals">
     <span class="mbn-icon">📌</span><span class="mbn-label">Tasks</span>
     <span class="mbn-badge" id="mbn-tasks-badge">0</span>
   </button>
