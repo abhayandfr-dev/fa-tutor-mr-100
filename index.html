@@ -158,6 +158,8 @@
   .cat-dd-item{width:100%;text-align:left;padding:.5rem .7rem;border:none;background:transparent;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.85rem;color:var(--text);display:block}
   .cat-dd-item:hover{background:var(--teal-light);color:var(--navy)}
   .cat-dd-item.selected{background:var(--navy);color:white;font-weight:600}
+  .cat-dd-item-locked{display:flex!important;flex-direction:column;align-items:flex-start;gap:.15rem}
+  .cat-dd-locked-tag{font-size:.7rem;font-weight:700;color:#b45309}
   .mode-card{border:2px solid var(--border);border-radius:14px;padding:1.4rem 1.2rem;cursor:pointer;transition:all .2s;background:var(--slate-light);text-align:left}
   .mode-card:hover,.mode-card.selected{border-color:var(--teal);background:var(--teal-light)}
   .mode-icon{font-size:1.6rem;margin-bottom:.6rem;display:block}
@@ -777,7 +779,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;">
       <button onclick="openFacultyUsernameRequests()" style="padding:.8rem;background:#00b4a0;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;position:relative;">✏️ Username Requests <span id="uname-req-badge" style="display:none;background:#ef4444;color:#fff;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:800;margin-left:.4rem;"></span></button>
       <button onclick="openFacultyUserManagement()" style="padding:.8rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;">🔑 Manage Users</button>
-      <button onclick="openFacultyRecentlyDeleted()" style="padding:.8rem;background:#b45309;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;position:relative;grid-column:1 / -1;">🕓 Recently Deleted <span id="recently-deleted-badge" style="display:none;background:#fff;color:#b45309;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:800;margin-left:.4rem;"></span></button>
+      <button onclick="openFacultyRecentlyDeleted()" style="padding:.8rem;background:#b45309;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;position:relative;grid-column:1 / -1;">🗑️ Recycle Bin <span id="recently-deleted-badge" style="display:none;background:#fff;color:#b45309;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:800;margin-left:.4rem;"></span></button>
     </div>
     </div>
   </div>
@@ -952,6 +954,8 @@
     </div>
 
     <div id="faculty-lb-mastery-panel">
+      <button onclick="backfillLeaderboardScores()" style="width:100%;padding:.7rem;margin-bottom:.8rem;border:2px dashed #f59e0b;border-radius:10px;background:#fffbeb;color:#b45309;font-weight:700;font-size:.82rem;cursor:pointer;">🔄 Fix Student Leaderboard (sync all students' scores now)</button>
+      <div id="faculty-lb-backfill-msg" style="font-size:.78rem;color:#64748b;margin-bottom:.8rem;"></div>
       <input id="faculty-lb-search" type="text" placeholder="🔎 Search student name…" oninput="renderFacultyLeaderboard()" style="width:100%;padding:.65rem .9rem;border:2px solid var(--border);border-radius:10px;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;">
       <div id="faculty-lb-sub" style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Loading…</div>
       <div id="faculty-lb-tiers-wrap" style="display:flex;flex-direction:column;gap:1.1rem;"></div>
@@ -1474,7 +1478,74 @@
     </div>
     <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">When maintenance mode is on, students can still log in or sign up as normal, but instead of the platform they'll only see a notice that the platform is under maintenance — until you turn it back off.</div>
     <div id="faculty-maintenance-status-card" style="border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;"></div>
-    <div id="faculty-maintenance-actions" style="display:flex;flex-direction:column;gap:.7rem;"></div>
+    <div id="faculty-maintenance-actions" style="display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.6rem;"></div>
+
+    <!-- CATEGORY MAINTENANCE — a separate, narrower lock: instead of locking
+         the whole platform, temporarily disable specific question categories
+         (e.g. while editing their questions) without affecting anything else. -->
+    <div style="border-top:2px solid #e2e8f0;padding-top:1.3rem;">
+      <div style="font-size:.95rem;font-weight:700;color:#0f1f3d;margin-bottom:.3rem;">🗂️ Category Maintenance</div>
+      <div style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Temporarily disable one or more categories — e.g. while you're editing their questions — without locking out the whole platform. Students still see the category, but it's greyed out and unclickable, and they can't Battle-challenge anyone on it either, until you turn it back off.</div>
+      <button onclick="openFacultyCategoryMaintenanceScreen()" style="padding:.75rem 1rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.86rem;font-weight:700;cursor:pointer;width:100%;">🗂️ Manage Category Maintenance →</button>
+    </div>
+  </div>
+</div>
+
+<!-- FACULTY MODE: CATEGORY MAINTENANCE — status/list screen -->
+<div id="faculty-category-maintenance-screen" class="screen">
+  <div style="max-width:680px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🗂️ Category Maintenance</span>
+      <button onclick="showScreen('faculty-maintenance-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Categories listed here are currently locked — invisible to click, greyed out, and unusable everywhere (Practice, Quiz, Test, Battle, Redo My Mistakes) for students, until you turn each one off or its timer runs out.</div>
+    <div id="faculty-catmaint-list" style="display:flex;flex-direction:column;gap:.8rem;margin-bottom:1.4rem;"></div>
+    <button onclick="openFacultyCategoryMaintenanceSetupScreen()" style="padding:.8rem 1rem;background:#b45309;color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;width:100%;">🛠 Lock More Categories</button>
+  </div>
+</div>
+
+<!-- FACULTY MODE: CATEGORY MAINTENANCE — setup screen (select categories + timer) -->
+<div id="faculty-category-maintenance-setup-screen" class="screen">
+  <div style="max-width:680px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🛠 Lock Categories</span>
+      <button onclick="showScreen('faculty-category-maintenance-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Select every category you want to temporarily disable. Already-locked categories aren't shown again here — manage those from the previous screen.</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+      <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;">Categories to lock</div>
+      <div style="display:flex;gap:.5rem;">
+        <button id="catmaint-selectall-btn" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:600;color:#1a3260;cursor:pointer;">☑ Select All</button>
+      </div>
+    </div>
+    <div id="catmaint-category-list" style="display:flex;flex-direction:column;gap:.5rem;max-height:340px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:10px;padding:.7rem;margin-bottom:1.4rem;"></div>
+
+    <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;margin-bottom:.6rem;">How long should the lock stay on?</div>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:#334155;margin-bottom:.5rem;cursor:pointer;">
+      <input type="radio" name="catmaint-duration-mode" value="manual" checked onchange="updateCatMaintTimerInputState()"> Until I turn it off manually
+    </label>
+    <label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:#334155;margin-bottom:.4rem;cursor:pointer;">
+      <input type="radio" name="catmaint-duration-mode" value="timer" onchange="updateCatMaintTimerInputState()"> Turn off automatically after
+    </label>
+    <div style="display:flex;gap:.5rem;align-items:center;margin:.2rem 0 1.4rem 1.6rem;">
+      <input id="catmaint-timer-value" type="number" min="1" value="60" disabled style="width:90px;padding:.5rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;">
+      <select id="catmaint-timer-unit" disabled style="padding:.5rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;">
+        <option value="minutes">minutes</option>
+        <option value="hours">hours</option>
+        <option value="days">days</option>
+      </select>
+    </div>
+
+    <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;margin-bottom:.4rem;">Notice for students (optional)</div>
+    <textarea id="catmaint-notice-text" rows="2" placeholder="e.g. Updating these questions — back shortly!" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;font-family:inherit;resize:vertical;margin-bottom:1.4rem;"></textarea>
+
+    <div id="catmaint-setup-error" style="display:none;font-size:.82rem;color:#ef4444;font-weight:600;margin-bottom:1rem;"></div>
+
+    <div style="display:flex;gap:.6rem;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding-top:.6rem;">
+      <button onclick="showScreen('faculty-category-maintenance-screen')" style="padding:.6rem 1rem;background:none;border:2px solid #e2e8f0;color:#64748b;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="catmaint-activate-confirm-btn" onclick="confirmActivateCategoryMaintenance()" style="padding:.6rem 1.2rem;background:#b45309;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;">🛠 Lock Selected Categories</button>
+    </div>
   </div>
 </div>
 
@@ -1482,7 +1553,7 @@
 <div id="faculty-recently-deleted-screen" class="screen">
   <div style="max-width:760px;width:100%;margin:0 auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
-      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🕓 Recently Deleted</span>
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">🗑️ Recycle Bin</span>
       <button onclick="showScreen('faculty-categories-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
     </div>
     <div id="faculty-recently-deleted-sub" style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Loading…</div>
@@ -1535,6 +1606,10 @@
 </div>
 
 <div id="home-screen" class="screen">
+  <div id="impersonation-banner" style="display:none;width:100%;max-width:760px;margin:0 auto .6rem;background:#b45309;color:#fff;border-radius:10px;padding:.6rem .9rem;font-size:.8rem;font-weight:700;display:none;align-items:center;justify-content:space-between;gap:.6rem;">
+    <span>🕵️ Viewing as <span id="impersonation-banner-username">student</span> (Faculty Mode)</span>
+    <button onclick="exitStudentImpersonation()" style="background:#fff;color:#b45309;border:none;border-radius:6px;padding:.3rem .7rem;font-size:.75rem;font-weight:800;cursor:pointer;">← Back</button>
+  </div>
   <div id="home-topbar-row" style="max-width:760px;width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;padding:0 .25rem;box-sizing:border-box;flex-wrap:wrap;gap:.5rem;">
     <span style="font-size:.85rem;color:var(--navy);font-weight:600;">👋 <span id="welcome-username">User</span></span>
     <span id="offline-mode-status-pill" style="display:none;align-items:center;gap:.35rem;font-size:.72rem;font-weight:700;color:#0369a1;background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:20px;padding:.25rem .7rem;white-space:nowrap;">📴 Offline Mode is ON</span>
@@ -1544,7 +1619,8 @@
       <button id="offline-mode-toggle-btn" onclick="toggleOfflineMode()" title="Prime the app for offline use, then stop trying to reach the server until you turn this back off." style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">📴 Go offline</button>
       <button id="changeUnameHomeBtn" data-offline-hide="1" onclick="openStudentChangeUnameDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">✏️ Change Username</button>
       <button data-offline-hide="1" onclick="openStudentChangePwDialog()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">🔑 Change Password</button>
-      <button onclick="handleLogout()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">Log out</button>
+      <button id="home-logout-btn" onclick="handleLogout()" style="background:none;border:2px solid var(--border);border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:var(--slate);cursor:pointer;">Log out</button>
+      <button id="home-impersonate-back-btn" onclick="exitStudentImpersonation()" style="display:none;background:#b45309;border:2px solid #b45309;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:700;color:#fff;cursor:pointer;">← Back to Faculty Mode</button>
     </div>
   </div>
 
@@ -1863,19 +1939,32 @@
   </div>
 </div>
 
-<!-- PAST ATTEMPTS — standalone page -->
+<!-- PAST ATTEMPTS — category list (student-facing, mirrors Faculty Mode's category list) -->
 <div id="past-attempts-screen" class="screen">
   <div style="max-width:760px;width:100%;margin:0 auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
       <span style="font-size:1.15rem;font-weight:800;color:var(--navy);">📚 Your Past Attempts</span>
       <button onclick="showScreen('home-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
     </div>
-    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.1rem;">Review any previous session in full detail.</div>
-    <div id="past-attempts-loading" style="font-size:.85rem;color:var(--text-muted);text-align:center;padding:1rem 0;">Loading your attempts…</div>
-    <div id="past-attempts-empty" style="font-size:.85rem;color:var(--text-muted);text-align:center;padding:1rem 0;display:none;">You haven't completed any attempts yet — finish a session and it'll show up here.</div>
-    <div id="past-attempts-list" style="display:flex;flex-direction:column;gap:.7rem;"></div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.1rem;">Pick a category to review or manage your attempts.</div>
+    <div id="past-attempts-cat-loading" style="font-size:.85rem;color:var(--text-muted);text-align:center;padding:1rem 0;">Loading your attempts…</div>
+    <div id="past-attempts-cat-empty" style="font-size:.85rem;color:var(--text-muted);text-align:center;padding:1rem 0;display:none;">You haven't completed any attempts yet — finish a session and it'll show up here.</div>
+    <div id="past-attempts-cat-list" style="display:flex;flex-direction:column;gap:.7rem;"></div>
   </div>
 </div>
+
+<!-- PAST ATTEMPTS — single category detail (student-facing) -->
+<div id="past-attempts-category-screen" class="screen">
+  <div style="max-width:760px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span id="past-attempts-category-title" style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">Category</span>
+      <button onclick="showScreen('past-attempts-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div id="past-attempts-category-sub" style="font-size:.82rem;color:#64748b;margin-bottom:1rem;"></div>
+    <div id="past-attempts-category-list" style="display:flex;flex-direction:column;gap:.7rem;"></div>
+  </div>
+</div>
+
 
 <!-- GHOST OF PAST YOU — standalone page -->
 <div id="ghost-screen" class="screen">
@@ -2119,6 +2208,13 @@
       <div class="results-meta" id="results-meta"></div>
       <div class="results-grade-bar"><div class="results-grade-fill" id="results-grade-fill" style="width:0%"></div></div>
     </div>
+
+    <!-- MINIMUM-ACCURACY GATE NOTICE: shown immediately on this results page
+         (not just after Back is clicked) when this session just finished a
+         task whose combined accuracy fell below its required minimum. Filled
+         in by showAccuracyGateFailureBanner(), called once the async gate
+         check inside showResults's save-chain resolves. -->
+    <div id="accuracy-gate-banner" style="display:none;background:#fef2f2;border:2px solid #fecaca;border-radius:14px;padding:1rem 1.2rem;margin-bottom:1.5rem;color:#991b1b;font-size:.88rem;font-weight:700;line-height:1.5;"></div>
 
     <!-- GHOST OF PAST YOU: score-progression comparison card (first attempt vs last attempt vs today) -->
     <div id="ghost-card" style="display:none;background:var(--white);border:2px solid var(--border);border-radius:16px;padding:1.1rem 1.4rem;margin-bottom:1.5rem;">
@@ -8403,6 +8499,65 @@ const QUESTION_ID_TO_CATEGORY = {};
 CATEGORIES.forEach(cat => cat.ids.forEach(id => { QUESTION_ID_TO_CATEGORY[id] = cat.id; }));
 
 // ══════════════════════════════════════════════════════════
+// CATEGORY MAINTENANCE MODE — live lock state (student + faculty side)
+// A category that is "locked" here must become fully unservable: it still
+// SHOWS in every picker (per spec — students can see it, just not use it),
+// but no question belonging to it can be loaded into any session, battle,
+// or drill anywhere in the app while the lock is active.
+//
+// lockedCategoryIds: a Set<string> of CATEGORIES[].id currently under
+// maintenance, refreshed from Supabase (category_maintenance table, anon-
+// readable) at a few key moments (page load, opening the category picker,
+// opening Battle Mode) — cheap single-table read, not worth a realtime
+// subscription for this.
+// ══════════════════════════════════════════════════════════
+let lockedCategoryIds = new Set();
+let lockedCategoryNotices = {}; // categoryId -> notice_text (optional teacher message)
+
+// Refreshes lockedCategoryIds/lockedCategoryNotices from Supabase. Auto-
+// expired locks (auto_off_at in the past) are treated as inactive here on
+// the read side — the faculty screen separately flips is_active=false in
+// the DB the next time a teacher opens it, same pattern as
+// platform_maintenance's auto-expiry. Fails open (empty lock set) on any
+// error, exactly like every other best-effort read on this platform: a
+// broken lock check must never itself block students from practicing.
+async function refreshLockedCategories(){
+  try{
+    const {data,error}=await sb.from('category_maintenance').select('category_id,auto_off_at,notice_text').eq('is_active',true);
+    if(error||!Array.isArray(data)){ lockedCategoryIds=new Set(); lockedCategoryNotices={}; return; }
+    const now=Date.now();
+    const ids=new Set();
+    const notices={};
+    data.forEach(r=>{
+      if(r.auto_off_at && new Date(r.auto_off_at).getTime()<=now) return; // expired — treat as unlocked
+      ids.add(r.category_id);
+      if(r.notice_text) notices[r.category_id]=r.notice_text;
+    });
+    lockedCategoryIds=ids;
+    lockedCategoryNotices=notices;
+  }catch(e){ lockedCategoryIds=new Set(); lockedCategoryNotices={}; /* fail open */ }
+}
+function isCategoryLocked(catId){ return lockedCategoryIds.has(catId); }
+// A question is locked if its OWNING category (per QUESTION_ID_TO_CATEGORY)
+// is currently locked. Questions belonging to no known category (shouldn't
+// normally happen) are never locked by this check.
+function isQuestionLocked(qid){
+  const catId=QUESTION_ID_TO_CATEGORY[qid];
+  return catId ? lockedCategoryIds.has(catId) : false;
+}
+// Strips any locked question out of a list of question objects/ids — the
+// single shared filter used by every session-starting path (practice,
+// battle, Redo My Mistakes, weak-topic drill, remaining-drill) so a locked
+// category's questions can never be loaded anywhere, even via a synthetic
+// pool that spans multiple categories.
+function filterOutLockedQuestions(qList){
+  return (qList||[]).filter(q=>{
+    const qid=(q&&q.id!=null)?q.id:q;
+    return !isQuestionLocked(qid);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
 // MODIFIED_QUESTIONS — registry of questions whose wording/options/answer
 // were edited after being live. Add an entry here any time a live question
 // is changed, so that: (1) any already-completed task covering that
@@ -8621,7 +8776,7 @@ const FACULTY_NAV_ITEMS=[
   {id:'__divider__'},
   {id:'faculty-uname-requests-screen', icon:'✏️', label:'Username Requests', action:'openFacultyUsernameRequests()', badge:'uname-req-badge'},
   {id:'faculty-users-screen', icon:'🔑', label:'Manage Users', action:'openFacultyUserManagement()'},
-  {id:'faculty-recently-deleted-screen', icon:'🕓', label:'Recently Deleted', action:'openFacultyRecentlyDeleted()', badge:'recently-deleted-badge'},
+  {id:'faculty-recently-deleted-screen', icon:'🕓', label:'Recycle Bin', action:'openFacultyRecentlyDeleted()', badge:'recently-deleted-badge'},
   {id:'faculty-maintenance-screen', icon:'🛠', label:'Maintenance Mode', action:'openFacultyMaintenanceScreen()', badge:'maintenance-badge'},
 ];
 function buildFacultySidebarHTML(activeId){
@@ -8835,14 +8990,72 @@ async function renderFacultyCategoryList(){
     allCards.forEach(cat=>{
       const n=counts[cat.name]||0;
       const card=document.createElement('div');
-      card.style.cssText='border:2px solid #e2e8f0;border-radius:12px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:#fff;';
-      card.innerHTML=`<div><div style="font-weight:700;color:#0f1f3d;font-size:.95rem;">${escHTML(cat.name)}</div><div style="font-size:.78rem;color:#64748b;margin-top:.2rem;">${n} attempt${n!==1?'s':''}</div></div><div style="color:#1a3260;font-weight:600;font-size:.85rem;">View →</div>`;
-      card.onclick=()=>openFacultyAttemptsForCategory(cat.name);
+      card.style.cssText='border:2px solid #e2e8f0;border-radius:12px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;gap:.7rem;background:#fff;';
+      card.innerHTML=`
+        <div style="flex:1;min-width:0;cursor:pointer;" class="fac-cat-open">
+          <div style="font-weight:700;color:#0f1f3d;font-size:.95rem;">${escHTML(cat.name)}</div>
+          <div style="font-size:.78rem;color:#64748b;margin-top:.2rem;">${n} attempt${n!==1?'s':''}</div>
+        </div>
+        <button class="fac-cat-view-btn" style="background:none;border:none;color:#1a3260;font-weight:600;font-size:.85rem;cursor:pointer;padding:.4rem .2rem;white-space:nowrap;">View →</button>
+        <button class="fac-cat-delete-btn" title="Delete all attempts in this category (moves them to the Recycle Bin)" style="background:none;border:2px solid var(--red);color:var(--red);border-radius:8px;padding:.5rem .8rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">🗑 Delete All</button>
+      `;
+      card.querySelector('.fac-cat-open').onclick=()=>openFacultyAttemptsForCategory(cat.name);
+      card.querySelector('.fac-cat-view-btn').onclick=()=>openFacultyAttemptsForCategory(cat.name);
+      card.querySelector('.fac-cat-delete-btn').onclick=(e)=>{ e.stopPropagation(); facultyDeleteWholeCategoryFromList(cat.name); };
       listEl.appendChild(card);
     });
   }catch(err){
     listEl.innerHTML='<div style="font-size:.85rem;color:#ef4444;">Network error loading categories.</div>';
   }
+}
+
+// "Delete All" button beside a category card on the whole-class category
+// list — moves every currently-visible (not already hidden/deleted) attempt
+// in that category to the Recycle Bin at once (hidden_by_teacher=true, a
+// REAL delete: hidden from the student too, restorable from Recycle Bin).
+async function facultyDeleteWholeCategoryFromList(categoryName){
+  if(!requireFacultyKey()) return;
+  try{
+    const url=SUPABASE_URL+'/rest/v1/attempts?select=id,hidden_by_teacher&category=eq.'+encodeURIComponent(categoryName);
+    const res=await fetch(url,{headers:facultyAuthHeaders()});
+    const rows=await res.json();
+    if(!Array.isArray(rows)){ alert('Could not load this category\'s attempts.'); return; }
+    const ids=rows.filter(r=>!r.hidden_by_teacher).map(r=>r.id);
+    if(!ids.length){ alert('There is nothing to delete in this category.'); return; }
+    const ok=await appConfirm({
+      title:'Delete ALL attempts in "'+categoryName+'"?',
+      message:`This will move all ${ids.length} attempt(s) in this category to the Recycle Bin — hidden from students immediately, restorable by you any time within 7 days.`,
+      icon:'⚠️',
+      confirmText:'Delete All',
+      cancelText:'Cancel'
+    });
+    if(!ok) return;
+    const {deleted,failed}=await facultyBulkDeleteAttemptsRaw(ids);
+    if(failed){ alert('Some attempts could not be deleted.'); }
+    invalidateFacultyProfilesAttemptsCache();
+    facultyRecentlyDeletedScreenLoaded=false; updateRecentlyDeletedBadge();
+    renderFacultyCategoryList();
+  }catch(e){
+    alert('Network error while deleting this category\'s attempts.');
+  }
+}
+
+// Bare PATCH helper (hidden_by_teacher=true) for a batch of ids, with no DOM
+// side effects — used by facultyDeleteWholeCategoryFromList, which deletes
+// from the category LIST screen (no attempt rows are rendered there to
+// remove from the DOM, unlike facultyBulkDeleteAttempts).
+async function facultyBulkDeleteAttemptsRaw(ids){
+  if(!ids.length) return {deleted:0,failed:0};
+  try{
+    const filterVal='('+ids.map(id=>encodeURIComponent(id)).join(',')+')';
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=in.'+filterVal,{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+      body:JSON.stringify({hidden_by_teacher:true})
+    });
+    if(res.status===200||res.status===204||res.status===202) return {deleted:ids.length,failed:0};
+    return {deleted:0,failed:ids.length};
+  }catch(e){ return {deleted:0,failed:ids.length}; }
 }
 
 let facultyCurrentCategory=null, facultyCurrentRows=[];
@@ -8968,7 +9181,7 @@ async function openFacultyAttemptsForCategory(categoryName){
     // removed from their own view (hidden_by_student), and ones the teacher has
     // temporarily deleted (hidden_by_teacher — hidden from BOTH the teacher's
     // normal list and the student's own view). All three sets still live in
-    // Supabase; teacher-hidden ones live in the global "Recently Deleted"
+    // Supabase; teacher-hidden ones live in the global "Recycle Bin"
     // section instead of a per-category folder, since a teacher may want one
     // place to review everything they've temporarily deleted.
     const teacherHiddenRows=rows.filter(r=>r.hidden_by_teacher);
@@ -9084,6 +9297,34 @@ async function facultyHardDeleteAttempt(attemptId, cardEl, rowsArr){
 //  - Permanently delete one, a bulk selection, or all (real DELETE — final).
 let facultyRecentlyDeletedRows=[];
 
+// Client-side safety net: permanently purges any Recycle Bin attempt older
+// than 7 days. The REAL purge runs server-side every night via a Supabase
+// pg_cron job (see recycle_bin_migration.sql) even if nobody opens the app —
+// this call just catches anything since the last cron run, so the teacher
+// never sees stale items lingering for a few extra hours.
+async function purgeExpiredRecycleBinAttempts(){
+  if(!window.facultyServiceRoleKey) return;
+  try{
+    const cutoff=new Date(Date.now()-7*24*60*60*1000).toISOString();
+    await fetch(SUPABASE_URL+'/rest/v1/attempts?hidden_by_teacher=eq.true&teacher_deleted_at=lt.'+encodeURIComponent(cutoff),{
+      method:'DELETE',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal'}
+    });
+  }catch(e){ /* best-effort; the nightly cron job is the real guarantee */ }
+}
+
+// Returns a short "Xd left" style string for a Recycle Bin row, based on
+// teacher_deleted_at (when it entered the bin) + a 7-day retention window.
+function recycleBinDaysLeftLabel(a){
+  if(!a.teacher_deleted_at) return '';
+  const deletedAt=new Date(a.teacher_deleted_at).getTime();
+  const purgeAt=deletedAt+7*24*60*60*1000;
+  const msLeft=purgeAt-Date.now();
+  if(msLeft<=0) return '<span style="color:#b91c1c;font-weight:700;">Purging soon…</span>';
+  const daysLeft=Math.ceil(msLeft/(24*60*60*1000));
+  return `<span style="color:#b45309;font-weight:600;">⏳ ${daysLeft} day${daysLeft!==1?'s':''} left</span>`;
+}
+
 async function openFacultyRecentlyDeleted(){
   if(!requireFacultyKey()) return;
   const subEl=document.getElementById('faculty-recently-deleted-sub');
@@ -9091,6 +9332,7 @@ async function openFacultyRecentlyDeleted(){
   subEl.textContent='Loading…';
   listEl.innerHTML='';
   showScreen('faculty-recently-deleted-screen');
+  await purgeExpiredRecycleBinAttempts();
   try{
     const url=SUPABASE_URL+'/rest/v1/attempts?select=*&hidden_by_teacher=eq.true&order=created_at.desc';
     const res=await fetch(url,{headers:facultyAuthHeaders()});
@@ -9208,13 +9450,22 @@ function renderFacultyRecentlyDeletedList(){
   listEl.appendChild(bar);
 
   facultyRecentlyDeletedRows.forEach(a=>{
-    listEl.appendChild(buildFacultyAttemptRow(a, {
+    const rowEl=buildFacultyAttemptRow(a, {
       showUsername:true,
       selectable:true,
       restoreHandler:(id,rowEl)=>facultyRestoreOneRow(id, rowEl),
       deleteHandler:(id,rowEl)=>facultyPermanentlyDeleteOneRow(id, rowEl),
       deleteLabel:'🗑 Delete Permanently'
-    }));
+    });
+    const countdown=recycleBinDaysLeftLabel(a);
+    if(countdown){
+      const tag=document.createElement('div');
+      tag.style.cssText='font-size:.76rem;margin-top:.3rem;';
+      tag.innerHTML=countdown+' <span style="color:#94a3b8;">— then permanently deleted automatically</span>';
+      const mainEl=rowEl.querySelector('.attempt-main');
+      if(mainEl) mainEl.appendChild(tag);
+    }
+    listEl.appendChild(rowEl);
   });
 }
 
@@ -9315,7 +9566,7 @@ let facultyRecentlyDeletedScreenLoaded=false;
 // Shared by: category attempts view (faculty-attempts-screen) and the
 // student profile view (faculty-profile-screen). "Deletes" a list of attempt
 // ids by marking them hidden_by_teacher=true (temporary delete) — the rows
-// remain in Supabase so they show up under "Recently Deleted" for restore or
+// remain in Supabase so they show up under "Recycle Bin" for restore or
 // permanent removal, and disappear from the student's own view immediately.
 async function facultyBulkDeleteAttempts(ids, listEl, rowsArrRefs, subElUpdater){
   if(!requireFacultyKey()) return {deleted:0,failed:0};
@@ -9378,7 +9629,7 @@ function buildBulkDeleteToolbar({listEl, getAllIds, getRowsArrRefs, subElUpdater
   delAllBtn.onclick=async()=>{
     const ids=getAllIds();
     if(!ids.length){ alert('There is nothing to delete.'); return; }
-    const ok=await appConfirm({title:'Delete ALL attempts?',message:`This will temporarily delete all ${ids.length} attempt(s) shown here — they'll disappear from the student's view but can be restored later from "Recently Deleted".`,icon:'⚠️',confirmText:'Delete All',cancelText:'Cancel'});
+    const ok=await appConfirm({title:'Delete ALL attempts?',message:`This will temporarily delete all ${ids.length} attempt(s) shown here — they'll disappear from the student's view but can be restored later from "Recycle Bin".`,icon:'⚠️',confirmText:'Delete All',cancelText:'Cancel'});
     if(!ok) return;
     delAllBtn.disabled=true; delAllBtn.textContent='Deleting…';
     await facultyBulkDeleteAttempts(ids, listEl, getRowsArrRefs(), subElUpdater);
@@ -9400,7 +9651,7 @@ function buildBulkDeleteToolbar({listEl, getAllIds, getRowsArrRefs, subElUpdater
   confirmBtn.onclick=async()=>{
     const checked=[...listEl.querySelectorAll('.faculty-bulk-checkbox:checked')].map(cb=>cb.dataset.attemptId);
     if(!checked.length){ alert('No attempts selected.'); return; }
-    const ok=await appConfirm({title:'Delete selected attempts?',message:`This will temporarily delete ${checked.length} selected attempt(s) — they'll disappear from the student's view but can be restored later from "Recently Deleted".`,icon:'⚠️',confirmText:'Delete Selected',cancelText:'Cancel'});
+    const ok=await appConfirm({title:'Delete selected attempts?',message:`This will temporarily delete ${checked.length} selected attempt(s) — they'll disappear from the student's view but can be restored later from "Recycle Bin".`,icon:'⚠️',confirmText:'Delete Selected',cancelText:'Cancel'});
     if(!ok) return;
     confirmBtn.disabled=true; confirmBtn.textContent='Deleting…';
     await facultyBulkDeleteAttempts(checked, listEl, getRowsArrRefs(), subElUpdater);
@@ -9414,11 +9665,11 @@ function buildBulkDeleteToolbar({listEl, getAllIds, getRowsArrRefs, subElUpdater
 // This immediately hides the attempt from the student's own Past Attempts /
 // dashboards / mistakes breakdown (all of those queries filter on
 // hidden_by_teacher=false), while keeping the row in Supabase so the teacher
-// can restore it later from the "Recently Deleted (by Teacher)" section, or
+// can restore it later from the "Recycle Bin" section, or
 // permanently delete it from there.
 async function facultyDeleteAttempt(attemptId, cardEl, deletedRowsArr){
   if(!requireFacultyKey()) return;
-  if(!confirm('Temporarily delete this attempt? The student will no longer see it in their past attempts, but you can restore it later from "Recently Deleted".')) return;
+  if(!confirm('Temporarily delete this attempt? The student will no longer see it in their past attempts, but you can restore it later from "Recycle Bin".')) return;
   try{
     const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=eq.'+encodeURIComponent(attemptId),{
       method:'PATCH',
@@ -9911,14 +10162,16 @@ function openMockDataStudentDetail(studentEmail){
 // Admin API has no bulk-delete endpoint), reporting how many succeeded.
 // Attempt records for deleted users are left untouched, matching the
 // behavior of the single-user "Delete User" button.
-async function facultyBulkDeleteUsers(userIds, listEl){
+async function facultyBulkDeleteUsers(userIds, listEl, deleteAttemptsToo){
   if(!requireFacultyKey()) return;
   let deleted=0, failed=0;
+  const successfulIds=[];
   for(const id of userIds){
     try{
       const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users/'+id,{ method:'DELETE', headers:facultyAuthHeaders() });
       if(res.status===200||res.status===204){
         deleted++;
+        successfulIds.push(id);
         const card=listEl.querySelector(`[data-user-id="${CSS.escape(id)}"]`);
         if(card){
           card.style.opacity='0.4';
@@ -9934,7 +10187,12 @@ async function facultyBulkDeleteUsers(userIds, listEl){
       failed++;
     }
   }
-  alert(`Deleted ${deleted} user(s).`+(failed?` ${failed} failed.`:''));
+  let attemptsNote='';
+  if(deleteAttemptsToo && successfulIds.length){
+    const {failed:attemptsFailed}=await facultyDeleteAttemptsForUsers(successfulIds);
+    attemptsNote = attemptsFailed ? ' Their attempt records could not be deleted.' : ' Their attempt records were also deleted.';
+  }
+  alert(`Deleted ${deleted} user(s).`+(failed?` ${failed} failed.`:'')+attemptsNote);
 }
 
 function buildUserBulkDeleteToolbar(users, listEl, subEl){
@@ -9949,10 +10207,11 @@ function buildUserBulkDeleteToolbar(users, listEl, subEl){
 
   delAllBtn.onclick=async()=>{
     if(!users.length){ alert('There are no users to delete.'); return; }
-    const ok=await appConfirm({title:'Delete ALL users?',message:`This will permanently delete all ${users.length} registered user account(s). Their attempt records will remain unless deleted separately. This cannot be undone.`,icon:'⚠️',confirmText:'Delete All',cancelText:'Cancel'});
+    const ok=await appConfirm({title:'Delete ALL users?',message:`This will permanently delete all ${users.length} registered user account(s). This cannot be undone.`,icon:'⚠️',confirmText:'Delete All',cancelText:'Cancel'});
     if(!ok) return;
+    const deleteAttemptsToo=await askDeleteAttemptsToo(users.length);
     delAllBtn.disabled=true; delAllBtn.textContent='Deleting…';
-    await facultyBulkDeleteUsers(users.map(u=>u.id), listEl);
+    await facultyBulkDeleteUsers(users.map(u=>u.id), listEl, deleteAttemptsToo);
     delAllBtn.disabled=false; delAllBtn.textContent='🗑 Delete All Users';
   };
 
@@ -10007,8 +10266,9 @@ async function loadFacultyDeleteUsersPicker(){
       if(!checked.length){ alert('No users selected.'); return; }
       const ok=await appConfirm({title:'Delete selected users?',message:`This will permanently delete ${checked.length} selected user account(s). This cannot be undone.`,icon:'⚠️',confirmText:'Delete Selected',cancelText:'Cancel'});
       if(!ok) return;
+      const deleteAttemptsToo=await askDeleteAttemptsToo(checked.length);
       confirmBtn.disabled=true; confirmBtn.textContent='Deleting…';
-      await facultyBulkDeleteUsers(checked, listEl);
+      await facultyBulkDeleteUsers(checked, listEl, deleteAttemptsToo);
       confirmBtn.disabled=false; confirmBtn.textContent='🗑 Delete Selected';
       showScreen('faculty-users-screen');
       loadFacultyUsers();
@@ -10199,6 +10459,211 @@ async function confirmActivateMaintenance(){
     alert(e.message);
   }finally{
     btn.disabled=false; btn.textContent='🛠 Turn On Maintenance Mode';
+  }
+}
+
+// ── FACULTY: CATEGORY MAINTENANCE ─────────────────────────
+// Same read/write pattern as platform_maintenance above, but keyed per
+// category (multiple rows can be active at once) via the category_maintenance
+// table. See migration_category_maintenance.sql for the table + RLS.
+function openFacultyCategoryMaintenanceScreen(){
+  if(!requireFacultyKey()) return;
+  showScreen('faculty-category-maintenance-screen');
+  loadFacultyCategoryMaintenanceList();
+}
+
+async function fetchActiveCategoryMaintenanceRows(){
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/category_maintenance?is_active=eq.true&select=*&order=created_at.desc',{headers:facultyAuthHeaders()});
+    if(!res.ok) return {missing:true};
+    const rows=await res.json();
+    if(rows && rows.error) return {missing:true};
+    return {missing:false, rows:Array.isArray(rows)?rows:[]};
+  }catch(e){ return {missing:true}; }
+}
+
+async function loadFacultyCategoryMaintenanceList(){
+  const listEl=document.getElementById('faculty-catmaint-list');
+  listEl.innerHTML='Loading…';
+  const {missing,rows}=await fetchActiveCategoryMaintenanceRows();
+  if(missing){
+    listEl.innerHTML='⚠️ Category Maintenance isn\'t set up yet — the <code>category_maintenance</code> table is missing. Run <code>migration_category_maintenance.sql</code> in the Supabase SQL Editor, then reload this page.';
+    return;
+  }
+  const now=Date.now();
+  // Auto-expire: silently flip any row whose timer has passed to is_active=false,
+  // same pattern as platform_maintenance, so the list always reflects reality
+  // without needing a background job.
+  const expired=rows.filter(r=>r.auto_off_at && new Date(r.auto_off_at).getTime()<=now);
+  if(expired.length){
+    await Promise.all(expired.map(r=>writeCategoryMaintenanceRow(r.id,{is_active:false})));
+    return loadFacultyCategoryMaintenanceList();
+  }
+  const live=rows.filter(r=>!(r.auto_off_at && new Date(r.auto_off_at).getTime()<=now));
+  if(live.length===0){
+    listEl.innerHTML='<div style="font-size:.85rem;color:#166534;font-weight:700;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:12px;padding:1rem;">✅ No categories are currently locked. Students can practice, battle, and drill on every category normally.</div>';
+    return;
+  }
+  listEl.innerHTML=live.map(r=>{
+    let timerLine='Locked until you turn it off manually.';
+    if(r.auto_off_at) timerLine='Unlocks automatically at '+new Date(r.auto_off_at).toLocaleString()+'.';
+    return `
+      <div style="border:2px solid #fde68a;background:#fef3c7;border-radius:12px;padding:1rem 1.1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem;">
+          <div style="min-width:0;">
+            <div style="font-weight:700;color:#92400e;font-size:.9rem;">🛠 ${escapeHtml(r.category_name)}</div>
+            <div style="font-size:.78rem;color:#78350f;margin-top:.25rem;">${timerLine}</div>
+            ${r.notice_text?`<div style="font-size:.78rem;color:#78350f;margin-top:.35rem;border-top:1px solid #fde68a;padding-top:.35rem;"><b>Notice shown to students:</b> ${escapeHtml(r.notice_text)}</div>`:''}
+          </div>
+          <button onclick="turnOffCategoryMaintenance('${escAttr(r.id)}')" style="background:#059669;color:#fff;border:none;border-radius:8px;padding:.5rem .9rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ Unlock Now</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function writeCategoryMaintenanceRow(id,patch){
+  const res=await fetch(SUPABASE_URL+'/rest/v1/category_maintenance?id=eq.'+encodeURIComponent(id),{
+    method:'PATCH',
+    headers: Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'}, facultyAuthHeaders()),
+    body: JSON.stringify(Object.assign({}, patch, { updated_at:new Date().toISOString() }))
+  });
+  if(!res.ok){
+    const t=await res.text();
+    throw new Error('Failed to update category maintenance: '+t);
+  }
+}
+
+async function turnOffCategoryMaintenance(id){
+  const ok=await appConfirm({title:'Unlock this category?',message:'Students will be able to practice, battle, and drill on it again immediately.',icon:'✅',confirmText:'Unlock',cancelText:'Cancel'});
+  if(!ok) return;
+  try{
+    await writeCategoryMaintenanceRow(id,{is_active:false});
+    loadFacultyCategoryMaintenanceList();
+  }catch(e){ alert(e.message); }
+}
+
+// ── Setup screen: pick categories (individually or whole chapters at once) + timer ──
+function openFacultyCategoryMaintenanceSetupScreen(){
+  if(!requireFacultyKey()) return;
+  document.getElementById('catmaint-timer-value').value=60;
+  document.getElementById('catmaint-timer-unit').value='minutes';
+  document.querySelector('input[name="catmaint-duration-mode"][value="manual"]').checked=true;
+  document.getElementById('catmaint-notice-text').value='';
+  document.getElementById('catmaint-setup-error').style.display='none';
+  updateCatMaintTimerInputState();
+  showScreen('faculty-category-maintenance-setup-screen');
+  loadCatMaintCategoryChecklist();
+}
+function updateCatMaintTimerInputState(){
+  const isTimer=document.querySelector('input[name="catmaint-duration-mode"]:checked').value==='timer';
+  document.getElementById('catmaint-timer-value').disabled=!isTimer;
+  document.getElementById('catmaint-timer-unit').disabled=!isTimer;
+}
+
+// Builds the checklist grouped by chapter, with a per-chapter "select all in
+// this chapter" checkbox alongside individual category checkboxes — covers
+// both selection granularities (single category, or a whole chapter at once)
+// without needing two separate screens. Already-locked categories are
+// excluded here (they're managed from the status screen instead) so a
+// teacher can't accidentally create a second, conflicting lock on one that's
+// already active.
+async function loadCatMaintCategoryChecklist(){
+  const listEl=document.getElementById('catmaint-category-list');
+  listEl.innerHTML='Loading…';
+  await refreshLockedCategories(); // make sure we exclude anything already locked
+  const availableGroups=CATEGORY_GROUPS.map(group=>({
+    group,
+    cats:CATEGORIES.filter(c=>c.group===group && !isCategoryLocked(c.id))
+  })).filter(g=>g.cats.length>0);
+  if(availableGroups.length===0){
+    listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">Every category is already locked.</div>';
+    return;
+  }
+  listEl.innerHTML=availableGroups.map(g=>{
+    const catRows=g.cats.map(c=>`
+      <label style="display:flex;align-items:center;gap:.6rem;padding:.4rem .5rem .4rem 1.6rem;font-size:.82rem;color:#334155;cursor:pointer;">
+        <input type="checkbox" class="catmaint-cat-checkbox" data-group="${escAttr(g.group)}" value="${escAttr(c.id)}" data-name="${escAttr(c.name)}">
+        ${escHTML(c.name)}
+      </label>`).join('');
+    return `
+      <div>
+        <label style="display:flex;align-items:center;gap:.6rem;padding:.4rem .5rem;font-size:.85rem;font-weight:700;color:#0f1f3d;cursor:pointer;border-bottom:1px solid #f1f5f9;">
+          <input type="checkbox" class="catmaint-group-checkbox" data-group="${escAttr(g.group)}" onchange="toggleCatMaintGroup('${escAttr(g.group)}',this.checked)">
+          ${escHTML(g.group)} <span style="font-weight:400;color:#94a3b8;">(whole chapter)</span>
+        </label>
+        ${catRows}
+      </div>`;
+  }).join('');
+  document.querySelectorAll('.catmaint-cat-checkbox').forEach(box=>{
+    box.onchange=()=>syncCatMaintGroupCheckbox(box.dataset.group);
+  });
+  document.getElementById('catmaint-selectall-btn').onclick=()=>{
+    const boxes=[...document.querySelectorAll('.catmaint-cat-checkbox')];
+    const allChecked=boxes.every(b=>b.checked);
+    boxes.forEach(b=>b.checked=!allChecked);
+    document.querySelectorAll('.catmaint-group-checkbox').forEach(gb=>syncCatMaintGroupCheckbox(gb.dataset.group));
+  };
+}
+// Checking a chapter's own checkbox checks/unchecks every category under it.
+function toggleCatMaintGroup(group,checked){
+  document.querySelectorAll(`.catmaint-cat-checkbox[data-group="${CSS.escape(group)}"]`).forEach(b=>{ b.checked=checked; });
+}
+// Keeps a chapter's own checkbox in sync (checked only when every category
+// under it is individually checked) whenever one of its category checkboxes
+// is toggled by hand.
+function syncCatMaintGroupCheckbox(group){
+  const boxes=[...document.querySelectorAll(`.catmaint-cat-checkbox[data-group="${CSS.escape(group)}"]`)];
+  const groupBox=document.querySelector(`.catmaint-group-checkbox[data-group="${CSS.escape(group)}"]`);
+  if(groupBox) groupBox.checked=boxes.length>0 && boxes.every(b=>b.checked);
+}
+
+async function confirmActivateCategoryMaintenance(){
+  const btn=document.getElementById('catmaint-activate-confirm-btn');
+  const errEl=document.getElementById('catmaint-setup-error');
+  errEl.style.display='none';
+  const checked=[...document.querySelectorAll('.catmaint-cat-checkbox:checked')];
+  if(checked.length===0){
+    errEl.textContent='Select at least one category to lock.';
+    errEl.style.display='block';
+    return;
+  }
+  const isTimer=document.querySelector('input[name="catmaint-duration-mode"]:checked').value==='timer';
+  let autoOffAt=null;
+  if(isTimer){
+    const val=parseFloat(document.getElementById('catmaint-timer-value').value);
+    const unit=document.getElementById('catmaint-timer-unit').value;
+    if(!val||val<=0){ errEl.textContent='Please enter a valid duration.'; errEl.style.display='block'; return; }
+    const ms = unit==='minutes'?val*60000 : unit==='hours'?val*3600000 : val*86400000;
+    autoOffAt=new Date(Date.now()+ms).toISOString();
+  }
+  const notice=document.getElementById('catmaint-notice-text').value.trim();
+  btn.disabled=true; btn.textContent='Locking…';
+  try{
+    const rows=checked.map(box=>({
+      category_id: box.value,
+      category_name: box.dataset.name,
+      is_active: true,
+      auto_off_at: autoOffAt,
+      notice_text: notice
+    }));
+    const res=await fetch(SUPABASE_URL+'/rest/v1/category_maintenance',{
+      method:'POST',
+      headers: Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'}, facultyAuthHeaders()),
+      body: JSON.stringify(rows)
+    });
+    if(!res.ok){
+      const t=await res.text();
+      errEl.textContent='Could not lock categories: '+t;
+      errEl.style.display='block';
+      return;
+    }
+    showScreen('faculty-category-maintenance-screen');
+    loadFacultyCategoryMaintenanceList();
+  }catch(e){
+    errEl.textContent='Network error while locking categories.';
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='🛠 Lock Selected Categories';
   }
 }
 
@@ -10818,7 +11283,50 @@ function categoryMatchesTask(categoryIds, attemptCategory){
 //       what lets a student's own independent practice count toward a task
 //       they never even opened, without also retroactively crediting
 //       practice done before the task existed.
+// Discarded-attempt safety net: when an attempt fails the minimum-accuracy
+// gate, goHomeFromResults() marks it hidden_by_student=true in Supabase so
+// every future query naturally excludes it -- but that UPDATE can silently
+// fail (network hiccup, or the "hidden_by_student" UPDATE policy for
+// students missing/misconfigured in Supabase RLS; see error-swallowing
+// try/catch there). If it fails, the discarded attempt's poor score/answer
+// count would otherwise sit in the attempts table FOREVER with a live
+// task_id, permanently dragging down that task's combined accuracy on
+// every future computeTaskAccuracyAndGate call -- meaning even a perfect
+// 100% retry could never clear the gate, since it's always averaged
+// together with the discarded failure. This client-side record (kept
+// alongside the "Start Again" notice in localStorage, same lifecycle)
+// guarantees a gate-failed attempt id is excluded from task-progress math
+// on THIS device from this point forward, independent of whether the
+// server-side hide actually took effect. It complements, not replaces, the
+// real fix: see the SQL policy note wherever this app's setup docs live.
+let _discardedTaskAttemptIdsCache=null; // {userId, ids:Set} -- invalidated in markTaskAttemptDiscarded
+function getDiscardedTaskAttemptIds(){
+  if(!currentUser) return new Set();
+  if(_discardedTaskAttemptIdsCache && _discardedTaskAttemptIdsCache.userId===currentUser.id) return _discardedTaskAttemptIdsCache.ids;
+  let ids=new Set();
+  try{
+    const raw=localStorage.getItem(`quizapp_discarded_attempts_${currentUser.id}`);
+    if(raw) ids=new Set(JSON.parse(raw));
+  }catch(e){ /* start empty */ }
+  _discardedTaskAttemptIdsCache={userId:currentUser.id, ids};
+  return ids;
+}
+function markTaskAttemptDiscarded(attemptId){
+  if(!currentUser || !attemptId) return;
+  try{
+    const key=`quizapp_discarded_attempts_${currentUser.id}`;
+    const ids=getDiscardedTaskAttemptIds();
+    ids.add(attemptId);
+    // Cap stored size defensively so this can never grow unbounded over a
+    // long-lived account -- only the most recent 200 discarded ids are kept,
+    // which is far more than any realistic number of gate failures.
+    const arr=[...ids].slice(-200);
+    localStorage.setItem(key, JSON.stringify(arr));
+    _discardedTaskAttemptIdsCache={userId:currentUser.id, ids:new Set(arr)}; // keep in-memory cache in sync
+  }catch(e){ /* non-fatal -- worst case, relies solely on the server-side hide */ }
+}
 function attemptCountsForTask(task, a){
+  if(a.id && getDiscardedTaskAttemptIds().has(a.id)) return false;
   if(a.task_id && task.id && a.task_id===task.id) return true;
   if(a.task_id) return false; // explicitly tied to a DIFFERENT task — never double-count
   if(!categoryMatchesTask(task.category_ids, a.category)) return false;
@@ -10834,12 +11342,34 @@ function attemptCountsForTask(task, a){
 // Prefers questions_json (exact ids for that session); falls back to
 // answers_json's keys (older rows / different shape); returns [] if neither
 // is present so callers can safely fall back to counting the whole row.
+// Returns only the question ids this attempt actually COVERS -- meaning the
+// student recorded an answer for them, not merely that they were loaded
+// into the session. This distinction matters because questions_json always
+// stores the FULL set of questions loaded for the session (shuffledQ, see
+// saveAttemptToSupabase) so review screens can show skipped/unanswered
+// questions too -- but that means a student who quits partway through (e.g.
+// answers 4 of 7 questions then hits Quit) still has all 7 ids sitting in
+// questions_json. Previously this function returned all 7 of those ids
+// unconditionally, so a single 4-of-7 quit-attempt could be miscounted as
+// "7 unique questions covered" by uniqueQuestionCountForTask -- instantly
+// (and wrongly) satisfying a 7-question task's target_count and marking it
+// falsely "Completed" after only a partial, incomplete attempt. Answered
+// questions are the ones actually present as keys in answers_json, so we
+// intersect against that whenever it's available; only if answers_json is
+// completely absent (very old rows with neither field in a usable shape) do
+// we fall back to trusting questions_json ids at face value.
 function questionIdsForAttempt(a){
   try{
+    const answeredIds = (a.answers_json && typeof a.answers_json==='object') ? new Set(Object.keys(a.answers_json)) : null;
     if(Array.isArray(a.questions_json) && a.questions_json.length){
-      return a.questions_json.map(q=>(q&&q.id!=null)?q.id:q).filter(id=>id!=null);
+      const allIds=a.questions_json.map(q=>(q&&q.id!=null)?q.id:q).filter(id=>id!=null);
+      if(answeredIds){
+        // Only the ones the student actually answered count as "covered".
+        return allIds.filter(id=>answeredIds.has(String(id))||answeredIds.has(id));
+      }
+      return allIds; // no answers_json at all to cross-check against -- trust questions_json as-is (legacy fallback)
     }
-    if(a.answers_json && typeof a.answers_json==='object'){
+    if(answeredIds){
       return Object.keys(a.answers_json);
     }
   }catch(e){ /* fall through */ }
@@ -10861,6 +11391,44 @@ function uniqueQuestionCountForTask(relevantAttempts){
     ids.forEach(id=>seen.add(id));
   });
   return seen.size+fallbackCount;
+}
+// Merges a set of attempt "pieces" (e.g. every attempt tied to one task_id,
+// plus any organic contributors) into ONE deduped question list + answers
+// map, for building a combined review row. Only questions the student
+// actually ANSWERED are included -- never the full loaded session (see
+// questionIdsForAttempt's fix above for why that distinction matters: a
+// quit-mid-session piece's questions_json holds the whole loaded set, not
+// just what was answered before quitting). Later pieces win on duplicate
+// question ids (a question answered again in a later piece overwrites the
+// earlier snapshot), matching how mergedAnswers already behaves via
+// Object.assign in chronological order.
+// Returns {questions, answers, attemptedCount} where attemptedCount is the
+// TRUE deduped count of distinct questions actually answered across every
+// piece -- the only trustworthy source for the combined row's "questions
+// attempted" total (summing each piece's own questions_attempted can
+// double-count a question answered in more than one piece).
+function mergeTaskPieceQuestions(pieces){
+  const byId={};
+  const order=[];
+  pieces.forEach(a=>{
+    const answeredIds=(a.answers_json && typeof a.answers_json==='object')?new Set(Object.keys(a.answers_json)):null;
+    if(Array.isArray(a.questions_json)){
+      a.questions_json.forEach(q=>{
+        const qid=(q&&q.id!=null)?q.id:q;
+        if(qid==null) return;
+        // Skip questions that were loaded into the session but never
+        // actually answered -- e.g. everything after the point a student
+        // quit mid-way through. Only questions with a recorded answer
+        // belong in the combined review.
+        if(answeredIds && !(answeredIds.has(String(qid))||answeredIds.has(qid))) return;
+        if(!(qid in byId)) order.push(qid);
+        byId[qid]=q; // later piece's snapshot wins on duplicate ids
+      });
+    }
+  });
+  const mergedAnswers={};
+  pieces.forEach(a=>{ if(a.answers_json && typeof a.answers_json==='object') Object.assign(mergedAnswers, a.answers_json); });
+  return { questions: order.map(id=>byId[id]), answers: mergedAnswers, attemptedCount: order.length };
 }
 // Resolves whether a task's assignment scope covers a given student profile
 // (needs at least {id, section}). Section membership is resolved LIVE off
@@ -10929,19 +11497,25 @@ function computeTaskProgress(task, studentAttempts){
     return {current, met:current>=task.target_count};
   }
   if(task.metric==='accuracy'){
-    // Count only questions answered at >= min_accuracy at the ATTEMPT level
-    // (i.e. sessions whose own percent score clears the bar). min_accuracy is
-    // optional: null/undefined means no bar to clear, so every attempted
-    // question in-category counts (same as the 'questions' metric, just kept
-    // under the 'accuracy' metric the teacher chose). Qualifying attempts are
-    // then deduped by unique question id (uniqueQuestionCountForTask) so
-    // re-attempting the same questions again never inflates the count past
-    // the task's real target.
-    const qualifying = task.min_accuracy==null ? relevant : relevant.filter(a=>{
-      const pct=(a.percent!=null)?a.percent:(a.score_total?Math.round((a.score_correct/a.score_total)*100):null);
-      return pct!=null && pct>=task.min_accuracy;
-    });
-    const current=uniqueQuestionCountForTask(qualifying);
+    // Progress toward target_count is simply "how many of this task's
+    // questions has the student attempted" -- exactly like the 'questions'
+    // metric below. The min_accuracy bar is a separate, SEPARATE check that
+    // only applies once target_count questions have actually been covered
+    // (see computeTaskAccuracyAndGate / the gate-check block in showResults
+    // and fetchMyTasksData) -- it decides whether that completion is kept
+    // or discarded, not how much progress has been made getting there.
+    //
+    // BUGFIX: this used to pre-filter to only attempts whose OWN percent
+    // already cleared min_accuracy before counting current at all. That
+    // meant a student below the bar (e.g. 7 questions at 14%, task requires
+    // 75%) got current stuck at 0 forever -- current could never reach
+    // target_count, so the "current>=target_count && accuracyPct<min_accuracy"
+    // gate check elsewhere in the app could never fire either (0>=7 is
+    // false), silently suppressing the whole "attempt won't count / Start
+    // Again" flow it exists to trigger. Progress must track attempted
+    // questions regardless of accuracy; only the completion GATE cares
+    // about the accuracy bar.
+    const current=uniqueQuestionCountForTask(relevant);
     return {current, met:current>=task.target_count};
   }
   // default: 'questions' — deduped by unique question id so re-attempting
@@ -10949,6 +11523,28 @@ function computeTaskProgress(task, studentAttempts){
   // questions assigned + the same 7 redone later must stay at 7/7, not 14/7).
   const current=uniqueQuestionCountForTask(relevant);
   return {current, met:current>=task.target_count};
+}
+// Combines computeTaskProgress (target_count reached) with the
+// min_accuracy gate (computeTaskAccuracyAndGate) into a single "is this
+// task ACTUALLY, GENUINELY complete" check. Needed because, after the
+// computeTaskProgress fix above, `met` alone only means "reached
+// target_count" -- for metric='accuracy' tasks with a min_accuracy set,
+// that is deliberately NOT sufficient (a student can reach target_count at
+// low accuracy; the task must stay open until they clear the bar). Any
+// caller that was using computeTaskProgress(...).met as a stand-in for
+// "is this task done" (outside the one true source of record,
+// task_completions) must use this instead, or it will wrongly treat a
+// gate-failed attempt as a finished assignment.
+function taskGenuinelyComplete(task, attempts){
+  // task_completions (completedTaskIds, checked by the caller before this
+  // is ever reached as a fallback) is the authoritative record under the
+  // per-attempt gate design: a completion row is only ever written when a
+  // single attempt's own score cleared min_accuracy (see fetchMyTasksData).
+  // So as a fallback when that row hasn't landed yet, simply reaching
+  // target_count is a reasonable proxy -- there is no historical
+  // blended-accuracy re-check to perform anymore.
+  const {met}=computeTaskProgress(task, attempts);
+  return met;
 }
 // ══════════════════════════════════════════════════════════
 // TASK COMPLETION — LEADERBOARD EFFECTS (FINAL AGREED DESIGN)
@@ -10991,15 +11587,33 @@ const TASK_WEEKLY_PRIZE_BONUS_PER_QUESTION=1.5;
 const TASK_MASTERY_TOPUP_PER_QUESTION=0.5;
 const TASK_BONUS_DEFAULT_GATE_PCT=50;
 
-// Shared gate/accuracy calculation used by both effects above.
+// Shared gate/accuracy calculation used by both effects above, and by the
+// live per-completion gate check in showResults.
 // relevantAttempts: the attempts that counted toward this task (same filter
-// as computeTaskProgress uses internally, i.e. attemptCountsForTask).
+// as computeTaskProgress uses internally, i.e. attemptCountsForTask) --
+// already excludes any discarded/gate-failed attempt (see
+// getDiscardedTaskAttemptIds), so those never contribute here.
+// CUMULATIVE ACCURACY (across every attempt that contributed to this task,
+// deduped by question so a question answered in more than one piece is
+// only counted once). Per spec: a task finished across multiple separate
+// attempts (e.g. 3 questions today, 4 more tomorrow) is graded as ONE
+// combined attempt covering all of it -- using the exact same deduped
+// question set the student sees when they review it under the Completed
+// tab (mergeTaskPieceQuestions), so the leaderboard/mastery score always
+// matches what's shown on that review screen. A task finished in one
+// single Start-Task sitting is the trivial case of "merge exactly one
+// piece" -- this one function correctly covers both without needing to
+// detect which situation occurred.
 function computeTaskAccuracyAndGate(task, relevantAttempts){
-  let correct=0, total=0;
-  relevantAttempts.forEach(a=>{
-    correct+=(a.score_correct||0);
-    total+=(a.score_total||a.questions_attempted||0);
+  const list = Array.isArray(relevantAttempts) ? relevantAttempts : (relevantAttempts ? [relevantAttempts] : []);
+  const {questions, answers}=mergeTaskPieceQuestions(list);
+  let correct=0;
+  questions.forEach(q=>{
+    const qid=(q&&q.id!=null)?q.id:q;
+    const rec=answers[qid]!=null?answers[qid]:answers[String(qid)];
+    if(rec && rec.isCorrect) correct++;
   });
+  const total=questions.length;
   const accuracyPct = total>0 ? (correct/total)*100 : 0;
   const gate = (task.min_accuracy!=null) ? task.min_accuracy : TASK_BONUS_DEFAULT_GATE_PCT;
   return {accuracyPct, gate, passesGate: accuracyPct>=gate};
@@ -11185,55 +11799,51 @@ async function loadFacultyGoalTasksList(){
 }
 async function deleteGoalTask(id){
   if(!requireFacultyKey()) return;
-  const ok=await appConfirm({title:'Delete this task?',message:'Students will no longer see it or be tracked against it. Their completion history for it will also be removed.',icon:'🗑',confirmText:'Delete',cancelText:'Cancel'});
+  const ok=await appConfirm({title:'Remove this task?',message:'This hides the task and its combined assignment record from you and the student(s). Nothing is permanently deleted from the database, and no leaderboard or mastery points already earned are reversed.',icon:'🗑',confirmText:'Remove',cancelText:'Cancel'});
   if(!ok) return;
   try{
-    // Detach any attempts still tagged with this task_id BEFORE deleting the
-    // task row. Attempts keep their own history either way (the underlying
-    // questions_json/answers_json are untouched) — this just clears the
-    // link — but if a foreign key from attempts.task_id -> tasks.id exists,
-    // deleting the task first would fail silently (the old code never
-    // checked the response), leaving the task stuck forever with no error
-    // shown to the teacher. Doing this first makes the task delete always
-    // succeed regardless of whether that FK is present.
-    const detachRes=await fetch(SUPABASE_URL+'/rest/v1/attempts?task_id=eq.'+encodeURIComponent(id),{
+    // SOFT DELETE ONLY — never hard-delete a task, its attempts' task_id
+    // link, or its task_completions rows. Hard-deleting used to (a) orphan
+    // the merged "review the whole assignment" record students and teachers
+    // rely on to see all N questions at once, since that record is rebuilt
+    // live from tasks.id + attempts.task_id + task_completions every time
+    // it's opened — delete any one of those three and the rebuild silently
+    // fails and the record just vanishes; and (b) via the attempts.task_id
+    // nulling step, permanently strip an attempt's link to its assignment,
+    // so even a "restore" could never bring the grouped view back. Instead
+    // we only flip tasks.archived=true. Every list-style read path already
+    // filters .eq('archived', false) (open/completed/missed tabs, the
+    // faculty active-tasks list) so an archived task disappears from those
+    // immediately — but loadMyTasksById()/the merged-attempt renderer are
+    // intentionally exempt from that filter (see fetchTasksByIdIncludingArchived)
+    // so the combined 20-question review stays reachable from Past Attempts
+    // and Completed on both sides, exactly as required. Weekly Prize /
+    // Mastery contributions already paid out live only in task_completions
+    // (never recalculated from a live task row), so they're untouched.
+    const taskRes=await fetch(SUPABASE_URL+'/rest/v1/tasks?id=eq.'+encodeURIComponent(id),{
       method:'PATCH',
       headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({task_id:null})
+      body:JSON.stringify({archived:true})
     });
-    if(!detachRes.ok){
-      const errBody=await detachRes.text().catch(()=>'');
-      alert('Could not delete this task: failed to detach linked attempts ('+detachRes.status+'). '+errBody);
-      return;
-    }
-    const completionsRes=await fetch(SUPABASE_URL+'/rest/v1/task_completions?task_id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:facultyAuthHeaders()});
-    if(!completionsRes.ok){
-      const errBody=await completionsRes.text().catch(()=>'');
-      alert('Could not delete this task: failed to remove completion records ('+completionsRes.status+'). '+errBody);
-      return;
-    }
-    const taskRes=await fetch(SUPABASE_URL+'/rest/v1/tasks?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:facultyAuthHeaders()});
     if(!taskRes.ok){
       const errBody=await taskRes.text().catch(()=>'');
-      alert('Could not delete this task ('+taskRes.status+'). '+errBody);
+      alert('Could not remove this task ('+taskRes.status+'). '+errBody);
       return;
     }
-    // Both boards derive a task's Weekly Prize bonus and Mastery top-up
-    // LIVE from task_completions + tasks every time they're computed —
-    // nothing is stored as a running total anywhere — so once the
-    // completions row and task row above are gone, deleting this task
-    // already fully reverses every extra contribution it ever made,
-    // automatically, the next time either leaderboard is loaded. The two
-    // calls below just make sure that "next time" is NOW rather than up to
-    // 20 seconds from now: they clear the client-side caches both
-    // leaderboards read from, so a teacher (or student, via the realtime
-    // subscription below) sees the reversal immediately instead of having
-    // to wait out the cache or manually refresh.
+    // IMPORTANT: this is a soft delete (archived=true) -- task_completions
+    // rows are left completely untouched on purpose, so any Weekly Prize
+    // bonus_points already stored on them, and any Mastery Board top-up
+    // derived live from them, keep counting exactly as before. Removing a
+    // task must NEVER reverse points a student already earned. The two
+    // calls below just refresh the teacher's own screen (the now-archived
+    // task should disappear from the active list immediately rather than
+    // waiting up to 20s for the cache to expire) -- they are not undoing
+    // any leaderboard contribution.
     invalidateFacultyProfilesAttemptsCache();
     invalidateWeeklyAttemptsCache();
     loadFacultyGoalTasksList();
     loadFacultyStatsStrip();
-  }catch(e){ alert('Could not delete — network error: '+(e&&e.message?e.message:e)); }
+  }catch(e){ alert('Could not remove -- network error: '+(e&&e.message?e.message:e)); }
 }
 // Per-student progress breakdown for a class-wide task — shown as an
 // achievers-style modal, ordered completed-first.
@@ -11312,11 +11922,30 @@ async function openTaskDetailsPage(taskId){
     if(!Array.isArray(trows)||!trows.length){ subEl.textContent='Task not found.'; return; }
     const task=trows[0];
     document.getElementById('task-details-title').textContent='📋 '+(task.label||'Task Details');
-    const [cached, completionsRes, fallbackMap] = await Promise.all([
+    const [cached, completionsRes, fallbackMap, allTasksRes, allCompletionsRes] = await Promise.all([
       getFacultyProfilesAndAttempts(),
       fetch(SUPABASE_URL+'/rest/v1/task_completions?select=user_id&task_id=eq.'+encodeURIComponent(taskId),{headers:facultyAuthHeaders()}),
-      loadSectionFallbackMap()
+      loadSectionFallbackMap(),
+      // Needed (alongside allCompletionsRes below) so openTaskStudentAttempts
+      // can build the merged review row using the EXACT SAME shared function
+      // (splitAttemptsForPastAttemptsDisplay) the student's own Past
+      // Attempts / Completed screens use, instead of an independently
+      // recomputed merge -- per spec, teacher and student must see the
+      // identical combined record, never two separately-derived versions
+      // that can silently disagree (e.g. one including an organic
+      // contributor attempt the other's calculation missed).
+      fetch(SUPABASE_URL+'/rest/v1/tasks?select=*&archived=eq.false',{headers:facultyAuthHeaders()}),
+      fetch(SUPABASE_URL+'/rest/v1/task_completions?select=task_id,user_id',{headers:facultyAuthHeaders()})
     ]);
+    const allTasksRows=await allTasksRes.json().catch(()=>[]);
+    const allTasksById={};
+    (Array.isArray(allTasksRows)?allTasksRows:[]).forEach(t=>{ allTasksById[t.id]=t; });
+    if(!allTasksById[task.id]) allTasksById[task.id]=task; // this task itself may already be archived by the time it's being reviewed -- still needed for the merge
+    const allCompletionsRows=await allCompletionsRes.json().catch(()=>[]);
+    const completedTaskIdsByUser={};
+    (Array.isArray(allCompletionsRows)?allCompletionsRows:[]).forEach(c=>{
+      (completedTaskIdsByUser[c.user_id]=completedTaskIdsByUser[c.user_id]||new Set()).add(c.task_id);
+    });
     const profiles=cached.profiles;
     const allAttempts=[...cached.attempts].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     const completions=await completionsRes.json().catch(()=>[]);
@@ -11339,9 +11968,9 @@ async function openTaskDetailsPage(taskId){
       const relevantAttempts=studentAttempts.filter(a=>attemptCountsForTask(task, a));
       const {current}=computeTaskProgress(task, studentAttempts);
       const met=completedIds.has(p.id);
-      return {profile:p, current, met, attempts:relevantAttempts};
+      return {profile:p, current, met, attempts:relevantAttempts, allAttempts:studentAttempts};
     }).sort((a,b)=> (b.met-a.met) || (b.current-a.current) || (a.profile.full_name||a.profile.username||'').localeCompare(b.profile.full_name||b.profile.username||''));
-    taskDetailsCache={task, rows:rowsOut};
+    taskDetailsCache={task, rows:rowsOut, allTasksById, completedTaskIdsByUser};
     const completedCount=rowsOut.filter(r=>r.met).length;
     subEl.textContent=`${rowsOut.length} student${rowsOut.length!==1?'s':''} targeted · ✅ ${completedCount} completed · ⬜ ${rowsOut.length-completedCount} not completed`;
     renderTaskDetailsList();
@@ -11385,9 +12014,24 @@ function renderTaskDetailsList(){
 }
 // Shows the list of this student's attempts that count toward the task (in
 // case they made more than one), each with a "Review full attempt" button
-// that reuses the existing reviewPastAttempt() faculty review flow — which
-// already shows every question, the student's answer, and whether it was
-// correct or wrong.
+// Shows this student's review for the task -- either the ONE combined
+// record (task completed) or the raw in-progress pieces (task still open),
+// with a "Review" button reusing the existing faculty review flow.
+//
+// COMPLETED case: per spec, the teacher must see the EXACT SAME combined
+// record the student sees under their own Completed / Past Attempts tabs --
+// not an independently-recomputed merge that can silently disagree (e.g.
+// different question counts) because it was built from a different
+// snapshot of "which attempts count" than the student's own view used.
+// Previously this function ran its OWN merge here using taskDetailsCache's
+// row.attempts (computed by openTaskDetailsPage against a class-wide
+// attempts cache fetched at a possibly different moment than whatever the
+// student's own last page load saw) -- close, but not guaranteed identical.
+// Now it calls splitAttemptsForPastAttemptsDisplay -- the SAME shared
+// function backing the student's own Past Attempts/Completed screens --
+// using this specific student's full attempt history and their own
+// completedTaskIds set, so the merged row produced here is exactly what
+// that student would see if they opened it themselves.
 function openTaskStudentAttempts(profileId){
   if(!taskDetailsCache) return;
   const row=taskDetailsCache.rows.find(r=>r.profile.id===profileId);
@@ -11397,37 +12041,21 @@ function openTaskStudentAttempts(profileId){
   document.getElementById('task-student-attempts-title').textContent=name+"'s Attempts";
   const listEl=document.getElementById('task-student-attempts-list');
   listEl.innerHTML='';
-  // Once the student has actually COMPLETED this task, show ONE combined
-  // record (merging every attempt that contributed — whether started via
-  // "Start Task" or done independently) instead of the raw individual
-  // pieces, matching exactly what the student themselves sees in their own
-  // Past Attempts. While still in progress, show the raw pieces as before
-  // (useful for the teacher to see live progress mid-assignment).
   if(row.met){
     const task=taskDetailsCache.task;
-    const allPieces=[...row.attempts].sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
-    const allQuestions=[]; const mergedAnswers={};
-    let totalAttempted=0, totalCorrect=0, totalMarks=0, totalMarksAttempted=0, totalTime=0;
-    allPieces.forEach(a=>{
-      if(Array.isArray(a.questions_json)) allQuestions.push(...a.questions_json);
-      if(a.answers_json && typeof a.answers_json==='object') Object.assign(mergedAnswers, a.answers_json);
-      totalAttempted+=(a.questions_attempted||0);
-      totalCorrect+=(a.score_correct||0);
-      totalMarks+=(a.marks||0);
-      totalMarksAttempted+=(a.marks_attempted||(a.score_total?a.score_total*2:0));
-      totalTime+=(a.time_taken_seconds||0);
-    });
-    const scoreTotal=allPieces.reduce((s,a)=>s+(a.score_total||0),0);
-    const pct=scoreTotal>0?Math.round((totalCorrect/scoreTotal)*100):0;
-    const latest=allPieces[allPieces.length-1]||{mode:'practice',created_at:new Date().toISOString()};
-    const mergedRow={
-      id:'task-merged-'+task.id, _isMergedTaskRow:true, _taskId:task.id, _pieceIds:allPieces.map(a=>a.id),
-      mode:latest.mode, category:'📌 '+task.label, questions_attempted:totalAttempted,
-      score_correct:totalCorrect, score_total:scoreTotal, marks:totalMarks, marks_attempted:totalMarksAttempted,
-      percent:pct, time_taken_seconds:totalTime, created_at:latest.created_at,
-      questions_json:allQuestions, answers_json:mergedAnswers, was_partial:false
-    };
-    document.getElementById('task-student-attempts-sub').textContent=`Assignment completed — combined record of all ${allPieces.length} attempt${allPieces.length!==1?'s':''} that contributed to "${task.label||'this task'}". Click Review to see every question, the student's answer, and whether it was correct.`;
+    const studentCompletedTaskIds=taskDetailsCache.completedTaskIdsByUser[row.profile.id]||new Set();
+    const {mergedTaskRows}=splitAttemptsForPastAttemptsDisplay(row.allAttempts||[], taskDetailsCache.allTasksById, studentCompletedTaskIds);
+    const mergedRow=mergedTaskRows.find(r=>r._taskId===task.id);
+    if(!mergedRow){
+      // Extremely unlikely (task_completions says met, but the shared merge
+      // function couldn't rebuild the record -- e.g. task_completions
+      // landed but every underlying attempt was independently deleted by
+      // the teacher afterward) -- fall back to a clear message rather than
+      // silently showing nothing.
+      document.getElementById('task-student-attempts-sub').textContent='This task is marked completed, but its combined record could not be rebuilt (its underlying attempts may have been removed).';
+      return;
+    }
+    document.getElementById('task-student-attempts-sub').textContent=`Assignment completed — combined record of every attempt that contributed to "${task.label||'this task'}", identical to what the student sees under their own Completed tab. Click Review to see every question, the student's answer, and whether it was correct.`;
     const facRow=buildFacultyAttemptRow(mergedRow, { showUsername:false });
     const reviewBtn=facRow.querySelector('.btn-ghost');
     if(reviewBtn) reviewBtn.onclick=()=>reviewMergedTaskAttemptAsFaculty(mergedRow);
@@ -11509,7 +12137,7 @@ async function fetchMyTasksData(){
   const tasks=tasksRaw.filter(t=>taskAppliesToStudent(t, myProfileForFilter));
   if(error||!tasks) return {tasks:[], myAttempts:[], completedTaskIds:new Set()};
   const {data:myAttempts,error:aErr}=await sb.from('attempts')
-    .select('category,questions_attempted,percent,score_correct,score_total,task_id,created_at,mode,questions_json,answers_json,created_at')
+    .select('id,category,questions_attempted,percent,score_correct,score_total,task_id,created_at,mode,questions_json,answers_json,created_at')
     .eq('user_id',currentUser.id).eq('hidden_by_student',false).eq('hidden_by_teacher',false);
   if(aErr) return {tasks, myAttempts:[], completedTaskIds:new Set()};
   const {data:myCompletions}=await sb.from('task_completions').select('task_id,created_at').eq('user_id',currentUser.id);
@@ -11528,6 +12156,24 @@ async function fetchMyTasksData(){
     const {met}=computeTaskProgress(t, myAttempts||[]);
     if(met){
       const relevant=(myAttempts||[]).filter(a=>attemptCountsForTask(t, a));
+      // CUMULATIVE ACCURACY GATE: for metric='accuracy' tasks with a
+      // min_accuracy set, hitting target_count is NOT enough — the
+      // combined accuracy across EVERY attempt that contributed toward
+      // this task (organic practice, resumed task sessions, or a mix, per
+      // the same "unknowing contribution" system that already works for
+      // non-accuracy tasks) must also clear the bar, or per spec the
+      // completion doesn't happen at all (no task_completions row, no
+      // "complete" toast, no milestone — the task stays open and the
+      // triggering attempt gets discarded by the caller via
+      // pendingAccuracyGateOutcome so the student can try again). Without
+      // this check here, this loop would mark the task complete and fire
+      // the "Assignment complete!" toast on THIS very call, before the
+      // accuracy-gate cleanup in goHomeFromResults ever gets a chance to
+      // run — completion must never race ahead of the gate check.
+      if(t.metric==='accuracy' && t.min_accuracy!=null){
+        const {accuracyPct}=computeTaskAccuracyAndGate(t, relevant);
+        if(accuracyPct < t.min_accuracy) continue; // not actually complete — gate not cleared
+      }
       const {bonus}=computeTaskWeeklyPrizeBonus(t, relevant);
       sb.from('task_completions').insert({task_id:t.id, user_id:currentUser.id, bonus_points:bonus}).then(()=>{}).catch(()=>{
         // Older schema without bonus_points — retry without it so completion
@@ -11536,6 +12182,12 @@ async function fetchMyTasksData(){
       });
       completedTaskIds.add(t.id);
       queueTaskBonusNotification(t, bonus);
+      // MILESTONE: completing an assignment/task is its own milestone,
+      // named after the task, using the same fire-once milestones_seen
+      // mechanism as every other milestone. Keyed per-task so re-completing
+      // a reopened (modified-question) task never fires a duplicate.
+      queueTaskCompletionMilestone(t);
+      clearTaskGateFailNotice(t.id);
     }
   }
   // ══════════════════════════════════════════════════════════
@@ -11587,9 +12239,29 @@ async function fetchMyTasksData(){
   const modifiedIdsNeedingNotice=[];
   for(const t of tasks){
     if(!completedTaskIds.has(t.id)) continue; // only need to check ones currently marked done
-    const relevantModified=MODIFIED_QUESTIONS.filter(m=>!t.category_ids||!t.category_ids.length||t.category_ids.includes(QUESTION_ID_TO_CATEGORY[m.id]));
-    if(!relevantModified.length) continue;
     const relevantAttempts=(myAttempts||[]).filter(a=>attemptCountsForTask(t,a));
+    // Only ever reopen a task for a question the student actually answered
+    // AS PART OF THIS TASK — never for every edited question that merely
+    // falls inside the task's category scope. The old version filtered
+    // MODIFIED_QUESTIONS down to "any edited question in this task's
+    // category(ies)" and then reopened the task if the CURRENT wording of
+    // that question wasn't found in the student's contributing attempts —
+    // but a question the student never happened to be served (a category
+    // can have far more questions than the task's target_count) can never
+    // pass that check, so a totally unrelated edit could force a genuinely
+    // finished task back open, un-completing it out from under the student.
+    // The fix: only consider a modified question "relevant" here if it's
+    // one the student actually answered while contributing to this task
+    // (i.e. it shows up, under its OLD or NEW wording, in one of
+    // relevantAttempts' own questions_json) — that's the only case where
+    // "did they answer the current version of it" is even a meaningful
+    // question to ask.
+    const answeredQuestionIds=new Set();
+    relevantAttempts.forEach(a=>{
+      if(Array.isArray(a.questions_json)) a.questions_json.forEach(q=>{ if(q&&q.id!=null) answeredQuestionIds.add(q.id); });
+    });
+    const relevantModified=MODIFIED_QUESTIONS.filter(m=>answeredQuestionIds.has(m.id));
+    if(!relevantModified.length) continue;
     const stillMissing=relevantModified.filter(m=>!relevantAttempts.some(a=>attemptHasCurrentVersionOf(a, m.id)));
     if(stillMissing.length){
       completedTaskIds.delete(t.id);
@@ -11631,6 +12303,38 @@ function showTaskBonusToast(message){
   el.style.cssText='position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#059669,#0d9488);color:#fff;padding:.85rem 1.3rem;border-radius:12px;font-size:.85rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw;text-align:center;line-height:1.4;';
   document.body.appendChild(el);
   setTimeout(()=>{ el.style.transition='opacity .5s'; el.style.opacity='0'; setTimeout(()=>el.remove(),500); }, 4500);
+}
+
+// ══════════════════════════════════════════════════════════
+// MILESTONE: COMPLETING AN ASSIGNMENT/TASK
+// Per spec, finishing a task is its own milestone, named after the task
+// (e.g. "Assignment complete: Chapter 5 Past Questions"). Reuses the exact
+// same milestones_seen fire-once table (user_id + milestone_key) and the
+// same toast queue (queueMilestoneToasts/showNextMilestoneToast) as every
+// other milestone, so it behaves identically — persists across
+// refreshes/relogins/devices, and can never fire twice for the same task.
+// Keyed 'task_done_<taskId>' so a task that gets reopened by an edited
+// question (see the MODIFIED_QUESTIONS reopen logic above) and later
+// re-completed does NOT fire a duplicate milestone toast — the row from
+// the first genuine completion is still there and blocks it, which is the
+// correct behavior since it's fundamentally the same assignment.
+// Best-effort / non-fatal throughout, same as every other milestone check:
+// a failure here must never block task completion itself from proceeding.
+// ══════════════════════════════════════════════════════════
+async function queueTaskCompletionMilestone(task){
+  if(!currentUser || !task) return;
+  try{
+    const key='task_done_'+task.id;
+    const {data:seenRows,error}=await sb.from('milestones_seen').select('milestone_key').eq('user_id',currentUser.id).eq('milestone_key',key);
+    if(error) return; // table missing or RLS issue — fail silently, never block task completion over this
+    if(seenRows && seenRows.length) return; // already fired for this task
+    await sb.from('milestones_seen').insert({user_id:currentUser.id, milestone_key:key});
+    queueMilestoneToasts([{
+      key,
+      emoji:'📌',
+      text:`Assignment complete: "${task.label}"!`
+    }]);
+  }catch(err){ /* non-fatal — milestones are a nice-to-have, never break the app over them */ }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -11684,7 +12388,42 @@ function showModifiedQuestionBanner(message){
   document.body.appendChild(el);
 }
 
-// ── STUDENT: TASKS & GOALS FULL PAGE ─────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+// NOTIFY STUDENTS WHEN ORGANIC PRACTICE UNKNOWINGLY CONTRIBUTES TO A TASK
+// Per spec: a student who never opened Tasks & Goals, but happened to
+// practice questions that count toward an open assignment, must be told
+// right away — "you've already completed N questions of this assignment
+// unknowingly, go check Tasks & Goals" — immediately after that attempt's
+// results screen, not silently. Fired from showResults()'s save callback
+// (see the "UNKNOWING CONTRIBUTION NOTIFICATION" block there), once per
+// finished live session, for every open task whose progress that specific
+// attempt moved forward. Tapping the banner jumps straight to Tasks & Goals,
+// matching the spec's "you can go and check the assignments... to review
+// progress". This is a same-session, real-time notice (no fire-once
+// milestones_seen table involved, unlike the completion milestone) — it is
+// meant to fire every single time organic practice contributes, not just
+// once ever, since it's reporting fresh progress each time.
+// ══════════════════════════════════════════════════════════
+function queueUnknowingContributionNotification(task, gainedCount, totalCurrent){
+  const remaining=Math.max(0, (task.target_count||0)-totalCurrent);
+  const msg=`📌 Heads up — ${gainedCount} question${gainedCount!==1?'s':''} you just practiced count${gainedCount!==1?'':'s'} toward your assignment "${task.label}" (${totalCurrent}/${task.target_count||'?'} now done${remaining>0?`, ${remaining} to go`:''}). Tap to view it in Tasks & Goals.`;
+  showUnknowingContributionBanner(msg, task.id);
+}
+function showUnknowingContributionBanner(message, taskId){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;padding:.9rem 1.2rem;border-radius:12px;font-size:.83rem;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:92vw;line-height:1.5;display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;';
+  const textEl=document.createElement('div'); textEl.textContent=message; textEl.style.flex='1';
+  const closeBtn=document.createElement('button');
+  closeBtn.textContent='✕'; closeBtn.setAttribute('aria-label','Dismiss');
+  closeBtn.style.cssText='background:none;border:none;color:#fff;font-weight:700;cursor:pointer;font-size:1rem;line-height:1;padding:0;flex-shrink:0;';
+  closeBtn.onclick=(ev)=>{ ev.stopPropagation(); el.remove(); };
+  el.onclick=()=>{ el.remove(); openStudentTasksPage(); };
+  el.appendChild(textEl); el.appendChild(closeBtn);
+  document.body.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode){ el.style.transition='opacity .5s'; el.style.opacity='0'; setTimeout(()=>el.remove(),500); } }, 8000);
+}
+
+
 let studentTasksCache=null; // {tasks, myAttempts, completedTaskIds} — reused across tab switches
 let studentTasksActiveTab='open';
 function openStudentTasksPage(){
@@ -11726,6 +12465,41 @@ function switchStudentTasksTab(tab){
     b.classList.toggle('active',on);
   });
   renderStudentTasksTab();
+}
+// Opens the combined "review the whole assignment" record for a completed
+// task directly from the student's Tasks & Goals > Completed tab -- per
+// spec, a completed assignment must be reviewable from BOTH the Completed
+// tab and Past Attempts, not just the latter. Previously the Completed tab
+// only offered "See who completed it" (a class-wide completers list) with
+// no way at all for the student to review their own finished attempt from
+// here -- they had to know to go dig it up in Past Attempts instead.
+// Reuses the exact same merge machinery as Past Attempts
+// (splitAttemptsForPastAttemptsDisplay) so the two views can never disagree
+// about what the combined record contains.
+async function reviewCompletedTaskFromTasksPage(taskId){
+  try{
+    const rawAttempts=await getMyAttempts();
+    const {tasksById, completedTaskIds}=await loadMyTasksById(rawAttempts);
+    const {mergedTaskRows}=splitAttemptsForPastAttemptsDisplay(rawAttempts||[], tasksById, completedTaskIds);
+    const mergedRow=mergedTaskRows.find(r=>r._taskId===taskId);
+    if(!mergedRow){ alert('Could not load this assignment\'s review yet -- try again in a moment.'); return; }
+    reviewMergedTaskAttempt(mergedRow);
+  }catch(e){ alert('Could not load this assignment\'s review: '+e.message); }
+}
+// Reads the "your last attempt at this task failed the minimum-accuracy
+// requirement" notice, if one is stored for this task -- see where it's
+// written in goHomeFromResults for why this lives in localStorage rather
+// than Supabase. Returns null if none, or if currentUser isn't set.
+function getTaskGateFailNotice(taskId){
+  if(!currentUser) return null;
+  try{
+    const raw=localStorage.getItem(`quizapp_gate_fail_${currentUser.id}_${taskId}`);
+    return raw?JSON.parse(raw):null;
+  }catch(e){ return null; }
+}
+function clearTaskGateFailNotice(taskId){
+  if(!currentUser) return;
+  try{ localStorage.removeItem(`quizapp_gate_fail_${currentUser.id}_${taskId}`); }catch(e){}
 }
 function renderStudentTasksTab(){
   const listEl=document.getElementById('student-tasks-list');
@@ -11778,23 +12552,40 @@ function renderStudentTasksTab(){
     if(t.target_type==='student') scopeTag='<span style="font-size:.68rem;color:#7c3aed;font-weight:700;">Just for you</span>';
     else if(t.target_type==='students') scopeTag='<span style="font-size:.68rem;color:#7c3aed;font-weight:700;">Assigned to you</span>';
     else if(t.target_type==='section') scopeTag=`<span style="font-size:.68rem;color:#0369a1;font-weight:700;">Section ${escHTML(t.section||'')}</span>`;
+    // "Start Again" notice: only relevant on the Open tab (a task that's
+    // completed or missed can't have a live gate-fail notice worth showing
+    // -- completing it for real clears the notice below, and a missed task
+    // is already done for either way). current===0 also guards against
+    // showing a stale notice once the student HAS started answering fresh
+    // questions toward this task again post-failure (their new progress
+    // will naturally show instead).
+    const gateFailNotice = (!completed && !missed) ? getTaskGateFailNotice(t.id) : null;
+    const gateFailHTML = gateFailNotice
+      ? `<div style="margin-top:.6rem;padding:.55rem .7rem;background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;font-size:.72rem;color:#991b1b;font-weight:700;line-height:1.4;">⚠️ Your previous attempt wasn't successful because it didn't meet the minimum requirement of ${gateFailNotice.requiredPct}% accuracy (you scored ${gateFailNotice.achievedPct}%). Tap Start Again to try once more.</div>`
+      : '';
     return `<div style="background:#fff;border:1.5px solid ${missed?'#fecaca':'#e2e8f0'};border-radius:12px;padding:1rem 1.1rem;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;">
         <div>
           <div style="font-size:.9rem;font-weight:700;color:#0f1f3d;">${escHTML(t.label)}</div>
-          <div style="font-size:.76rem;color:#64748b;margin-top:.2rem;">${escHTML(taskMetricLabel(t))} · ${escHTML(taskCategoryLabel(t))} · ${escHTML(taskModeLabel(t))} · due ${escHTML(formatTaskDeadline(t))}</div>
+          <div style="font-size:.76rem;color:#64748b;margin-top:.2rem;">${escHTML(taskMetricLabel(t))} · ${escHTML(taskCategoryLabel(t))} · ${escHTML(taskModeLabel(t))}</div>
           ${t.note?`<div style="font-size:.78rem;color:#475569;margin-top:.4rem;line-height:1.5;white-space:pre-wrap;">${escHTML(t.note)}</div>`:''}
           <div style="margin-top:.35rem;">${scopeTag}</div>
         </div>
         ${badgeHTML}
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem;margin-top:.55rem;padding:.4rem .65rem;background:${missed?'#fef2f2':'#f8fafc'};border:1px solid ${missed?'#fecaca':'#e2e8f0'};border-radius:8px;">
+        <span style="font-size:.85rem;">📅</span>
+        <span style="font-size:.78rem;font-weight:700;color:${missed?'#991b1b':'#334155'};">Due ${escHTML(formatTaskDeadline(t))}</span>
       </div>
       <div style="background:#f1f5f9;border-radius:999px;height:8px;margin-top:.7rem;overflow:hidden;">
         <div style="height:100%;background:${completed?'#22c55e':(missed?'#ef4444':'#ea580c')};width:${pct}%;transition:width .5s ease;"></div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.35rem;">
         <div style="font-size:.74rem;color:#64748b;font-weight:600;">${current} / ${t.target_count}${(!completed&&!missed&&current>0&&t.metric!=='sessions')?` <span style="color:#ea580c;">(${Math.max(0,t.target_count-current)} left)</span>`:''}</div>
-        ${(!completed&&!missed)?`<button class="start-btn" style="width:auto;white-space:nowrap;padding:.45rem 1rem;margin:0;font-size:.78rem;" onclick="startTaskSession('${escAttr(t.id)}')">${current>0?'Resume task →':'Start task →'}</button>`:''}
+        ${(!completed&&!missed)?`<button class="start-btn" style="width:auto;white-space:nowrap;padding:.45rem 1rem;margin:0;font-size:.78rem;" onclick="startTaskSession('${escAttr(t.id)}')">${gateFailNotice?'🔁 Start Again':(current>0?'Resume task →':'Start task →')}</button>`:''}
+        ${completed?`<button style="width:auto;white-space:nowrap;padding:.45rem 1rem;margin:0;font-size:.78rem;background:#0f1f3d;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;" onclick="reviewCompletedTaskFromTasksPage('${escAttr(t.id)}')">📋 Review your attempt →</button>`:''}
       </div>
+      ${gateFailHTML}
       ${(t.target_type==='class'||t.target_type==='section'||t.target_type==='students')?`<div style="margin-top:.5rem;"><a href="#" onclick="openTaskCompletersModal('${escAttr(t.id)}','${escAttr(t.label)}');return false;" style="font-size:.75rem;color:#ea580c;font-weight:700;text-decoration:underline;">See who completed it</a></div>`:''}
     </div>`;
   }).join('');
@@ -12096,6 +12887,67 @@ function renderFacultyWeeklyPrize(){
       </div>
       <div style="font-family:'IBM Plex Mono',monospace;font-weight:800;color:#7c3aed;font-size:1.15rem;">${s.score}</div>
     </div>`).join('');
+}
+
+// ── ONE-TIME / ON-DEMAND FIX: backfills leaderboard_scores for EVERY
+// student, using the exact same data + math the faculty leaderboard already
+// uses (getFacultyProfilesAndAttempts + computeMasteryFromAttempts). This
+// exists because leaderboard_scores is normally only written client-side by
+// each student's own browser (updateMyLeaderboardScore), so any student who
+// hasn't opened the app since that system was added has no row there yet —
+// which is why the student-facing leaderboard was only showing a handful of
+// students per level while this faculty-side live computation showed
+// everyone. Running this writes a correct row for every student at once, so
+// the student leaderboard (which just reads leaderboard_scores) catches up
+// immediately. Safe to click any time — it only reads attempts (read-only)
+// and upserts leaderboard_scores (each student's own row), it never touches
+// or deletes any other data.
+async function backfillLeaderboardScores(){
+  if(!requireFacultyKey()) return;
+  const msg=document.getElementById('faculty-lb-backfill-msg');
+  msg.textContent='Syncing every student\'s score… this may take a moment.';
+  try{
+    const {profiles, attempts}=await getFacultyProfilesAndAttempts();
+    const liveAttempts=attempts.filter(a=>!a.hidden_by_student&&!a.hidden_by_teacher);
+    const attemptsByUser={};
+    liveAttempts.forEach(a=>{ (attemptsByUser[a.user_id]=attemptsByUser[a.user_id]||[]).push(a); });
+
+    let allTasks=[], completionsByUser={};
+    try{
+      const tasksRes=await fetch(SUPABASE_URL+'/rest/v1/tasks?select=id,counts_toward_leaderboard,min_accuracy,category_ids,mode,created_at,target_count&archived=eq.false',{headers:facultyAuthHeaders()});
+      if(tasksRes.ok){ const rows=await tasksRes.json(); if(Array.isArray(rows)) allTasks=rows; }
+      const compRes=await fetch(SUPABASE_URL+'/rest/v1/task_completions?select=task_id,user_id',{headers:facultyAuthHeaders()});
+      if(compRes.ok){
+        const compRows=await compRes.json();
+        if(Array.isArray(compRows)) compRows.forEach(c=>{ (completionsByUser[c.user_id]=completionsByUser[c.user_id]||new Set()).add(c.task_id); });
+      }
+    }catch(_){}
+
+    let updated=0, failed=0;
+    for(const p of profiles){
+      const rows=attemptsByUser[p.id]||[];
+      if(rows.length===0) continue; // matches student-side "attemptCount>0" filter — nothing to write
+      const myCompletedTaskIds=completionsByUser[p.id]||new Set();
+      const topupQuestionIds=computeTaskMasteryTopupQuestionIds(allTasks, rows, myCompletedTaskIds);
+      const {mastery,attemptedCount}=computeMasteryFromAttempts(rows, topupQuestionIds);
+      try{
+        const res=await fetch(SUPABASE_URL+'/rest/v1/leaderboard_scores',{
+          method:'POST',
+          headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+          body:JSON.stringify({
+            user_id:p.id,
+            mastery:Math.round(mastery*10000)/10000,
+            attempted_count:attemptedCount,
+            updated_at:new Date().toISOString()
+          })
+        });
+        if(res.ok) updated++; else failed++;
+      }catch(_){ failed++; }
+    }
+    msg.textContent=`✅ Synced ${updated} student${updated!==1?'s':''}.`+(failed?` (${failed} failed — you can click the button again to retry.)`:'');
+  }catch(e){
+    msg.textContent='❌ Could not sync — check your service_role key and try again.';
+  }
 }
 
 async function loadFacultyLeaderboardData(){
@@ -12733,69 +13585,92 @@ function openDashboardCategoryDrilldown(categoryName){
 }
 
 
-// ── FACULTY: view a single student's profile / past-attempts history ─────
-// Shows EXACTLY what that student sees on their own Home screen's Past
-// Attempts list — same row layout, same info — but since this uses the
-// service_role key it also includes attempts the student has removed from
-// their own view (hidden_by_student = true), clearly tagged, since a
-// teacher should be able to see everything. No delete button here; deleting
-// attempts is done from the category views in Faculty Mode, not from here.
+// ── FACULTY: LOG IN AS STUDENT (real impersonation) ─────────────────────
+// Clicking "View Profile" now does a GENUINE login as that student — using
+// the service_role key to mint a one-time magic-link token for their
+// account, then verifying it with the normal (anon-key) client to obtain a
+// real, valid session for them. From that point on, the teacher's browser
+// IS that student's browser: every feature (practicing questions, joining
+// groups, deleting attempts, etc.) works through the exact same RLS-backed
+// paths a real student login would use — nothing is faked or simulated.
+// The teacher's Faculty Mode key + "Back" state is stashed so exiting
+// returns them to Faculty Mode exactly where they left off.
+let facultyImpersonationStash=null; // {facultyServiceRoleKey}
+
 async function openFacultyStudentProfile(userId, username){
   if(!requireFacultyKey()) return;
-  facultyProfileUserId=userId; facultyProfileUsername=username;
-  document.getElementById('faculty-profile-title').textContent='👁 '+username+"'s Profile";
-  const subEl=document.getElementById('faculty-profile-sub');
-  const listEl=document.getElementById('faculty-profile-list');
-  subEl.textContent='Loading past attempts…';
-  listEl.innerHTML='';
-  showScreen('faculty-profile-screen');
+  const ok=await appConfirm({
+    title:'Log in as "'+username+'"?',
+    message:'You will be logged into this student\'s account exactly as they see it — homepage, practice, groups, past attempts, everything. Any attempt you delete this way is REAL deleted (moved to the Recycle Bin), not just hidden. Use the "Back" button to return to Faculty Mode.',
+    icon:'🕵️',
+    confirmText:'Log In As Student',
+    cancelText:'Cancel'
+  });
+  if(!ok) return;
   try{
-    const url=SUPABASE_URL+'/rest/v1/attempts?select=*&user_id=eq.'+encodeURIComponent(userId)+'&order=created_at.desc';
-    const res=await fetch(url,{headers:facultyAuthHeaders()});
-    let rows=await res.json();
-    if(!Array.isArray(rows)){ subEl.textContent='Could not load this student\'s attempts. Check your service_role key.'; return; }
-    if(rows.length===0){ subEl.textContent='This student has not completed any attempts yet.'; return; }
-    const teacherHiddenCount=rows.filter(r=>r.hidden_by_teacher).length;
-    rows=rows.filter(r=>!r.hidden_by_teacher);
-    if(rows.length===0){ subEl.textContent='All of this student\'s attempts are currently temporarily deleted. See "Recently Deleted" from the Faculty Mode home screen.'; return; }
-    const hiddenCount=rows.filter(r=>r.hidden_by_student).length;
-    subEl.textContent=rows.length+' total attempt'+(rows.length!==1?'s':'')+(hiddenCount?' ('+hiddenCount+' removed by the student from their own view, still shown here)':'')+(teacherHiddenCount?' · '+teacherHiddenCount+' temporarily deleted by you (see "Recently Deleted")':'')+'.';
-    // Ordinal numbering here mirrors the student's own view: per category+mode,
-    // NOT per faculty-wide category view (which groups by user_id already since
-    // this list is already scoped to one user).
-    const chronological=[...rows].reverse();
-    const seenPerCategoryMode={};
-    const attemptNumberById={};
-    chronological.forEach(a=>{
-      const key=(a.category||'Sample Mock')+'|'+a.mode;
-      seenPerCategoryMode[key]=(seenPerCategoryMode[key]||0)+1;
-      attemptNumberById[a.id]=seenPerCategoryMode[key];
+    const email=usernameToEmail(username);
+    // 1) Mint a one-time magic-link token for this student using the
+    //    service_role key. Nothing is emailed — quizapp.local isn't a real
+    //    domain — we just need the hashed_token it returns.
+    const genRes=await fetch(SUPABASE_URL+'/auth/v1/admin/generate_link',{
+      method:'POST',
+      headers:{...facultyAuthHeaders(),'Content-Type':'application/json'},
+      body:JSON.stringify({ type:'magiclink', email })
     });
-    rows.forEach(a=>{
-      const n=attemptNumberById[a.id];
-      a._attemptOrdinal=n===1?'1st':n===2?'2nd':n===3?'3rd':`${n}th`;
-    });
-
-    facultyProfileRows=rows;
-    const toolbar=buildBulkDeleteToolbar({
-      listEl,
-      getAllIds:()=>facultyProfileRows.map(r=>r.id),
-      getRowsArrRefs:()=>[facultyProfileRows],
-      subElUpdater:()=>{
-        const hiddenCount2=facultyProfileRows.filter(r=>r.hidden_by_student).length;
-        subEl.textContent=facultyProfileRows.length+' total attempt'+(facultyProfileRows.length!==1?'s':'')+(hiddenCount2?' ('+hiddenCount2+' removed by the student from their own view, still shown here)':'')+'.';
-      },
-      rerender:()=>openFacultyStudentProfile(userId, username)
-    });
-    listEl.appendChild(toolbar);
-
-    rows.forEach(a=>{
-      listEl.appendChild(buildFacultyAttemptRow(a, { showUsername:false, deleteHandler:facultyDeleteAttempt, selectable:true }));
-    });
+    const genData=await genRes.json();
+    const hashedToken=genData?.properties?.hashed_token || genData?.hashed_token;
+    if(!hashedToken){
+      alert('Could not start impersonation: '+(genData.message||genData.msg||'no token returned. Make sure Email auth (magic link) is enabled in your Supabase project\'s Auth settings.'));
+      return;
+    }
+    // 2) Verify that token with the REGULAR (anon-key) client — this is a
+    //    genuine sign-in, producing a real session for this exact student.
+    const {data:verifyData, error:verifyErr}=await sb.auth.verifyOtp({ token_hash:hashedToken, type:'magiclink' });
+    if(verifyErr || !verifyData?.user){
+      alert('Could not log in as this student: '+(verifyErr?verifyErr.message:'unknown error'));
+      return;
+    }
+    // 3) Stash the Faculty Mode key so "Back" can restore it, then swap into
+    //    the student's session/UI exactly like a normal student login.
+    facultyImpersonationStash={ facultyServiceRoleKey: window.facultyServiceRoleKey };
+    document.body.classList.remove('faculty-shell-on');
+    document.getElementById('impersonation-banner').style.display='flex';
+    document.getElementById('impersonation-banner-username').textContent=username;
+    document.getElementById('home-logout-btn').style.display='none';
+    document.getElementById('home-impersonate-back-btn').style.display='inline-block';
+    await completeLogin(verifyData.user.id, username);
   }catch(err){
-    subEl.textContent='Network error loading this student\'s attempts.';
+    alert('Network error while starting impersonation: '+err.message);
   }
 }
+
+// "Back" button shown while impersonating a student — ends the student's
+// real session (does NOT touch their account otherwise) and restores the
+// teacher straight back into Faculty Mode with the same key they had.
+async function exitStudentImpersonation(){
+  const stash=facultyImpersonationStash;
+  try{ await sb.auth.signOut(); }catch(e){}
+  currentUser=null;
+  try{ sessionStorage.removeItem('quizapp_active_session'); }catch(e){}
+  document.getElementById('impersonation-banner').style.display='none';
+  document.getElementById('home-logout-btn').style.display='inline-block';
+  document.getElementById('home-impersonate-back-btn').style.display='none';
+  facultyImpersonationStash=null;
+  if(stash && stash.facultyServiceRoleKey){
+    window.facultyServiceRoleKey=stash.facultyServiceRoleKey;
+    document.body.classList.add('faculty-shell-on');
+    document.body.style.overflow='';
+    document.getElementById('authOverlay').style.display='none';
+    document.body.classList.remove('auth-pending');
+    showScreen('faculty-users-screen');
+    if(typeof loadFacultyUsers==='function') loadFacultyUsers();
+  } else {
+    showScreen('home-screen');
+    document.getElementById('authOverlay').style.display='flex';
+    document.body.classList.add('auth-pending');
+  }
+}
+
 
 let resetPwTargetUserId=null, resetPwTargetUsername=null;
 function openResetPwDialog(userId, username){
@@ -12953,14 +13828,56 @@ async function doChangeUsername(){
   }
 }
 
+// Permanently deletes every attempt row belonging to a set of user ids —
+// used when a teacher chooses "Yes, delete their attempts too" while
+// deleting user account(s). This is a real, permanent DELETE (not a move
+// to the Recycle Bin) since the account itself is being destroyed.
+async function facultyDeleteAttemptsForUsers(userIds){
+  if(!userIds.length) return {deleted:0,failed:0};
+  try{
+    const filterVal='('+userIds.map(id=>encodeURIComponent(id)).join(',')+')';
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?user_id=in.'+filterVal,{
+      method:'DELETE',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal'}
+    });
+    if(res.status===200||res.status===204||res.status===202) return {deleted:userIds.length,failed:0};
+    return {deleted:0,failed:userIds.length};
+  }catch(e){ return {deleted:0,failed:userIds.length}; }
+}
+
+// Shared prompt: "delete their attempts too?" shown right after confirming
+// a user deletion (single or bulk). Returns true/false/null (null = the
+// teacher cancelled the whole deletion via the earlier confirm, handled by
+// callers before this is ever invoked). This dialog itself only ever
+// resolves true or false, defaulting safely to false (keep attempts) if
+// dismissed some other way.
+async function askDeleteAttemptsToo(count){
+  return await appConfirm({
+    title: count>1 ? 'Also delete their attempt records?' : 'Also delete this user\'s attempt records?',
+    message: count>1
+      ? `You're about to permanently delete ${count} user account(s). Do you also want to permanently delete all of their past attempt records? If you choose "No", their attempts will remain in the database (visible only in Faculty Mode) even though their account is gone.`
+      : 'Do you also want to permanently delete all of this user\'s past attempt records? If you choose "No", their attempts will remain in the database (visible only in Faculty Mode) even though their account is gone.',
+    icon:'🗑',
+    confirmText:'Yes, delete attempts too',
+    cancelText:'No, keep attempts'
+  });
+}
+
 async function facultyDeleteUser(userId, username, cardEl){
   if(!requireFacultyKey()) return;
-  if(!confirm('Delete user "'+username+'"? This cannot be undone. Their attempt records will remain unless deleted separately.')) return;
+  const ok=await appConfirm({title:'Delete user "'+username+'"?',message:'This will permanently delete this user\'s account. This cannot be undone.',icon:'⚠️',confirmText:'Delete User',cancelText:'Cancel'});
+  if(!ok) return;
+  const deleteAttemptsToo=await askDeleteAttemptsToo(1);
   try{
     const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users/'+userId,{ method:'DELETE', headers:facultyAuthHeaders() });
     if(res.status===200||res.status===204){
+      let attemptsNote='';
+      if(deleteAttemptsToo){
+        const {deleted,failed}=await facultyDeleteAttemptsForUsers([userId]);
+        attemptsNote = failed ? ' (could not delete their attempt records)' : ' (their attempt records were also deleted)';
+      }
       cardEl.style.opacity='0.4';
-      cardEl.querySelector('div div').textContent+=' (deleted)';
+      cardEl.querySelector('div div').textContent+=' (deleted)'+attemptsNote;
       cardEl.querySelectorAll('button').forEach(b=>b.disabled=true);
     } else {
       const d=await res.json().catch(()=>({}));
@@ -13410,6 +14327,24 @@ let viewingPastAttempt = false; // true when results/review screens are showing 
 // milestones, mistakes pool) that reads from the attempts table — otherwise a
 // student clicking "back to home" quickly sees stale, pre-save data.
 let pendingAttemptSavePromise = null;
+// Set by showResults()'s save callback when a just-finished TASK session's
+// combined accuracy falls below the task's min_accuracy — consumed and
+// cleared by goHomeFromResults() when the student taps Back, which is the
+// moment the attempt actually gets deleted (never before — the student can
+// still review it on the results screen first). null whenever no gate
+// failure applies to the current results screen.
+let pendingAccuracyGateOutcome = null;
+// Renders the "this attempt won't be counted" warning directly on the
+// results screen, the moment the gate check resolves -- see the comment at
+// its call site for why this can't just be the goHomeFromResults() alert
+// alone. Safe to call even if the results screen isn't showing anymore (the
+// element just won't exist / won't be visible; nothing errors).
+function showAccuracyGateFailureBanner(outcome){
+  const el=document.getElementById('accuracy-gate-banner');
+  if(!el || !outcome) return;
+  el.innerHTML=`⚠️ This attempt won't be counted: "${escHTML(outcome.taskLabel)}" requires at least ${outcome.requiredPct}% accuracy, and you scored ${outcome.achievedPct}%. Your progress on this attempt will not be saved once you go back — tap Back, then Start Again on the task to try once more.`;
+  el.style.display='block';
+}
 let viewingAsFaculty = false; // true when results/review screens were opened from Faculty Mode (controls back-nav + delete button)
 let facultyReviewAttemptId = null; // id of the attempt currently shown, so the faculty delete button can act on it
 let facultyReviewBattleId = null; // id of the battle currently being reviewed via facultyReviewBattle, for back-nav context
@@ -13597,6 +14532,10 @@ async function completeLogin(userId, username, isResume){
   updateOfflinePendingBadge();
   loadPastAttempts();
   loadMistakesBreakdown(); loadEngagementCard(); refreshMyTasksBadge(); loadMilestonesDashboard(); loadGhostSection(); loadHomeSnapshot(); refreshBattleBadgeOnly(); refreshGroupInviteBadgeOnly(); loadExamCountdown();
+  // Pick up current category maintenance locks right at login, and re-render
+  // the category picker with them so a student never sees stale (unlocked)
+  // state after logging in while a lock is already active.
+  refreshLockedCategories().then(populateCategories);
   // Prefer greeting by full name if this student's profile has one on file
   // (populated from mock-1 data); falls back to username otherwise.
   try{
@@ -13740,7 +14679,7 @@ checkExistingSession();
 // per completed task, ready to splice into the same list/sort as normalRows.
 function splitAttemptsForPastAttemptsDisplay(rawAttempts, tasksById, completedTaskIds){
   const normalRows=[];
-  const byTaskId={}; // taskId -> attempts tied to it (task_id === taskId)
+  const byTaskId={}; // taskId -> attempts explicitly tied to it (a.task_id === taskId)
   rawAttempts.forEach(a=>{
     if(a.task_id && tasksById[a.task_id]){
       (byTaskId[a.task_id]=byTaskId[a.task_id]||[]).push(a);
@@ -13748,12 +14687,63 @@ function splitAttemptsForPastAttemptsDisplay(rawAttempts, tasksById, completedTa
       normalRows.push(a); // organic/independent attempt — shown as normal, unchanged
     }
   });
+  // BUGFIX ("assignment completed entirely unknowingly never shows up"):
+  // the loop below used to run ONLY over Object.keys(byTaskId) -- i.e. only
+  // tasks that have at least one attempt explicitly tied to them via
+  // task_id (meaning the student opened Tasks & Goals and tapped "Start
+  // Task"/"Resume Task" at least once). A task completed ENTIRELY through
+  // organic practice -- e.g. 3 separate independent practice sessions that
+  // each happened to count toward it, with the student never once opening
+  // Tasks & Goals for it -- has NO attempt with that task_id at all, so it
+  // never got a byTaskId entry and the merge loop below silently skipped
+  // it forever. Concretely this meant: the "Assignment complete!" toast and
+  // Completed-tab card would correctly appear (those are driven by
+  // completedTaskIds / computeTaskProgress, a different code path), but
+  // "Review your attempt" had nothing to find (mergedTaskRows never
+  // contained it) and it never appeared under the Past Attempts
+  // "Assignments" category either. Fix: also seed byTaskId with an empty
+  // array for every task in completedTaskIds (this student's own
+  // permanent completion record) that doesn't already have one, so the
+  // merge loop always considers every completed task, regardless of
+  // whether any single piece happened to be tied to it explicitly.
+  completedTaskIds.forEach(taskId=>{
+    if(!byTaskId[taskId] && tasksById[taskId]) byTaskId[taskId]=[];
+  });
   const mergedTaskRows=[];
   Object.keys(byTaskId).forEach(taskId=>{
     const task=tasksById[taskId];
     const pieces=byTaskId[taskId];
-    if(!completedTaskIds.has(taskId)){
-      return; // still in progress — every piece stays invisible in Past Attempts
+    // ARCHIVED (soft-deleted) TASK: per spec, when a teacher "deletes" a
+    // task, only the combined/merged review record disappears from the
+    // student's Past Attempts and Completed tab — the underlying task row
+    // and every individual attempt stay exactly as they were in Supabase
+    // (task.archived=true is the ONLY thing that changed; see
+    // deleteGoalTask). loadMyTasksById() deliberately still RESOLVES
+    // archived tasks by id (so a teacher can restore one later and this
+    // whole view comes back correctly) — but resolving the task row and
+    // SHOWING its merged record are two different things. This check is
+    // what actually hides it: if the resolved task is archived, we treat
+    // it exactly like "still in progress" for display purposes and bail
+    // out before building the merged row, even though it may be fully
+    // complete underneath.
+    if(task && task.archived){
+      return; // soft-deleted by the teacher — hidden from the student, nothing touched in Supabase
+    }
+    // Completion is normally read from completedTaskIds (backed by the
+    // permanent task_completions table). But that table is only written
+    // asynchronously the first time fetchMyTasksData() detects "met" — if
+    // that write hasn't landed yet, previously failed silently, or the
+    // task was briefly reopened by the modified-question check and hasn't
+    // re-inserted yet, completedTaskIds can lag behind reality. Rather than
+    // trust it blindly and risk hiding a genuinely-finished assignment's
+    // review record (the "vanished assignment" bug), we independently
+    // recompute progress straight from this student's own attempts as a
+    // fallback whenever the task row is available. A task counts as
+    // reviewable here if EITHER source says it's complete.
+    const trulyComplete = completedTaskIds.has(taskId) ||
+      (task ? taskGenuinelyComplete(task, rawAttempts) : false);
+    if(!trulyComplete){
+      return; // still genuinely in progress — every piece stays invisible in Past Attempts, per spec
     }
     // Task is complete: merge every piece tied to this task_id, PLUS any
     // organic attempts that also counted toward it (e.g. the student
@@ -13762,19 +14752,25 @@ function splitAttemptsForPastAttemptsDisplay(rawAttempts, tasksById, completedTa
     const organicContributors = normalRows.filter(a=>attemptCountsForTask(task, a) && !a.task_id);
     const allPieces=[...pieces, ...organicContributors];
     allPieces.sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
-    const allQuestions=[];
-    const mergedAnswers={};
-    let totalAttempted=0, totalCorrect=0, totalMarks=0, totalMarksAttempted=0, totalTime=0;
+    // Dedupe to only the questions actually ANSWERED across every piece --
+    // a quit-mid-session piece's questions_json holds the full loaded set,
+    // not just what was answered, so merging that in raw would pad the
+    // combined review with unanswered/duplicate questions and inflate
+    // totals past what the student really did (see mergeTaskPieceQuestions).
+    const {questions:allQuestions, answers:mergedAnswers, attemptedCount:totalAttempted}=mergeTaskPieceQuestions(allPieces);
+    let totalCorrect=0, totalMarks=0, totalTime=0;
     allPieces.forEach(a=>{
-      if(Array.isArray(a.questions_json)) allQuestions.push(...a.questions_json);
-      if(a.answers_json && typeof a.answers_json==='object') Object.assign(mergedAnswers, a.answers_json);
-      totalAttempted+=(a.questions_attempted||0);
       totalCorrect+=(a.score_correct||0);
       totalMarks+=(a.marks||0);
-      totalMarksAttempted+=(a.marks_attempted||(a.score_total?a.score_total*2:0));
       totalTime+=(a.time_taken_seconds||0);
     });
-    const scoreTotal=allPieces.reduce((s,a)=>s+(a.score_total||0),0);
+    // totalMarksAttempted/scoreTotal must reflect the TRUE deduped question
+    // count, not each piece's own (possibly padded) score_total -- otherwise
+    // a quit-mid-session piece's score_total (full loaded set) would still
+    // leak into the combined percentage even after the question list itself
+    // was correctly deduped down to what was actually answered.
+    const totalMarksAttempted=allQuestions.reduce((s,q)=>s+((q&&q.noMark)?0:((q&&q.marks)||2)),0);
+    const scoreTotal=allQuestions.length;
     const pct=scoreTotal>0?Math.round((totalCorrect/scoreTotal)*100):0;
     const latest=allPieces[allPieces.length-1];
     mergedTaskRows.push({
@@ -13783,7 +14779,15 @@ function splitAttemptsForPastAttemptsDisplay(rawAttempts, tasksById, completedTa
       _taskId:taskId,
       _pieceIds:allPieces.map(a=>a.id),
       mode: latest.mode,
-      category: '📌 '+task.label,
+      // Per spec: every completed assignment lives together under one
+      // dedicated "Assignments" bucket in Past Attempts — NOT scattered as
+      // its own separate category card per task label (which is what this
+      // used to do: category:'📌 '+task.label created a new card for every
+      // single assignment, fragmenting them across the category list
+      // instead of grouping them). The task's own label is preserved on
+      // _taskLabel for display inside the row itself.
+      category: 'Assignments',
+      _taskLabel: task.label,
       questions_attempted: totalAttempted,
       score_correct: totalCorrect,
       score_total: scoreTotal,
@@ -13803,22 +14807,69 @@ function splitAttemptsForPastAttemptsDisplay(rawAttempts, tasksById, completedTa
 // Fetches this student's tasks + which are completed, keyed by id, for use
 // by splitAttemptsForPastAttemptsDisplay. Reuses fetchMyTasksData's fields
 // but returns a plain {tasksById, completedTaskIds} shape.
-async function loadMyTasksById(){
+//
+// rawAttempts (optional): this student's own attempts array, if the caller
+// already has it. fetchMyTasksData() only returns currently-ACTIVE tasks
+// (archived=false), which is correct for the open/completed/missed tabs —
+// but the merged "review the whole assignment" row that Past Attempts shows
+// for a completed task must keep working even after a teacher removes
+// (soft-deletes/archives) that task, per spec: the combined record stays
+// visible to the student (and teacher) even though the task itself is gone
+// from the active list. So whenever any of this student's own attempts
+// still reference a task_id that ISN'T in the active set — because it's now
+// archived, or (defensively) for any other reason a straight archived=false
+// fetch might miss it — we fetch those specific task rows directly by id,
+// bypassing the archived filter, and merge them in. Without this, the
+// moment a task is archived its merged review record would silently vanish
+// from both Past Attempts and Completed for every student who'd finished it,
+// which is exactly the "assignment disappeared" bug this exists to prevent.
+async function loadMyTasksById(rawAttempts){
   try{
     const {tasks, completedTaskIds}=await fetchMyTasksData();
     const tasksById={};
     (tasks||[]).forEach(t=>{ tasksById[t.id]=t; });
+    // Backfill any task referenced either by an attempt's task_id (explicit
+    // Start Task usage) OR by completedTaskIds alone -- the latter matters
+    // for a task completed ENTIRELY through organic/unknowing practice
+    // (no attempt ever has this task_id set) where fetchMyTasksData's
+    // active-only (archived=false) fetch might have missed it, e.g. if the
+    // teacher has since archived it. Without this, such a task's tasksById
+    // entry would be missing and the "assignment completed entirely
+    // unknowingly" merge (see splitAttemptsForPastAttemptsDisplay) could
+    // never resolve it even after being told to look via completedTaskIds.
+    const referencedTaskIds=new Set([
+      ...(rawAttempts||[]).map(a=>a.task_id).filter(Boolean),
+      ...[...(completedTaskIds||[])]
+    ]);
+    const missingIds=[...referencedTaskIds].filter(id=>!tasksById[id]);
+    if(missingIds.length){
+      try{
+        const {data:extraTasks}=await sb.from('tasks').select('*').in('id', missingIds);
+        if(Array.isArray(extraTasks)) extraTasks.forEach(t=>{ tasksById[t.id]=t; });
+      }catch(e){ /* best-effort — if this fails, those specific merged rows just won't resolve, nothing else breaks */ }
+    }
     return {tasksById, completedTaskIds: completedTaskIds||new Set()};
   }catch(e){
     return {tasksById:{}, completedTaskIds:new Set()};
   }
 }
 
-// ── PAST ATTEMPTS: LOAD LIST ────────────────────────────────
+// ── PAST ATTEMPTS: CATEGORY LIST (student-facing) ───────────────────────
+// Mirrors the Faculty Mode category list: one card per category that has at
+// least one visible attempt, showing a count, with a delete button beside
+// each card to remove every attempt in that category at once. This is a
+// "false delete" (hidden_by_student=true) — the teacher can still see
+// everything under Faculty Mode.
+let myPastAttemptsCache=null; // {normalRows, mergedTaskRows} — refreshed each time the category list loads
+
 async function loadPastAttempts(){
-  const loadingEl=document.getElementById('past-attempts-loading');
-  const emptyEl=document.getElementById('past-attempts-empty');
-  const listEl=document.getElementById('past-attempts-list');
+  await renderPastAttemptsCategoryList();
+}
+
+async function renderPastAttemptsCategoryList(){
+  const loadingEl=document.getElementById('past-attempts-cat-loading');
+  const emptyEl=document.getElementById('past-attempts-cat-empty');
+  const listEl=document.getElementById('past-attempts-cat-list');
   loadingEl.style.display='block'; emptyEl.style.display='none'; listEl.innerHTML='';
   if(shouldSkipNetwork()){
     loadingEl.style.display='none';
@@ -13828,100 +14879,201 @@ async function loadPastAttempts(){
   }
   try{
     const rawAttempts=await getMyAttempts();
-    const {tasksById, completedTaskIds}=await loadMyTasksById();
+    const {tasksById, completedTaskIds}=await loadMyTasksById(rawAttempts);
     const {normalRows, mergedTaskRows}=splitAttemptsForPastAttemptsDisplay(rawAttempts||[], tasksById, completedTaskIds);
-    const data=[...normalRows, ...mergedTaskRows].sort((x,y)=>new Date(y.created_at)-new Date(x.created_at));
-    const error=null;
+    myPastAttemptsCache={normalRows, mergedTaskRows};
+    const data=[...normalRows, ...mergedTaskRows];
     loadingEl.style.display='none';
-    if(error){ emptyEl.textContent='Could not load past attempts: '+error.message; emptyEl.style.display='block'; return; }
-    if(!data||data.length===0){ emptyEl.style.display='block'; return; }
-    // Attempt frequency: "Attempt #N for this category" — N counts prior attempts of the
-    // SAME category AND SAME mode (Practice/Test/Quiz are counted separately), in
-    // chronological order (oldest = attempt #1).
-    // data is sorted newest-first, so we count occurrences from the END of the array.
-    const chronological=[...data].reverse();
-    const seenPerCategoryMode={};
-    const attemptNumberById={};
-    chronological.forEach(a=>{
-      const key=(a.category||'Sample Mock')+'|'+a.mode;
-      seenPerCategoryMode[key]=(seenPerCategoryMode[key]||0)+1;
-      attemptNumberById[a.id]=seenPerCategoryMode[key];
-    });
-    data.forEach(a=>{
-      const dt=new Date(a.created_at);
-      const dateStr=dt.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
-      const timeStr=dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
-      const mins=Math.floor(a.time_taken_seconds/60), secs=a.time_taken_seconds%60;
-      const modeLabel=a.mode==='practice'?'Practice':(a.mode==='test'?'Test':'Quiz');
-      const modeClass=a.mode==='practice'?'mode-practice':(a.mode==='test'?'mode-test':'mode-quiz');
-      // Correct definitions (per platform's actual behaviour):
-      // - score_total = the number of questions the student CHOSE to attempt when
-      //   starting this session (their selected question count for that mode/category)
-      // - questions_attempted = the number the student actually clicked/answered
-      //   during the session — for a session ended early (tab closed, reload, quit),
-      //   this is the partial-progress count, which is exactly what "Attempted" should show
-      // - catFullSize = total questions available in the category's whole question bank
-      //   (a separate stat — NOT the denominator for "Attempted")
-      const catDef=CATEGORIES.find(c=>c.name===a.category);
-      const catFullSize=catDef?catDef.ids.length:null;
-      const chosenCount=a.score_total??0;
-      const qAttempted=a.questions_attempted??chosenCount??0;
-      const marksAttemptedSafe=a.marks_attempted??(a.score_total?a.score_total*2:a.marks)??0;
-      const tier = a.percent>=70?'tier-high':(a.percent>=50?'tier-mid':'tier-low');
-      const attemptNo=attemptNumberById[a.id];
-      const attemptOrdinal=attemptNo===1?'1st':attemptNo===2?'2nd':attemptNo===3?'3rd':`${attemptNo}th`;
-      const partialTag=a.was_partial?'<span class="attempt-partial-tag" title="This attempt was not finished — it was auto-saved when the session ended early.">⚠ Incomplete</span>':'';
-      const taskTag=a._isMergedTaskRow?'<span class="attempt-partial-tag" style="background:#ffedd5;color:#9a3412;border-color:#fed7aa;" title="This is the combined record of a full assignment, built from every question you answered toward it.">📌 Assignment</span>':'';
-      const row=document.createElement('div');
-      row.className='attempt-row '+tier;
-      row.innerHTML=`
-        <div class="attempt-main">
-          <div class="attempt-title">${escHTML(a.category||'Sample Mock')} ${a._isMergedTaskRow?'':`<span class="attempt-number-tag">${attemptOrdinal} attempt</span>`} ${partialTag}${taskTag}</div>
-          <div class="attempt-meta">
-            <span class="attempt-date">📅 ${dateStr} · 🕐 ${timeStr}</span>
-            <span class="attempt-mode-tag ${modeClass}">${modeLabel}</span>
-          </div>
+    if(!data.length){ emptyEl.style.display='block'; return; }
+    const counts={};
+    data.forEach(a=>{ const c=a.category||'Sample Mock'; counts[c]=(counts[c]||0)+1; });
+    const names=Object.keys(counts).sort((x,y)=>counts[y]-counts[x]);
+    names.forEach(name=>{
+      const n=counts[name];
+      const card=document.createElement('div');
+      card.style.cssText='border:2px solid #e2e8f0;border-radius:12px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;gap:.7rem;background:#fff;';
+      card.innerHTML=`
+        <div style="flex:1;min-width:0;cursor:pointer;" class="pa-cat-open">
+          <div style="font-weight:700;color:#0f1f3d;font-size:.95rem;">${escHTML(name)}</div>
+          <div style="font-size:.78rem;color:#64748b;margin-top:.2rem;">${n} attempt${n!==1?'s':''}</div>
         </div>
-        <div class="attempt-stats">
-          <div class="attempt-stat attempt-score-stat">
-            <span class="attempt-score-pill ${tier}">${a.percent}%</span>
-            <span class="stat-lbl">Score</span>
-          </div>
-          <div class="attempt-stat stat-attempted">
-            <span class="stat-val">${qAttempted} out of ${chosenCount}</span>
-            <span class="stat-lbl">Questions Attempted</span>
-          </div>
-          <div class="attempt-stat stat-catsize">
-            <span class="stat-val">${chosenCount}${catFullSize!=null?' out of '+catFullSize:''}</span>
-            <span class="stat-lbl">Questions Selected${catFullSize!=null?' (of Category)':''}</span>
-          </div>
-          <div class="attempt-stat stat-correct">
-            <span class="stat-val">${a.score_correct} out of ${qAttempted}</span>
-            <span class="stat-lbl">Questions Correct</span>
-          </div>
-          <div class="attempt-stat stat-marks">
-            <span class="stat-val">${a.marks} out of ${marksAttemptedSafe}</span>
-            <span class="stat-lbl">Marks Scored</span>
-          </div>
-          <div class="attempt-stat stat-time">
-            <span class="stat-val">${mins}m ${String(secs).padStart(2,'0')}s</span>
-            <span class="stat-lbl">Time Taken</span>
-          </div>
-        </div>
-        <div class="attempt-actions" style="display:flex;gap:.5rem;">
-          <button class="btn btn-ghost" style="padding:.5rem 1rem;font-size:.78rem;">Review →</button>
-          <button class="btn btn-ghost student-delete-btn" style="padding:.5rem 1rem;font-size:.78rem;border-color:var(--red);color:var(--red);">🗑 Delete</button>
-        </div>
+        <button class="pa-cat-view-btn" style="background:none;border:none;color:#1a3260;font-weight:600;font-size:.85rem;cursor:pointer;padding:.4rem .2rem;">View →</button>
+        <button class="pa-cat-delete-btn" title="Delete all attempts in this category" style="background:none;border:2px solid var(--red);color:var(--red);border-radius:8px;padding:.5rem .8rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">🗑 Delete All</button>
       `;
-      row.querySelector('.btn-ghost').onclick=()=> a._isMergedTaskRow ? reviewMergedTaskAttempt(a) : reviewPastAttempt(a.id);
-      row.querySelector('.student-delete-btn').onclick=()=> a._isMergedTaskRow ? studentDeleteMergedTaskAttempt(a, row) : studentDeleteAttempt(a.id, row);
-      listEl.appendChild(row);
+      card.querySelector('.pa-cat-open').onclick=()=>openPastAttemptsCategory(name);
+      card.querySelector('.pa-cat-view-btn').onclick=()=>openPastAttemptsCategory(name);
+      card.querySelector('.pa-cat-delete-btn').onclick=(e)=>{ e.stopPropagation(); studentDeleteWholeCategory(name); };
+      listEl.appendChild(card);
     });
   }catch(err){
     loadingEl.style.display='none';
     emptyEl.textContent='Could not load past attempts: '+err.message;
     emptyEl.style.display='block';
   }
+}
+
+// Deletes (hides) every attempt the student has in one category at once —
+// the "delete beside the category card" button. Same false-delete mechanism
+// as a single-attempt delete: hidden_by_student=true, still visible to the
+// teacher in Faculty Mode.
+// True while a teacher is logged in AS a student via "View Profile"
+// impersonation (facultyImpersonationStash holds their stashed key while
+// this is active). Used to make deletes done THIS way real deletes (moved
+// to the Recycle Bin) instead of the normal student soft-delete.
+function isImpersonatingStudent(){
+  return !!(typeof facultyImpersonationStash!=='undefined' && facultyImpersonationStash);
+}
+
+// Real delete used only while a teacher is impersonating a student: moves
+// attempt(s) into the Recycle Bin (hidden_by_teacher=true) using the
+// stashed service_role key, exactly like a normal Faculty Mode delete.
+async function impersonatedRealDeleteAttempts(ids){
+  if(!ids.length || !facultyImpersonationStash?.facultyServiceRoleKey) return {ok:false};
+  try{
+    const headers={ 'apikey':facultyImpersonationStash.facultyServiceRoleKey, 'Authorization':'Bearer '+facultyImpersonationStash.facultyServiceRoleKey, 'Prefer':'return=minimal', 'Content-Type':'application/json' };
+    const filterVal='('+ids.map(id=>encodeURIComponent(id)).join(',')+')';
+    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=in.'+filterVal,{
+      method:'PATCH', headers, body:JSON.stringify({hidden_by_teacher:true})
+    });
+    return {ok: res.status===200||res.status===204||res.status===202};
+  }catch(e){ return {ok:false}; }
+}
+
+async function studentDeleteWholeCategory(categoryName){
+  if(!currentUser||!myPastAttemptsCache) return;
+  const rows=[...myPastAttemptsCache.normalRows, ...myPastAttemptsCache.mergedTaskRows].filter(a=>(a.category||'Sample Mock')===categoryName);
+  if(!rows.length) return;
+  const impersonating=isImpersonatingStudent();
+  const ok=await appConfirm({
+    title:'Delete all attempts in "'+categoryName.replace(/^📌\s*/,'')+'"?',
+    message: impersonating
+      ? 'This will PERMANENTLY move all '+rows.length+' attempt(s) in this category to the Recycle Bin (real delete, since you\'re logged in as this student via Faculty Mode).'
+      : 'This will remove all '+rows.length+' attempt(s) in this category from your Past Attempts list. They will not be shown to you again, but your teacher can still see them.',
+    icon:'🗑',
+    confirmText:'Delete All',
+    cancelText:'Cancel'
+  });
+  if(!ok) return;
+  try{
+    const allIds=[];
+    rows.forEach(a=>{ if(a._isMergedTaskRow){ allIds.push(...(a._pieceIds||[])); } else { allIds.push(a.id); } });
+    if(allIds.length){
+      if(impersonating){
+        const {ok:delOk}=await impersonatedRealDeleteAttempts(allIds);
+        if(!delOk){ alert('Could not delete this category\'s attempts.'); return; }
+      } else {
+        const {error}=await sb.from('attempts').update({hidden_by_student:true}).in('id', allIds).eq('user_id', currentUser.id);
+        if(error){ alert('Could not delete this category\'s attempts: '+error.message); return; }
+      }
+    }
+    invalidateMyAttemptsCache(); invalidateProfilesAttemptsCache(); updateMyLeaderboardScore();
+    await renderPastAttemptsCategoryList();
+  }catch(e){ alert('Network error while deleting this category\'s attempts.'); }
+}
+
+// ── PAST ATTEMPTS: SINGLE CATEGORY DETAIL (student-facing) ─────────────
+let currentPastAttemptsCategory=null;
+async function openPastAttemptsCategory(categoryName){
+  currentPastAttemptsCategory=categoryName;
+  showScreen('past-attempts-category-screen');
+  document.getElementById('past-attempts-category-title').textContent=categoryName;
+  await renderPastAttemptsCategoryDetail();
+}
+
+async function renderPastAttemptsCategoryDetail(){
+  const categoryName=currentPastAttemptsCategory;
+  const subEl=document.getElementById('past-attempts-category-sub');
+  const listEl=document.getElementById('past-attempts-category-list');
+  listEl.innerHTML='';
+  if(!myPastAttemptsCache){
+    const rawAttempts=await getMyAttempts();
+    const {tasksById, completedTaskIds}=await loadMyTasksById(rawAttempts);
+    myPastAttemptsCache=splitAttemptsForPastAttemptsDisplay(rawAttempts||[], tasksById, completedTaskIds);
+  }
+  const data=[...myPastAttemptsCache.normalRows, ...myPastAttemptsCache.mergedTaskRows]
+    .filter(a=>(a.category||'Sample Mock')===categoryName)
+    .sort((x,y)=>new Date(y.created_at)-new Date(x.created_at));
+  if(!data.length){ subEl.textContent='No attempts left in this category.'; return; }
+  subEl.textContent=data.length+' attempt'+(data.length!==1?'s':'')+' in this category.';
+
+  // "Delete All" button inside the category page, deleting every attempt
+  // shown here at once (same false-delete mechanism).
+  const delAllBar=document.createElement('div');
+  delAllBar.style.cssText='margin-bottom:1rem;';
+  delAllBar.innerHTML=`<button class="pa-delall-inner-btn" style="padding:.55rem 1rem;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">🗑 Delete All In This Category</button>`;
+  delAllBar.querySelector('.pa-delall-inner-btn').onclick=()=>studentDeleteWholeCategory(categoryName);
+  listEl.appendChild(delAllBar);
+
+  const chronological=[...data].reverse();
+  const seenPerCategoryMode={};
+  const attemptNumberById={};
+  chronological.forEach(a=>{
+    const key=(a.category||'Sample Mock')+'|'+a.mode;
+    seenPerCategoryMode[key]=(seenPerCategoryMode[key]||0)+1;
+    attemptNumberById[a.id]=seenPerCategoryMode[key];
+  });
+  data.forEach(a=>{
+    const dt=new Date(a.created_at);
+    const dateStr=dt.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+    const timeStr=dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    const mins=Math.floor(a.time_taken_seconds/60), secs=a.time_taken_seconds%60;
+    const modeLabel=a.mode==='practice'?'Practice':(a.mode==='test'?'Test':'Quiz');
+    const modeClass=a.mode==='practice'?'mode-practice':(a.mode==='test'?'mode-test':'mode-quiz');
+    const catDef=CATEGORIES.find(c=>c.name===a.category);
+    const catFullSize=catDef?catDef.ids.length:null;
+    const chosenCount=a.score_total??0;
+    const qAttempted=a.questions_attempted??chosenCount??0;
+    const marksAttemptedSafe=a.marks_attempted??(a.score_total?a.score_total*2:a.marks)??0;
+    const tier = a.percent>=70?'tier-high':(a.percent>=50?'tier-mid':'tier-low');
+    const attemptNo=attemptNumberById[a.id];
+    const attemptOrdinal=attemptNo===1?'1st':attemptNo===2?'2nd':attemptNo===3?'3rd':`${attemptNo}th`;
+    const partialTag=a.was_partial?'<span class="attempt-partial-tag" title="This attempt was not finished — it was auto-saved when the session ended early.">⚠ Incomplete</span>':'';
+    const taskTag=a._isMergedTaskRow?'<span class="attempt-partial-tag" style="background:#ffedd5;color:#9a3412;border-color:#fed7aa;" title="This is the combined record of a full assignment, built from every question you answered toward it.">📌 Assignment</span>':'';
+    const row=document.createElement('div');
+    row.className='attempt-row '+tier;
+    row.innerHTML=`
+      <div class="attempt-main">
+        <div class="attempt-title">${escHTML(a._isMergedTaskRow?(a._taskLabel||a.category||'Assignment'):(a.category||'Sample Mock'))} ${a._isMergedTaskRow?'':`<span class="attempt-number-tag">${attemptOrdinal} attempt</span>`} ${partialTag}${taskTag}</div>
+        <div class="attempt-meta">
+          <span class="attempt-date">📅 ${dateStr} · 🕐 ${timeStr}</span>
+          <span class="attempt-mode-tag ${modeClass}">${modeLabel}</span>
+        </div>
+      </div>
+      <div class="attempt-stats">
+        <div class="attempt-stat attempt-score-stat">
+          <span class="attempt-score-pill ${tier}">${a.percent}%</span>
+          <span class="stat-lbl">Score</span>
+        </div>
+        <div class="attempt-stat stat-attempted">
+          <span class="stat-val">${qAttempted} out of ${chosenCount}</span>
+          <span class="stat-lbl">Questions Attempted</span>
+        </div>
+        <div class="attempt-stat stat-catsize">
+          <span class="stat-val">${chosenCount}${catFullSize!=null?' out of '+catFullSize:''}</span>
+          <span class="stat-lbl">Questions Selected${catFullSize!=null?' (of Category)':''}</span>
+        </div>
+        <div class="attempt-stat stat-correct">
+          <span class="stat-val">${a.score_correct} out of ${qAttempted}</span>
+          <span class="stat-lbl">Questions Correct</span>
+        </div>
+        <div class="attempt-stat stat-marks">
+          <span class="stat-val">${a.marks} out of ${marksAttemptedSafe}</span>
+          <span class="stat-lbl">Marks Scored</span>
+        </div>
+        <div class="attempt-stat stat-time">
+          <span class="stat-val">${mins}m ${String(secs).padStart(2,'0')}s</span>
+          <span class="stat-lbl">Time Taken</span>
+        </div>
+      </div>
+      <div class="attempt-actions" style="display:flex;gap:.5rem;">
+        <button class="btn btn-ghost" style="padding:.5rem 1rem;font-size:.78rem;">Review →</button>
+        <button class="btn btn-ghost student-delete-btn" style="padding:.5rem 1rem;font-size:.78rem;border-color:var(--red);color:var(--red);">🗑 Delete</button>
+      </div>
+    `;
+    row.querySelector('.btn-ghost').onclick=()=> a._isMergedTaskRow ? reviewMergedTaskAttempt(a) : reviewPastAttempt(a.id);
+    row.querySelector('.student-delete-btn').onclick=()=> a._isMergedTaskRow ? studentDeleteMergedTaskAttempt(a, row) : studentDeleteAttempt(a.id, row);
+    listEl.appendChild(row);
+  });
 }
 
 // Student-side "delete": this only HIDES the attempt from the student's own
@@ -13934,9 +15086,12 @@ async function loadPastAttempts(){
 // delete) — the teacher can still see them all under "Deleted by Students".
 async function studentDeleteMergedTaskAttempt(mergedRow, rowEl){
   if(!currentUser) return;
+  const impersonating=isImpersonatingStudent();
   const ok=await appConfirm({
     title:'Remove this assignment record?',
-    message:'This will remove the whole "'+mergedRow.category.replace(/^📌\s*/,'')+'" assignment from your Past Attempts list. It will not be shown to you again, but your teacher can still see it on their end.',
+    message: impersonating
+      ? 'This will PERMANENTLY move the whole "'+(mergedRow._taskLabel||mergedRow.category.replace(/^📌\s*/,''))+'" assignment to the Recycle Bin (real delete, since you\'re logged in as this student via Faculty Mode).'
+      : 'This will remove the whole "'+(mergedRow._taskLabel||mergedRow.category.replace(/^📌\s*/,''))+'" assignment from your Past Attempts list. It will not be shown to you again, but your teacher can still see it on their end.',
     icon:'🗑',
     confirmText:'Remove',
     cancelText:'Cancel'
@@ -13945,47 +15100,68 @@ async function studentDeleteMergedTaskAttempt(mergedRow, rowEl){
   try{
     const ids=mergedRow._pieceIds||[];
     if(ids.length){
-      const {error}=await sb.from('attempts')
-        .update({ hidden_by_student:true })
-        .in('id', ids)
-        .eq('user_id', currentUser.id);
-      if(error){ alert('Could not remove this assignment: '+error.message); return; }
+      if(impersonating){
+        const {ok:delOk}=await impersonatedRealDeleteAttempts(ids);
+        if(!delOk){ alert('Could not remove this assignment.'); return; }
+      } else {
+        const {error}=await sb.from('attempts')
+          .update({ hidden_by_student:true })
+          .in('id', ids)
+          .eq('user_id', currentUser.id);
+        if(error){ alert('Could not remove this assignment: '+error.message); return; }
+      }
     }
     invalidateMyAttemptsCache(); invalidateProfilesAttemptsCache(); updateMyLeaderboardScore();
     rowEl.style.transition='opacity .4s';
     rowEl.style.opacity='0.3';
-    setTimeout(()=>{ rowEl.remove(); }, 400);
+    setTimeout(async()=>{
+      rowEl.remove();
+      myPastAttemptsCache=null;
+      const listEl=document.getElementById('past-attempts-category-list');
+      if(listEl && listEl.children.length<=1) await renderPastAttemptsCategoryList(), showScreen('past-attempts-screen');
+    }, 400);
   }catch(e){ alert('Could not remove this assignment: '+e.message); }
 }
 async function studentDeleteAttempt(attemptId, rowEl){
   if(!currentUser) return;
+  const impersonating=isImpersonatingStudent();
   const ok=await appConfirm({
     title:'Remove this attempt?',
-    message:'This will remove it from your Past Attempts list. It will not be shown to you again, but your teacher can still see it on their end.',
+    message: impersonating
+      ? 'This will PERMANENTLY move this attempt to the Recycle Bin (real delete, since you\'re logged in as this student via Faculty Mode).'
+      : 'This will remove it from your Past Attempts list. It will not be shown to you again, but your teacher can still see it on their end.',
     icon:'🗑',
     confirmText:'Remove',
     cancelText:'Cancel'
   });
   if(!ok) return;
   try{
-    const {error}=await sb.from('attempts')
-      .update({ hidden_by_student:true })
-      .eq('id', attemptId)
-      .eq('user_id', currentUser.id);
-    if(error){ alert('Could not remove this attempt: '+error.message); return; }
+    if(impersonating){
+      const {ok:delOk}=await impersonatedRealDeleteAttempts([attemptId]);
+      if(!delOk){ alert('Could not remove this attempt.'); return; }
+    } else {
+      const {error}=await sb.from('attempts')
+        .update({ hidden_by_student:true })
+        .eq('id', attemptId)
+        .eq('user_id', currentUser.id);
+      if(error){ alert('Could not remove this attempt: '+error.message); return; }
+    }
     invalidateMyAttemptsCache(); invalidateProfilesAttemptsCache(); updateMyLeaderboardScore();
     rowEl.style.transition='opacity .4s';
     rowEl.style.opacity='0.3';
-    setTimeout(()=>{
+    setTimeout(async()=>{
       rowEl.remove();
-      const listEl=document.getElementById('past-attempts-list');
-      const emptyEl=document.getElementById('past-attempts-empty');
-      if(listEl && listEl.children.length===0 && emptyEl) emptyEl.style.display='block';
+      myPastAttemptsCache=null;
+      const listEl=document.getElementById('past-attempts-category-list');
+      // If only the "Delete All" bar remains (or the list is empty), go back
+      // to the category list since this category no longer has attempts.
+      if(listEl && listEl.children.length<=1){ await renderPastAttemptsCategoryList(); showScreen('past-attempts-screen'); }
     },400);
   }catch(err){
     alert('Network error while removing this attempt.');
   }
 }
+
 
 // ── REDO MY MISTAKES ────────────────────────────────────
 // Pulls every question the student has ever gotten wrong across all their past
@@ -14300,6 +15476,42 @@ async function computeMilestoneStats(){
     Object.keys(a.answers_json||{}).forEach(id=>seenIdsByCategory[cat].add(String(id)));
   });
   const catalog=buildMilestoneCatalog({streak, totalAttempts:data.length, byCategory, seenIdsByCategory});
+  // Append one earned-milestone entry per completed task, so "completing
+  // an assignment counts as a milestone" (per spec) shows up consistently
+  // everywhere this catalog is consumed — the Milestones page's Earned
+  // list, the home snapshot's earned-count, and (via checkMilestones,
+  // though task completions are actually toasted separately by
+  // queueTaskCompletionMilestone at the moment of completion) the toast
+  // queue. current/target are both fixed at 1 so these always read as
+  // "earned" here — completed-or-not is a fact by the time task_completions
+  // has a row, there's no partial-progress version of this entry to show
+  // in the "almost there" sections (computeTaskProgress already handles
+  // that live view, over on the Tasks & Goals page itself).
+  if(currentUser){
+    try{
+      const {data:completions}=await sb.from('task_completions').select('task_id').eq('user_id',currentUser.id);
+      const taskIds=[...new Set((completions||[]).map(c=>c.task_id).filter(Boolean))];
+      if(taskIds.length){
+        // Excludes archived (teacher-deleted) tasks: per spec, deleting an
+        // assignment removes its milestone entry from here even though
+        // task_completions itself is deliberately left alone (so any
+        // Weekly Prize / Mastery points already earned stay untouched --
+        // see deleteGoalTask's comment). This is purely a display filter on
+        // the milestone catalog, not a change to the completion record.
+        const {data:taskRows}=await sb.from('tasks').select('id,label').eq('archived',false).in('id', taskIds);
+        if(Array.isArray(taskRows)){
+          taskRows.forEach(t=>{
+            catalog.push({
+              key:'task_done_'+t.id, emoji:'📌',
+              text:`Assignment complete: "${t.label}"!`,
+              label:`Assignment: "${t.label}"`,
+              current:1, target:1
+            });
+          });
+        }
+      }
+    }catch(e){ /* best-effort — if this fails, task milestones just don't appear this load, nothing else breaks */ }
+  }
   return {catalog, totalAttempts:data.length};
 }
 
@@ -14603,12 +15815,16 @@ async function loadMistakesBreakdown(){
 
     list.innerHTML=rows.map(r=>{
       const isCurrent=selectedCategory && selectedCategory.id===r.catId;
-      return `<div class="mistakes-cat-row" data-cat-id="${escHTML(r.catId)}" style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem .9rem;border-radius:9px;border:2px solid ${isCurrent?'var(--amber,#f59e0b)':'var(--border)'};background:${isCurrent?'var(--amber-light,#fef3c7)':'transparent'};">
+      const locked=isCategoryLocked(r.catId);
+      const drillBtn=locked
+        ? `<span style="font-size:.72rem;font-weight:700;color:#b45309;white-space:nowrap;">🛠 Under maintenance</span>`
+        : `<button class="start-btn" style="width:auto;white-space:nowrap;padding:.5rem 1rem;margin:0;font-size:.82rem;" onclick="startMistakesDrill('${escHTML(r.catId)}')">Drill →</button>`;
+      return `<div class="mistakes-cat-row" data-cat-id="${escHTML(r.catId)}" style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem .9rem;border-radius:9px;border:2px solid ${isCurrent?'var(--amber,#f59e0b)':'var(--border)'};background:${isCurrent?'var(--amber-light,#fef3c7)':'transparent'};opacity:${locked?'.7':'1'};">
         <div style="min-width:0;">
           <div style="font-size:.86rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHTML(r.name)}</div>
           <div style="font-size:.74rem;color:var(--text-muted);">${r.count} question${r.count===1?'':'s'} to redo</div>
         </div>
-        <button class="start-btn" style="width:auto;white-space:nowrap;padding:.5rem 1rem;margin:0;font-size:.82rem;" onclick="startMistakesDrill('${escHTML(r.catId)}')">Drill →</button>
+        ${drillBtn}
       </div>`;
     }).join('');
 
@@ -14822,6 +16038,10 @@ function startTaskSession(taskId){
   if(!studentTasksCache) return;
   const task=(studentTasksCache.tasks||[]).find(t=>t.id===taskId);
   if(!task) return;
+  // Clear any "your previous attempt failed the accuracy gate" notice --
+  // the student is now trying again, which is exactly what that notice was
+  // prompting them to do; it shouldn't linger once they've acted on it.
+  clearTaskGateFailNotice(taskId);
   const pool = (!task.category_ids||!task.category_ids.length)
     ? QUESTIONS
     : QUESTIONS.filter(q=>task.category_ids.includes(QUESTION_ID_TO_CATEGORY[q.id]));
@@ -16659,6 +17879,7 @@ let viewingBattleReview=false; // true when results/review screens were opened f
 async function openBattleHub(){
   if(!currentUser) return;
   showScreen('battle-hub-screen');
+  await refreshLockedCategories(); // pick up any category maintenance lock before showing the category picker
   populateBattleCategoryDropdown();
   loadBattleHubData();
   subscribeBattleRealtime();
@@ -16695,27 +17916,39 @@ function populateBattleCategoryDropdown(){
 
 // Looks up the currently-selected category (real or meta) and returns its
 // full question list (live objects, not just ids) — used both for the max
-// hint and for auto-set-time's marks calculation.
+// hint and for auto-set-time's marks calculation. Excludes any question
+// belonging to a currently-locked category, so the hint/timer calc always
+// matches what createBattle would actually be able to draw from.
 function currentBattleCategoryQuestions(){
   const catId=document.getElementById('battle-category-select').value;
   const cat=CATEGORIES.find(c=>c.id===catId) || BATTLE_META_CATEGORIES.find(c=>c.id===catId);
   if(!cat) return null;
   const liveById={};
   QUESTIONS.forEach(q=>{ liveById[q.id]=q; });
-  const qs=(cat.ids||[]).map(id=>liveById[id]).filter(Boolean);
+  const availableIds=filterOutLockedQuestions(cat.ids||[]);
+  const qs=availableIds.map(id=>liveById[id]).filter(Boolean);
   return {cat, qs};
 }
 
 // Whenever the category changes, update the "max questions available" hint
 // and clamp whatever count is currently typed in so it can never exceed what
 // the selected category (or combination of categories, for the meta options)
-// actually has.
+// actually has. A real (non-meta) category currently under maintenance shows
+// a maintenance-specific hint instead of a question count, since createBattle
+// will block it outright regardless of count.
 function onBattleCategoryChange(){
   const hint=document.getElementById('battle-qcount-max-hint');
   const input=document.getElementById('battle-qcount-input');
+  const catId=document.getElementById('battle-category-select').value;
+  const cat=CATEGORIES.find(c=>c.id===catId);
+  if(cat && isCategoryLocked(cat.id)){
+    hint.textContent='🛠 This category is temporarily disabled for maintenance.';
+    input.removeAttribute('max');
+    return;
+  }
   const found=currentBattleCategoryQuestions();
   if(!found||found.qs.length===0){
-    hint.textContent='This category has no questions.';
+    hint.textContent='This category has no questions available right now.';
     input.removeAttribute('max');
     return;
   }
@@ -16826,6 +18059,20 @@ async function createBattle(){
   const opponentSel=document.getElementById('battle-opponent-select').value;
   const cat=CATEGORIES.find(c=>c.id===catId) || BATTLE_META_CATEGORIES.find(c=>c.id===catId);
   if(!cat){ errBox.textContent='Pick a category first.'; errBox.style.display='block'; return; }
+  // CATEGORY MAINTENANCE GATE: a real (non-meta) category that is currently
+  // locked can't be challenged at all — block outright with a clear reason,
+  // same wording as the practice-side block. Meta-categories ("whole
+  // chapter" / "random anywhere") are a union of several real categories, so
+  // they aren't blocked outright — instead their question pool is filtered
+  // below (via filterOutLockedQuestions) to silently exclude any locked
+  // sub-category's questions, same as how Redo My Mistakes handles a mixed
+  // pool.
+  if(cat.group!=='__battle_meta__' && isCategoryLocked(cat.id)){
+    const notice=lockedCategoryNotices[cat.id];
+    errBox.textContent='🛠 This category is temporarily disabled for maintenance.'+(notice?(' '+notice):'');
+    errBox.style.display='block';
+    return;
+  }
 
   let opponentId=opponentSel;
   if(opponentSel==='__random__'){
@@ -16858,10 +18105,15 @@ async function createBattle(){
   const timeLimitMinutes=parseInt(document.getElementById('battle-timelimit-input').value,10);
   if(!qCountRaw||qCountRaw<1){ errBox.textContent='Enter a valid number of questions.'; errBox.style.display='block'; return; }
   if(isNaN(timeLimitMinutes)||timeLimitMinutes<0){ errBox.textContent='Enter a valid time limit (0 for no limit).'; errBox.style.display='block'; return; }
-  const pool=shuffle([...cat.ids]);
-  if(qCountRaw>pool.length){ errBox.textContent=`This category only has ${pool.length} question${pool.length===1?'':'s'} — lower your question count.`; errBox.style.display='block'; return; }
+  // Filter out any question belonging to a currently-locked category before
+  // drawing — a no-op for a real (already-blocked-above) category, but the
+  // meaningful step for meta-categories, which union several real
+  // categories and must silently skip a locked one's questions.
+  const availableIds=filterOutLockedQuestions(cat.ids);
+  const pool=shuffle([...availableIds]);
+  if(qCountRaw>pool.length){ errBox.textContent=`Only ${pool.length} question${pool.length===1?'':'s'} available right now (some may be temporarily disabled for maintenance) — lower your question count.`; errBox.style.display='block'; return; }
   const questionIds=pool.slice(0,qCountRaw);
-  if(questionIds.length===0){ errBox.textContent='This category has no questions.'; errBox.style.display='block'; return; }
+  if(questionIds.length===0){ errBox.textContent='This category has no questions available right now (temporarily disabled for maintenance).'; errBox.style.display='block'; return; }
   const timeLimitSeconds=timeLimitMinutes*60;
 
   btn.disabled=true; btn.textContent='Creating…';
@@ -17340,7 +18592,8 @@ async function saveAttemptToSupabase(wasPartial){
       return null;
     }
     console.log('Attempt saved successfully:', data);
-    return {attemptNumber, categoryName};
+    const savedRow=Array.isArray(data)&&data.length?data[0]:null;
+    return {attemptNumber, categoryName, savedAttemptId: savedRow?savedRow.id:null};
   }catch(err){
     if(looksLikeOfflineError(err)){
       queuePendingAttempt(insertPayload);
@@ -17655,14 +18908,34 @@ function reviewMergedTaskAttempt(mergedRow){
 // Saves whatever progress exists as a partial attempt (was_partial:true), then
 // returns straight to the home screen. Mirrors the crash-recovery path but is
 // user-initiated and immediate rather than deferred until next login.
+// Shared routing helper: a session started via startTaskSession() uses a
+// synthetic selectedCategory whose id is 'task_<taskId>' (see
+// saveAttemptToSupabase's isTaskSession check, which this mirrors exactly).
+// Quitting mid-task, or finishing a task and tapping back from the results
+// screen, must land the student back on Tasks & Goals — not the home
+// screen — so they can immediately see updated progress / resume / move on
+// to the next task, per spec. selectedCategory is never nulled between
+// sessions (only overwritten by the next one started), so checking it here,
+// right before it would get overwritten by whatever screen loads next, is
+// always reading the value for the session that just ended.
+function returnFromSessionScreen(){
+  const cameFromTask = selectedCategory && typeof selectedCategory.id==='string' && selectedCategory.id.indexOf('task_')===0;
+  if(cameFromTask){
+    openStudentTasksPage();
+  } else {
+    showScreen('home-screen');
+  }
+}
 async function quitSessionEarly(){
   const attempted=Object.keys(answers).length;
+  const isTaskSessionForQuit = selectedCategory && typeof selectedCategory.id==='string' && selectedCategory.id.indexOf('task_')===0;
+  const quitTaskId = isTaskSessionForQuit ? selectedCategory.id.slice('task_'.length) : null;
   if(attempted===0){
     // Nothing answered yet — nothing meaningful to save, just leave.
     if(!confirm('Quit this session? No answers have been recorded yet, so there is nothing to save.')) return;
     clearLiveAttemptSnapshot();
     if(timerInterval) clearInterval(timerInterval);
-    showScreen('home-screen');
+    returnFromSessionScreen();
     if(currentUser){ loadPastAttempts(); loadMistakesBreakdown(); loadEngagementCard(); refreshMyTasksBadge(); loadMilestonesDashboard(); checkDailyWarmupStatus(); refreshBattleBadgeOnly(); refreshGroupInviteBadgeOnly(); loadExamCountdown(); }
     return;
   }
@@ -17671,11 +18944,62 @@ async function quitSessionEarly(){
   const quitBtn=document.getElementById('quiz-quit-btn');
   if(quitBtn){ quitBtn.disabled=true; quitBtn.textContent='Saving…'; }
   try{
-    await saveAttemptToSupabase(true);
+    const quitSaveMeta = await saveAttemptToSupabase(true);
+    const lastQuitSavedAttemptId = quitSaveMeta && quitSaveMeta.savedAttemptId ? quitSaveMeta.savedAttemptId : null;
+    // QUIT-MID-TASK CONTRIBUTION NOTICE: per spec, even a KNOWING quit
+    // (started via Start Task/Resume Task, then quit partway through)
+    // must tell the student what just got banked toward the assignment --
+    // not only the separate "unknowing organic practice" notice, which
+    // deliberately never fires for task sessions (see the
+    // isTaskSessionForGate check in showResults's save-chain). Previously
+    // a knowing quit-mid-task gave no assignment-specific feedback
+    // whatsoever -- the student only found out their progress was saved
+    // by later noticing "4/12" on the task's own card in Tasks & Goals.
+    // Fetches fresh task progress right after the save so this reflects
+    // exactly what just landed, then shows the same toast style used for
+    // task completion/bonus notices elsewhere in the app.
+    if(isTaskSessionForQuit && quitTaskId && currentUser){
+      try{
+        const {tasks, myAttempts, completedTaskIds}=await fetchMyTasksData();
+        studentTasksCache={tasks, myAttempts, completedTaskIds};
+        const task=(tasks||[]).find(t=>t.id===quitTaskId);
+        if(task && !completedTaskIds.has(task.id)){
+          const {current}=computeTaskProgress(task, myAttempts||[]);
+          const remaining=Math.max(0, task.target_count-current);
+          showTaskBonusToast(`📌 Saved — ${current}/${task.target_count} of "${task.label}" now done${remaining>0?` (${remaining} to go)`:''}. Tap Resume in Tasks & Goals to continue.`);
+        }
+      }catch(e){ /* non-fatal -- the task card itself still shows correct progress on next visit either way */ }
+    }
+    // UNKNOWING CONTRIBUTION NOTICE (quit path): mirrors the same check in
+    // showResults's save-chain, for a student who QUIT partway through
+    // ordinary practice (never opened via Start Task) that happened to
+    // match an open task's category. Per spec, this must fire on quitting
+    // just as much as on completing a session -- a sincere student should
+    // never be kept unaware that partial, unfinished practice still
+    // counted toward an assignment. Skipped for isTaskSessionForQuit
+    // sessions (those already get the more specific "Saved — X/Y" toast
+    // just above) and for tasks already completed (those get the
+    // completion toast elsewhere, not this one).
+    if(!isTaskSessionForQuit && currentUser && lastQuitSavedAttemptId){
+      try{
+        const {tasks, myAttempts, completedTaskIds}=await fetchMyTasksData();
+        studentTasksCache={tasks, myAttempts, completedTaskIds};
+        const attemptsExcludingThisOne=(myAttempts||[]).filter(a=>a.id!==lastQuitSavedAttemptId);
+        (tasks||[]).forEach(t=>{
+          if(completedTaskIds.has(t.id)) return;
+          const {current:before}=computeTaskProgress(t, attemptsExcludingThisOne);
+          const {current:after}=computeTaskProgress(t, myAttempts||[]);
+          const gained=after-before;
+          if(gained>0){
+            queueUnknowingContributionNotification(t, gained, after);
+          }
+        });
+      }catch(e){ /* non-fatal -- the task card itself still shows correct progress on next visit either way */ }
+    }
   } finally {
     clearLiveAttemptSnapshot();
     if(quitBtn){ quitBtn.disabled=false; quitBtn.textContent='✕ Quit'; }
-    showScreen('home-screen');
+    returnFromSessionScreen();
     if(currentUser){
       loadPastAttempts(); loadMistakesBreakdown(); loadEngagementCard(); refreshMyTasksBadge(); loadMilestonesDashboard(); checkDailyWarmupStatus(); refreshBattleBadgeOnly(); refreshGroupInviteBadgeOnly(); loadGhostSection(); loadExamCountdown();
     }
@@ -17686,13 +19010,14 @@ async function goHomeFromResults(){
   const cameFromProfile = viewingFacultyProfile;
   const cameFromBattle = viewingBattleReview;
   const battleIdToReturnTo = viewingBattleResultId;
+  const wasViewingPastAttempt = viewingPastAttempt;
   viewingPastAttempt=false;
   viewingAsFaculty=false;
   facultyReviewAttemptId=null;
   viewingFacultyProfile=false;
   viewingBattleReview=false;
   if(cameFromBattle && wasFaculty){
-    // Faculty reviewing a finished battle (facultyReviewBattle) — return to
+    // Faculty reviewing a finished battle (facultyReviewBattle) -- return to
     // the faculty Battles list, never the student-facing battle hub/result
     // screens below.
     facultyReviewBattleId=null;
@@ -17701,7 +19026,7 @@ async function goHomeFromResults(){
     return;
   }
   if(cameFromBattle){
-    // Return to the battle's result screen (not the student home screen) —
+    // Return to the battle's result screen (not the student home screen) --
     // re-fetch from the hub cache so the Review buttons there still work.
     const b=battleHubCache.find(x=>x.id===battleIdToReturnTo);
     if(b){ showBattleResult(b); return; }
@@ -17720,13 +19045,83 @@ async function goHomeFromResults(){
     if(facultyCurrentCategory) openFacultyAttemptsForCategory(facultyCurrentCategory);
     return;
   }
-  showScreen('home-screen');
-  // Wait for the just-finished attempt's save to actually land in Supabase before
-  // reloading streak/milestones/mistakes data — otherwise a fast click here reads
-  // the attempts table before the new row exists and shows stale progress.
+  // Task sessions (selectedCategory.id starts with 'task_', set by
+  // startTaskSession) route back to Tasks & Goals instead of Home, so the
+  // student immediately sees their updated progress / next task -- per
+  // spec, finishing (or reviewing) an assignment should never just dump
+  // them on the generic home screen. This only applies to a LIVE
+  // just-finished task session, not to a student browsing a merged
+  // assignment record from Past Attempts (viewingPastAttempt=true already
+  // reset above, so we check it via the local copy captured before reset).
+  const cameFromTaskSession = !wasViewingPastAttempt && selectedCategory && typeof selectedCategory.id==='string' && selectedCategory.id.indexOf('task_')===0;
+  // Wait for the just-finished attempt's save (and, for task sessions, the
+  // accuracy-gate check queued inside that save's own .then chain -- see
+  // showResults) to actually land before doing anything else. Otherwise a
+  // fast click here could navigate away, or reload streak/milestone data,
+  // before the new row even exists / before we know whether it needs to be
+  // discarded for missing the task's minimum accuracy.
   if(pendingAttemptSavePromise){
     try{ await pendingAttemptSavePromise; }catch(e){ /* save already reports its own error banner elsewhere */ }
     pendingAttemptSavePromise=null;
+  }
+  // ══════════════════════════════════════════════════════════
+  // MINIMUM-ACCURACY GATE: perform the actual delete now, exactly at the
+  // moment the student leaves the results screen (never before -- they were
+  // still free to review their answers on the results screen itself).
+  // Per spec: "if the student ... completes the 20 questions (at 40%
+  // accuracy) goes to the end page then click on back button there that
+  // attempt gets deleted ... plus a notification ... they can see a start
+  // again button". For a MULTI-PART completion (e.g. 3 questions today, 4
+  // more in a later session), the combined gate is checked across every
+  // piece that contributed -- so if it fails, EVERY contributing piece must
+  // be discarded, not just the one that happened to be saved last. Leaving
+  // earlier pieces alone would let their questions keep silently counting
+  // toward the task's progress even though the attempt as a whole failed.
+  if(pendingAccuracyGateOutcome && pendingAccuracyGateOutcome.failedGate){
+    const outcome=pendingAccuracyGateOutcome;
+    pendingAccuracyGateOutcome=null;
+    const idsToDiscard=(outcome.attemptIds&&outcome.attemptIds.length)?outcome.attemptIds:(outcome.attemptId?[outcome.attemptId]:[]);
+    for(const attId of idsToDiscard){
+      try{
+        // Soft-hide, not a real delete -- matches every other student-
+        // initiated attempt removal in this app (see the Past Attempts
+        // delete flow), which all go through hidden_by_student=true rather
+        // than an actual row delete. Students are not provisioned with
+        // DELETE grants under RLS (only this specific UPDATE path), and even
+        // where they were, this file deliberately never hard-deletes attempt
+        // history -- the teacher can still see it under Faculty Mode /
+        // Recycle Bin. fetchMyTasksData's own attempts query already filters
+        // .eq('hidden_by_student', false), so a hidden row is automatically
+        // excluded from computeTaskProgress from this point on, which is all
+        // that's actually required for "Start Again" to work correctly.
+        await sb.from('attempts').update({hidden_by_student:true}).eq('id', attId).eq('user_id', currentUser.id);
+      }catch(e){ /* best-effort -- if this fails, the attempt just stays visible and can be cleaned up manually; never block navigation over this */ }
+      // Safety net regardless of whether the hide above actually succeeded --
+      // see getDiscardedTaskAttemptIds's comment for why this matters.
+      markTaskAttemptDiscarded(attId);
+    }
+    invalidateMyAttemptsCache(); invalidateProfilesAttemptsCache();
+    // Persist this so the Open tab can show a small "Start Again" notice on
+    // the task's own card the next time the student looks at it -- not just
+    // a one-off alert() that's easy to miss/dismiss and forget. Keyed per
+    // user+task in localStorage (not Supabase -- this is purely a "what
+    // happened last time" UI hint, nothing that needs to sync across
+    // devices or be visible to the teacher). Cleared automatically the next
+    // time this same task is genuinely completed (see fetchMyTasksData) or
+    // the moment the student taps Start Again (see startTaskSession).
+    // No separate alert() here anymore -- the banner shown live on the
+    // results screen (showAccuracyGateFailureBanner, fired the instant the
+    // gate check resolved) already told the student this; repeating it as
+    // a second alert() right after would just be a jarring duplicate.
+    try{
+      const key=`quizapp_gate_fail_${currentUser.id}_${outcome.taskId}`;
+      localStorage.setItem(key, JSON.stringify({requiredPct:outcome.requiredPct, achievedPct:outcome.achievedPct, at:new Date().toISOString()}));
+    }catch(e){ /* localStorage unavailable -- notice just won't persist, non-fatal */ }
+  }
+  if(cameFromTaskSession){
+    openStudentTasksPage();
+  } else {
+    showScreen('home-screen');
   }
   if(currentUser){ loadPastAttempts(); loadMistakesBreakdown(); loadEngagementCard(); refreshMyTasksBadge(); loadMilestonesDashboard(); checkDailyWarmupStatus(); refreshBattleBadgeOnly(); refreshGroupInviteBadgeOnly(); loadGhostSection(); loadExamCountdown(); }
 }
@@ -17736,11 +19131,11 @@ function backFromReviewDetail(){
 // Temporarily delete the attempt currently open in the results/review screens
 // (Faculty Mode only), then return to the category's attempt list — mirrors
 // facultyDeleteAttempt's confirm/delete flow, but as a soft delete
-// (hidden_by_teacher=true) so it can be restored later from "Recently Deleted".
+// (hidden_by_teacher=true) so it can be restored later from "Recycle Bin".
 async function facultyDeleteCurrentAttempt(){
   if(!facultyReviewAttemptId){ return; }
   if(!requireFacultyKey()) return;
-  if(!confirm('Temporarily delete this attempt? The student will no longer see it in their past attempts, but you can restore it later from "Recently Deleted".')) return;
+  if(!confirm('Temporarily delete this attempt? The student will no longer see it in their past attempts, but you can restore it later from "Recycle Bin".')) return;
   try{
     const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=eq.'+encodeURIComponent(facultyReviewAttemptId),{
       method:'PATCH',
@@ -18140,6 +19535,9 @@ function renderMatchAnswerTable(q,saved){
 }
 
 // ── CATEGORY SELECT (grouped accordion dropdown) ────────
+// CATEGORY MAINTENANCE, per spec: a locked category still APPEARS in this
+// list (never hidden) but is rendered non-clickable, greyed out, with an
+// inline "temporarily disabled for maintenance" note beside its name.
 function populateCategories(){
   const panel=document.getElementById('cat-dd-panel');
   panel.innerHTML='';
@@ -18159,10 +19557,18 @@ function populateCategories(){
     const itemsWrap=document.createElement('div');
     itemsWrap.className='cat-dd-group-items';
     catsInGroup.forEach(cat=>{
+      const locked=isCategoryLocked(cat.id);
       const item=document.createElement('button');
-      item.type='button'; item.className='cat-dd-item'+(cat.id===selectedCategory.id?' selected':'');
-      item.textContent=`${cat.name} (${cat.ids.length} questions)`;
-      item.onclick=(e)=>{ e.stopPropagation(); selectCategory(cat.id); closeCategoryDropdown(); };
+      item.type='button';
+      item.className='cat-dd-item'+(cat.id===selectedCategory.id?' selected':'')+(locked?' cat-dd-item-locked':'');
+      item.innerHTML=`<span>${escHTML(cat.name)} (${cat.ids.length} questions)</span>`
+        + (locked ? `<span class="cat-dd-locked-tag">🛠 Temporarily disabled — under maintenance</span>` : '');
+      if(locked){
+        item.disabled=true;
+        item.style.cssText='opacity:.55;cursor:not-allowed;';
+      }else{
+        item.onclick=(e)=>{ e.stopPropagation(); selectCategory(cat.id); closeCategoryDropdown(); };
+      }
       itemsWrap.appendChild(item);
     });
     groupEl.appendChild(itemsWrap);
@@ -18176,7 +19582,13 @@ function updateCategoryTriggerLabel(){
   if(label) label.textContent=selectedCategory.displayLabel||selectedCategory.name;
 }
 function toggleCategoryDropdown(){
-  document.getElementById('category-dropdown').classList.toggle('open');
+  const dd=document.getElementById('category-dropdown');
+  const opening=!dd.classList.contains('open');
+  dd.classList.toggle('open');
+  // Refresh lock state right as the picker opens, so a lock a teacher just
+  // turned on mid-session shows up the next time a student looks, without
+  // needing a full page reload.
+  if(opening) refreshLockedCategories().then(populateCategories);
 }
 function closeCategoryDropdown(){
   document.getElementById('category-dropdown').classList.remove('open');
@@ -18248,7 +19660,18 @@ function toggleCustomTimerBox(){
 function startExam(){
   const inp=document.getElementById('q-count-input');
   const errEl=document.getElementById('q-count-error');
-  const catQuestions=selectedCategory.ids.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean);
+  // CATEGORY MAINTENANCE GATE: block starting a session in a locked category
+  // outright, before any question-count validation. Per spec, the category
+  // stays VISIBLE and selectable in the picker — only actually starting a
+  // session from it is blocked, with a clear reason shown inline where the
+  // start button already lives.
+  if(isCategoryLocked(selectedCategory.id)){
+    const notice=lockedCategoryNotices[selectedCategory.id];
+    errEl.textContent='🛠 This category is temporarily disabled for maintenance.'+(notice?(' '+notice):'');
+    errEl.style.display='block';
+    return;
+  }
+  const catQuestions=filterOutLockedQuestions(selectedCategory.ids.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean));
   const catSize=catQuestions.length;
   const n=parseInt(inp.value,10);
   if(!n||n<1||n>catSize){errEl.textContent=`Please enter a number between 1 and ${catSize}.`;errEl.style.display='block';return}
@@ -18279,7 +19702,24 @@ function startExam(){
 // been pointed at the right category (real or synthetic) by the caller.
 // Optionally takes a fixed number of minutes to override the auto-calculated
 // (marks × 1.2) timer allowance.
+//
+// CATEGORY MAINTENANCE — SECOND LAYER: startExam already blocks starting a
+// session directly from a locked category, but Redo My Mistakes, the
+// weak-topic nudge, and the "practice remaining" drill all build their own
+// qList (sometimes spanning several real categories, e.g. "all mistakes")
+// and call straight into this function. Filtering here too guarantees a
+// locked category's questions can never be served through ANY path, with
+// one shared rule instead of duplicating the check in every caller. If
+// filtering empties the list entirely (e.g. every mistake happened to be in
+// a category now under maintenance), show a plain alert and bail rather
+// than launching an empty/broken quiz screen.
 async function beginSessionWithQuestions(qList, timerMinutesOverride){
+  const filtered=filterOutLockedQuestions(qList);
+  if(filtered.length===0){
+    alert('🛠 All the questions in this session are temporarily disabled for maintenance. Please try again later.');
+    return;
+  }
+  qList=filtered;
   shuffledQ = qList;
   _qcNavCollapsed=false; _qcMenuCollapsed=false; // start each session with both bars expanded
   currentIdx=0; answers={}; pendingTF={}; pendingMCQ={}; pendingNum={}; pendingToken={}; pendingCheckbox={}; pendingMatch={}; shuffledPoolCache={}; pendingPairs={}; armedLeft={}; pendingDrag={}; armedChip={}; pendingMulti={};
@@ -19017,6 +20457,9 @@ function finalizeTestAnswers(){
 // ── RESULTS ────────────────────────────────────────────
 function showResults(savedAttempt){
   clearInterval(timerInterval);
+  pendingAccuracyGateOutcome=null; // cleared fresh each time; only ever (re)set below for a live task-session save
+  const gateBanner=document.getElementById('accuracy-gate-banner');
+  if(gateBanner){ gateBanner.style.display='none'; gateBanner.innerHTML=''; }
   // BATTLE MODE: if this session was launched via playBattle()/createBattle(),
   // route to the battle-specific finish path instead of the normal
   // attempts-table save + results screen. This must be checked first, before
@@ -19071,6 +20514,8 @@ function showResults(savedAttempt){
     renderStrip(null);
   }
   if(!viewingPastAttempt){
+    const isTaskSessionForGate = selectedCategory && typeof selectedCategory.id==='string' && selectedCategory.id.indexOf('task_')===0;
+    const gateTaskId = isTaskSessionForGate ? selectedCategory.id.slice('task_'.length) : null;
     pendingAttemptSavePromise = saveAttemptToSupabase(false).then(meta=>{
       if(meta&&meta.attemptNumber){
         const n=meta.attemptNumber;
@@ -19093,11 +20538,147 @@ function showResults(savedAttempt){
       // (the "unknowing completion" case) — and surface the leaderboard
       // bonus toast immediately rather than waiting for the student to
       // happen to visit the Tasks tab later.
+      // NOTE: this inner promise is deliberately returned (not just fired)
+      // so that pendingAttemptSavePromise — which goHomeFromResults awaits
+      // before checking pendingAccuracyGateOutcome — doesn't resolve until
+      // this whole chain, including the accuracy-gate check below, is
+      // actually done. Without returning it, the Back button could win the
+      // race and navigate away before the gate outcome was ever set.
       if(!viewingAsFaculty && currentUser){
-        fetchMyTasksData().then(({tasks, completedTaskIds})=>{
-          studentTasksCache={tasks, myAttempts:studentTasksCache?studentTasksCache.myAttempts:[], completedTaskIds};
+        return fetchMyTasksData().then(({tasks, myAttempts, completedTaskIds})=>{
+          studentTasksCache={tasks, myAttempts, completedTaskIds};
           flushPendingTaskBonusNotifications();
-        }).catch(()=>{});
+          // ══════════════════════════════════════════════════════════
+          // UNKNOWING CONTRIBUTION NOTIFICATION
+          // Only for ORGANIC practice -- a session NOT started via "Start
+          // Task"/"Resume Task" (isTaskSessionForGate false) -- that just
+          // moved a still-open task's progress forward without the student
+          // ever opening Tasks & Goals for it. Per spec: "if a student
+          // practices some questions unknowingly that is contributing
+          // towards his assignment he gets to see a notification ... this
+          // much contribution has been made towards your assignment".
+          //
+          // "Before" is computed by taking the FRESH, complete attempts
+          // list (myAttempts, just returned by fetchMyTasksData -- already
+          // includes the attempt that was just saved) and excluding that
+          // one just-saved attempt by id, then running the exact same
+          // computeTaskProgress/uniqueQuestionCountForTask dedup logic used
+          // everywhere else on what's left. "After" runs the same
+          // computation on the full list. This is reliable on a cold page
+          // load (no dependency on whatever studentTasksCache happened to
+          // hold before this call) and a student re-answering
+          // already-completed questions can never trigger a false
+          // "contribution" notice, since the dedup naturally yields
+          // before===after in that case. Tasks that finished outright from
+          // this same attempt are deliberately skipped here
+          // (completedTaskIds.has(t.id)) -- those get the separate, more
+          // prominent "Assignment complete!" toast instead, not this one.
+          // ══════════════════════════════════════════════════════════
+          if(!isTaskSessionForGate && meta && meta.savedAttemptId){
+            const attemptsExcludingThisOne = (myAttempts||[]).filter(a=>a.id!==meta.savedAttemptId);
+            (tasks||[]).forEach(t=>{
+              if(completedTaskIds.has(t.id)) return; // finished tasks get the completion toast instead
+              const {current:before} = computeTaskProgress(t, attemptsExcludingThisOne);
+              const {current:after} = computeTaskProgress(t, myAttempts||[]);
+              const gained = after - before;
+              if(gained>0){
+                queueUnknowingContributionNotification(t, gained, after);
+              }
+            });
+          }
+          // ══════════════════════════════════════════════════════════
+          // CUMULATIVE ACCURACY GATE FOR TASK COMPLETION
+          // Only applies to tasks the teacher created with metric='accuracy'
+          // AND a min_accuracy set. Runs for EVERY task this just-finished
+          // attempt contributed to -- not only the one task a Start Task
+          // session was launched for -- because the same "unknowing
+          // contribution" system that already lets organic practice add up
+          // toward a task's target_count must also let organic practice
+          // trigger (and fail) the accuracy gate, exactly like a
+          // deliberate Start Task/Resume session does. The accuracy check
+          // itself is CUMULATIVE: every attempt that ever counted toward
+          // this task (attemptCountsForTask) is combined -- not just this
+          // one session -- matching the spec's "4 correct earlier + 3 more
+          // now, combined score decides it" behaviour. If the combined
+          // accuracy clears the bar, fetchMyTasksData's own completion
+          // loop (above, same file) has already written task_completions
+          // and this is a no-op (completedTaskIds.has(t.id) is true). If it
+          // doesn't, we don't delete anything here — the student may still
+          // want to review their answers first. Instead we stash what to
+          // do, and goHomeFromResults() (fired by the Back button)
+          // performs the actual delete + shows the "start again" notice,
+          // exactly at the moment the student leaves the results screen —
+          // matching "goes to the end page then click on back button
+          // there that attempt gets deleted" from spec.
+          // ══════════════════════════════════════════════════════════
+          pendingAccuracyGateOutcome=null;
+          if(meta && meta.savedAttemptId){
+            for(const task of (tasks||[])){
+              if(completedTaskIds.has(task.id)) continue; // already genuinely complete -- nothing to gate
+              if(task.metric!=='accuracy' || task.min_accuracy==null) continue;
+              const relevant=(myAttempts||[]).filter(a=>attemptCountsForTask(task,a));
+              if(!relevant.some(a=>a.id===meta.savedAttemptId)) continue; // this session didn't touch this task at all
+              const {current}=computeTaskProgress(task, myAttempts||[]);
+              const {accuracyPct}=computeTaskAccuracyAndGate(task, relevant);
+              // Only fires once target_count has genuinely been reached —
+              // gate failures on a still-in-progress task are a non-event
+              // (nothing to discard yet; the student just keeps going,
+              // whether that's via Resume or by practicing more later).
+              if(current>=task.target_count && accuracyPct < task.min_accuracy){
+                pendingAccuracyGateOutcome={
+                  failedGate:true,
+                  attemptIds: relevant.map(a=>a.id).filter(Boolean),
+                  taskId: task.id,
+                  taskLabel: task.label,
+                  requiredPct: task.min_accuracy,
+                  achievedPct: Math.round(accuracyPct)
+                };
+                // Per spec: the student must see this the moment they reach
+                // the results page -- not only after tapping Back. The
+                // actual delete + "start again" alert still happens in
+                // goHomeFromResults() (they can still review their answers
+                // here first), but the warning itself needs to be visible
+                // right away.
+                showAccuracyGateFailureBanner(pendingAccuracyGateOutcome);
+                break; // one banner/outcome at a time is enough
+              }
+            }
+          }
+          return meta;
+        }).catch(err=>{
+          // Previously this silently swallowed ANY error thrown inside the
+          // block above -- including the accuracy-gate check itself -- so a
+          // transient failure (e.g. the profiles/mock_reports lookup inside
+          // fetchMyTasksData throwing) meant the student saw no banner, no
+          // error, and the task simply stayed open with a plain "Start
+          // task" button instead of "Start Again". Surface it (console +
+          // best-effort retry) instead of hiding it.
+          console.error('Post-save task/gate check failed, retrying once:', err);
+          if(meta && meta.savedAttemptId){
+            return fetchMyTasksData().then(({tasks, myAttempts, completedTaskIds})=>{
+              studentTasksCache={tasks, myAttempts, completedTaskIds};
+              pendingAccuracyGateOutcome=null;
+              for(const task of (tasks||[])){
+                if(completedTaskIds.has(task.id)) continue;
+                if(task.metric!=='accuracy' || task.min_accuracy==null) continue;
+                const relevant=(myAttempts||[]).filter(a=>attemptCountsForTask(task,a));
+                if(!relevant.some(a=>a.id===meta.savedAttemptId)) continue;
+                const {current}=computeTaskProgress(task, myAttempts||[]);
+                const {accuracyPct}=computeTaskAccuracyAndGate(task, relevant);
+                if(current>=task.target_count && accuracyPct<task.min_accuracy){
+                  pendingAccuracyGateOutcome={
+                    failedGate:true, attemptIds: relevant.map(a=>a.id).filter(Boolean), taskId: task.id,
+                    taskLabel: task.label, requiredPct: task.min_accuracy, achievedPct: Math.round(accuracyPct)
+                  };
+                  showAccuracyGateFailureBanner(pendingAccuracyGateOutcome);
+                  break;
+                }
+              }
+              return meta;
+            }).catch(err2=>{ console.error('Gate-check retry also failed:', err2); return meta; });
+          }
+          return meta;
+        });
       }
       return meta;
     });
