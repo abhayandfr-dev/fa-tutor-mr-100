@@ -4801,7 +4801,17 @@ const QUESTIONS = [
   req:"What profit was made in the year to 31 October 20X7?",
   marks:2,
   options:["$55,750","$78,250","$9,250","$33,250"],
-  correct:3, explanation:"Since the business commenced trading on 1 November 20X6, opening net assets were $0. Total capital introduced = $80,000 (cash) + $22,500 (motor vehicle) = $102,500. Increase in net assets = capital introduced + profit − drawings, so 123,750 − 0 = 102,500 + profit − 12,000, giving profit = 123,750 − 102,500 + 12,000 = $33,250.", calc:null
+  correct:3, explanation:"Since the business commenced trading on 1 November 20X6, opening net assets were $0. Total capital introduced = $80,000 (cash) + $22,500 (motor vehicle) = $102,500. Increase in net assets = capital introduced + profit − drawings, so 123,750 − 0 = 102,500 + profit − 12,000, giving profit = 123,750 − 102,500 + 12,000 = $33,250.", calc:null,
+  calcTable:{
+    columns:["",{v:"$",num:true}],
+    rows:[
+      ["Net assets at 31 October 20X7",{v:"123,750",num:true}],
+      ["Opening net assets (1 Nov 20X6)",{v:"0",num:true}],
+      ["Capital introduced (80,000 + 22,500)",{v:"(102,500)",num:true}],
+      ["Add: drawings",{v:"12,000",num:true}]
+    ],
+    totalRow:["Profit",{v:"33,250",num:true}]
+  }
 },
 { id:294, type:"number-entry",
   text:"The following information relates to a business:\n\nWhat loss was made by the business during 20X7?",
@@ -4831,11 +4841,21 @@ const QUESTIONS = [
   }
 },
 { id:295, type:"mcq",
-  text:"Harry has been unable to calculate his business' profit or loss for the year ended 31 December 20X8 as fire destroyed most of his accounting records. He has, however, been able to provide the following information:\nNet assets at 31 December 20X7 were $23,000 and $32,500 at 31 December 20X8\nHe introduced capital during the year of $4,000 cash\nHe took cash drawings of $2,500 and goods with a selling price of $800, the cost of the goods was $750\n\nWhat was Harry's profit or loss for the year ended 31 December 20X8?",
+  text:"Harry has been unable to calculate his business' profit or loss for the year ended 31 December 20X8 as fire destroyed most of his accounting records. He has, however, been able to provide the following information:\n1. Net assets at 31 December 20X7 were $23,000 and $32,500 at 31 December 20X8\n2. He introduced capital during the year of $4,000 cash\n3. He took cash drawings of $2,500 and goods with a selling price of $800, the cost of the goods was $750\n\nWhat was Harry's profit or loss for the year ended 31 December 20X8?",
   req:"What was Harry's profit or loss for the year ended 31 December 20X8?",
   marks:2,
   options:["$8,750 profit","$1,750 loss","$9,800 profit","$2,750 loss"],
-  correct:0, explanation:"Using the accounting equation: Net assets at 31.12.X8 = 32,500. Opening capital = 23,000. Capital introduced = 4,000. Drawings (2,500 + 750, goods drawn by the proprietor are recorded at cost) = 3,250. Profit (balancing figure) = 32,500 − 23,000 − 4,000 + 3,250 = $8,750 profit.", calc:null
+  correct:0, explanation:"Using the accounting equation: Net assets at 31.12.X8 = 32,500. Opening capital = 23,000. Capital introduced = 4,000. Drawings (2,500 + 750, goods drawn by the proprietor are recorded at cost) = 3,250. Profit (balancing figure) = 32,500 − 23,000 − 4,000 + 3,250 = $8,750 profit.", calc:null,
+  calcTable:{
+    columns:["",{v:"$",num:true}],
+    rows:[
+      ["Net assets at 31.12.X8",{v:"32,500",num:true}],
+      ["Opening capital (net assets 31.12.X7)",{v:"(23,000)",num:true}],
+      ["Capital introduced",{v:"(4,000)",num:true}],
+      ["Add: drawings (2,500 + 750)",{v:"3,250",num:true}]
+    ],
+    totalRow:["Profit",{v:"8,750",num:true}]
+  }
 },
 { id:296, type:"number-entry",
   text:"On 1 January, net assets of a business were $25,000. On 31 December they had increased to $32,000. During the year the owner introduced additional capital of $10,000 and withdrew drawings of $7,000.\n\nYou are required to calculate the profit for the year.",
@@ -6162,6 +6182,99 @@ const QUESTIONS = [
   ],
   explanation:"Year-end adjustment to record an amount owing to a supplier for which an invoice has not yet been received would be posted using a manual journal entry. Year-end adjustments are not recorded anywhere else.\n\nCorrection of errors are not normal trading activities relating to sales or purchases and so are not recorded automatically.\n\nSale of goods on credit to a new customer would be recorded by the sales module and posted automatically to the general ledger accounts.\n\nPurchase of a motor vehicle will be recorded in the cash ledger account and the non-current assets motor vehicle ledger account using a manual journal entry as the bank and cash system is not integrated with the general ledger accounts.", calc:null
 },
+{ id:626, type:"true-false-table",
+  text:"Indicate whether each of the following statements about receipts and payments is TRUE or FALSE.",
+  req:"Indicate whether each of the following statements about receipts and payments is TRUE or FALSE.",
+  marks:2,
+  rows:[
+    {statement:"A cash receipt is a credit entry in the cash account.", correct:"False"},
+    {statement:"Payments made to credit suppliers are debited to purchases.", correct:"False"}
+  ],
+  explanation:"Cash receipts are a debit in the cash account; they increase an asset. The original invoice will have been debited to purchases. The payment is debited to the trade payables balance.", calc:null
+},
+{ id:627, type:"mcq-table",
+  text:"Which of the following is the correct journal entry for making a credit sale?",
+  req:"Which of the following is the correct journal entry for making a credit sale?",
+  marks:2,
+  columns:["Debit","Credit"],
+  options:[
+    ["Cash","Revenue"],
+    ["Revenue","Trade receivables"],
+    ["Trade receivables","Revenue"],
+    ["Cash","Trade receivables"]
+  ],
+  correct:2, explanation:"A sale gives rise to a credit entry to the revenue account. The corresponding debit entry is to trade receivables for a credit sale (rather than cash for a cash sale).", calc:null
+},
+{ id:628, type:"true-false-table",
+  text:"Ravi is confused over some accounting entries made to the accounts in the general ledger. He has made the following statements.\n\nFor each statement below state whether it is TRUE or FALSE.",
+  req:"For each statement below state whether it is TRUE or FALSE.",
+  marks:2,
+  rows:[
+    {statement:"Cash receipts are posted to the credit side of the trade receivables ledger account.", correct:"True"},
+    {statement:"Credit purchases are posted to the debit side of the trade payables ledger account.", correct:"False"},
+    {statement:"Cash sales are not recorded in the trade receivables ledger account.", correct:"True"}
+  ],
+  explanation:"Cash receipts reduce the amount owed to the business and a reduction in an asset is a credit entry.\n\nCredit purchases are posted to the credit side of the trade payables ledger because this is an increase in a liability.\n\nCash sales are recorded in the cash ledger.", calc:null
+},
+{ id:629, type:"true-false-table",
+  text:"George has made the following statements regarding some transactions in his business.\n\nFor each statement made below indicate whether it is TRUE or FALSE.",
+  req:"For each statement made below indicate whether it is TRUE or FALSE.",
+  marks:2,
+  rows:[
+    {statement:"Credit sales are recorded in the individual receivables ledger accounts", correct:"True"},
+    {statement:"Payments made to credit suppliers are recorded in the purchases ledger account.", correct:"False"},
+    {statement:"The general ledger is a list of business transactions", correct:"False"}
+  ],
+  explanation:"Credit sales are recorded in the individual receivables ledger accounts. Payments made to credit suppliers are recorded in the bank and trade payables ledger accounts. The general ledger refers to the ledger accounts.", calc:null
+},
+{ id:630, type:"true-false-table",
+  text:"Hussan made the following payments during May:\n\nState whether each of the following ledgers is debited or credited because of Hussan's payments.",
+  dataTable:{
+    columns:["Date","Narrative",{v:"Total ($)",num:true},{v:"Payment to suppliers ($)",num:true},{v:"Stationery ($)",num:true},{v:"Taxation ($)",num:true}],
+    rows:[
+      ["08 May","PD Suppliers",{v:"890",num:true},{v:"890",num:true},"",""],
+      ["10 May","AA Stationers",{v:"240",num:true},"",{v:"240",num:true},""],
+      ["12 May","Tax Authorities",{v:"12,200",num:true},"","",{v:"12,200",num:true}],
+      ["14 May","PD Suppliers",{v:"650",num:true},{v:"650",num:true},"",""]
+    ],
+    totalRow:["","Total",{v:"13,980",num:true},{v:"1,540",num:true},{v:"240",num:true},{v:"12,200",num:true}]
+  },
+    tableAnchor:"Hussan made the following payments during May:",
+  req:"State whether each of the following ledgers is debited or credited because of Hussan's payments.",
+  marks:2,
+  customHeaders:["Ledger","Debit","Credit"],
+  customOptions:["Debit","Credit"],
+  rows:[
+    {statement:"Bank", correct:"Credit"},
+    {statement:"Trade Payables", correct:"Debit"},
+    {statement:"Taxation", correct:"Debit"},
+    {statement:"Stationery", correct:"Debit"}
+  ],
+  explanation:"Bank should be credited to reflect the reduction in an asset.\n\nTrade payables should be debited to reflect the reduction in liabilities as the supplier has been paid.\n\nTaxation should be debited to reflect the increase in expense or the reduction in a liability.\n\nStationery should be debited to reflect the increase in stationery expenses.", calc:null
+},
+{ id:631, type:"mcq",
+  text:"Sales returns of $500 have arrived at Akash's business. These sales were made on credit.\n\nWhat impact will these sales returns have on the accounts?",
+  req:"What impact will these sales returns have on the accounts?",
+  marks:2,
+  options:["Sales balance will decrease and the bank balance will decrease","Sales returns account will increase and the bank balance will decrease","Sales returns account will increase and trade receivables balance will decrease","Sales balance will decrease and trade receivables balance will increase"],
+  correct:2, explanation:"The sales returns account will increase to record goods being sent back by customers and the trade receivables account will decrease to reflect that less is owed by customers.", calc:null
+},
+{ id:632, type:"mcq",
+  text:"Jai had the following cash transactions:\n\nWhat journal entries will be made in the ledger accounts for these cash transactions?",
+  dataTable:{
+    columns:["Date","Narrative",{v:"Total $",num:true},{v:"Receipts from customer $",num:true},{v:"Cash sales $",num:true}],
+    rows:[
+      ["03 Jan","J. Hoskins",{v:"2,000",num:true},{v:"2,000",num:true},""],
+      ["10 Jan","Daily sales",{v:"800",num:true},"",{v:"800",num:true}]
+    ],
+    totalRow:["","Total",{v:"2,800",num:true},{v:"2,000",num:true},{v:"800",num:true}]
+  },
+    tableAnchor:"Jai had the following cash transactions:",
+  req:"What journal entries will be made in the ledger accounts for these cash transactions?",
+  marks:2,
+  options:["DR Sales $800, DR Trade Receivables $2,000, CR Bank $2,800","DR Bank $2,000, CR Trade Receivables $2,000","DR Bank $2,800, CR Trade Receivables $2,000, CR Sales $800","DR Bank $800, CR Sales $800"],
+  correct:2, explanation:"Bank increases by $2,800, sales increase by $800 and trade receivables decrease by $2,000.", calc:null
+},
 
 // ── Ch 4 Study Hub Questions (415-446) ──────────────────────────────
 { id:415, type:"mcq",
@@ -6204,22 +6317,6 @@ const QUESTIONS = [
   marks:2,
   options:["The record of petty cash transactions in the ledger does not collect information valuable to the operations of the manager","Recording petty cash acts as a means of internal control","Approvers for petty cash transactions should be provided by the owner of the business","There is no need to record petty cash if it is replenished using the imprest system"],
   correct:1, explanation:"The record of petty cash is vital to help minimise the risk of theft and fraud. The documents also act as evidence to provide supporting information on petty cash transactions.", calc:null
-},
-{ id:420, type:"mcq",
-  text:"Jai had the following cash transactions:\n\nWhat journal entries will be made in the ledger accounts for these cash transactions?",
-  dataTable:{
-    columns:["Date","Narrative",{v:"Total $",num:true},{v:"Receipts from customer $",num:true},{v:"Cash sales $",num:true}],
-    rows:[
-      ["03 Jan","J. Hoskins",{v:"2,000",num:true},{v:"2,000",num:true},""],
-      ["10 Jan","Daily sales",{v:"800",num:true},"",{v:"800",num:true}]
-    ],
-    totalRow:["","Total",{v:"2,800",num:true},{v:"2,000",num:true},{v:"800",num:true}]
-  },
-    tableAnchor:"Jai had the following cash transactions:",
-  req:"What journal entries will be made in the ledger accounts for these cash transactions?",
-  marks:2,
-  options:["DR Sales $800, DR Trade Receivables $2,000, CR Bank $2,800","DR Bank $2,000, CR Trade Receivables $2,000","DR Bank $2,800, CR Trade Receivables $2,000, CR Sales $800","DR Bank $800, CR Sales $800"],
-  correct:2, explanation:"Bank increases by $2,800, sales increase by $800 and trade receivables decrease by $2,000.", calc:null
 },
 { id:421, type:"mcq",
   text:"Kin uses $34 in petty cash to pay a window cleaner, to buy postage stamps and to buy some coffee for the office. Kin uses the imprest petty cash system. At the end of the month, he prepares the petty cash ledger from his collection of vouchers and post the totals spent.\n\nWhich of the following statements describe what will happen to the petty cash balance at the end of the month?",
@@ -6272,38 +6369,6 @@ const QUESTIONS = [
   marks:2,
   options:["DR Purchases $540, CR Trade payables $540","DR Purchases $540, CR Sales tax control account $90, CR Trade payables $450","DR Purchases $450, CR Trade payables $450","DR Purchases $450, DR Sales tax control account $90, CR Trade payables $540"],
   correct:3, explanation:"This entry records the purchase at the net price of $450, the sales tax of $90 and trade payables at the gross price of $540.", calc:null
-},
-{ id:428, type:"mcq",
-  text:"Sales returns of $500 have arrived at Akash's business. These sales were made on credit.\n\nWhat impact will these sales returns have on the accounts?",
-  req:"What impact will these sales returns have on the accounts?",
-  marks:2,
-  options:["Sales balance will decrease and the bank balance will decrease","Sales returns account will increase and the bank balance will decrease","Sales returns account will increase and trade receivables balance will decrease","Sales balance will decrease and trade receivables balance will increase"],
-  correct:2, explanation:"The sales returns account will increase to record goods being sent back by customers and the trade receivables account will decrease to reflect that less is owed by customers.", calc:null
-},
-{ id:429, type:"true-false-table",
-  text:"Hussan made the following payments during May:\n\nState whether each of the following ledgers is debited or credited because of Hussan's payments.",
-  dataTable:{
-    columns:["Date","Narrative",{v:"Total ($)",num:true},{v:"Payment to suppliers ($)",num:true},{v:"Stationery ($)",num:true},{v:"Taxation ($)",num:true}],
-    rows:[
-      ["08 May","PD Suppliers",{v:"890",num:true},{v:"890",num:true},"",""],
-      ["10 May","AA Stationers",{v:"240",num:true},"",{v:"240",num:true},""],
-      ["12 May","Tax Authorities",{v:"12,200",num:true},"","",{v:"12,200",num:true}],
-      ["14 May","PD Suppliers",{v:"650",num:true},{v:"650",num:true},"",""]
-    ],
-    totalRow:["","Total",{v:"13,980",num:true},{v:"1,540",num:true},{v:"240",num:true},{v:"12,200",num:true}]
-  },
-    tableAnchor:"Hussan made the following payments during May:",
-  req:"State whether each of the following ledgers is debited or credited because of Hussan's payments.",
-  marks:2,
-  customHeaders:["Ledger","Debit","Credit"],
-  customOptions:["Debit","Credit"],
-  rows:[
-    {statement:"Bank", correct:"Credit"},
-    {statement:"Trade Payables", correct:"Debit"},
-    {statement:"Taxation", correct:"Debit"},
-    {statement:"Stationery", correct:"Debit"}
-  ],
-  explanation:"Bank should be credited to reflect the reduction in an asset.\n\nTrade payables should be debited to reflect the reduction in liabilities as the supplier has been paid.\n\nTaxation should be debited to reflect the increase in expense or the reduction in a liability.\n\nStationery should be debited to reflect the increase in stationery expenses.", calc:null
 },
 { id:430, type:"checkbox",
   text:"Shadi has purchased goods for $600 with a prompt payment discount of 10% if she settles the debt within 10 days.\n\nWhich TWO of the following statements are true if Shadi settles the debt within 10 days?",
@@ -6386,28 +6451,6 @@ const QUESTIONS = [
   options:["To provide managers with valuable information on business transactions such as the transactions leading to fluctuations in petty cash expenses","Petty cash records acts as an internal control whereby the risk of theft and fraud is totally eliminated","To provide evidence and support items of tax deductible transactions to tax authorities","To comply with legal requirements of each local jurisdiction"],
   correctSet:[0,2], explanation:"Answer B is incorrect as although petty cash acts as a measure of internal control, theft risks cannot totally be eliminated due to intentional circumvention of malicious intent.\n\nAnswer D is incorrect as the record of petty cash is for management use and not required by regulation.", calc:null
 },
-{ id:440, type:"true-false-table",
-  text:"George has made the following statements regarding some transactions in his business.\n\nFor each statement made below indicate whether it is TRUE or FALSE.",
-  req:"For each statement made below indicate whether it is TRUE or FALSE.",
-  marks:2,
-  rows:[
-    {statement:"Credit sales are recorded in the individual receivables ledger accounts", correct:"True"},
-    {statement:"Payments made to credit suppliers are recorded in the purchases ledger account.", correct:"False"},
-    {statement:"The general ledger is a list of business transactions", correct:"False"}
-  ],
-  explanation:"Credit sales are recorded in the individual receivables ledger accounts. Payments made to credit suppliers are recorded in the bank and trade payables ledger accounts. The general ledger refers to the ledger accounts.", calc:null
-},
-{ id:441, type:"true-false-table",
-  text:"Ravi is confused over some accounting entries made to the accounts in the general ledger. He has made the following statements.\n\nFor each statement below state whether it is TRUE or FALSE.",
-  req:"For each statement below state whether it is TRUE or FALSE.",
-  marks:2,
-  rows:[
-    {statement:"Cash receipts are posted to the credit side of the trade receivables ledger account.", correct:"True"},
-    {statement:"Credit purchases are posted to the debit side of the trade payables ledger account.", correct:"False"},
-    {statement:"Cash sales are not recorded in the trade receivables ledger account.", correct:"True"}
-  ],
-  explanation:"Cash receipts reduce the amount owed to the business and a reduction in an asset is a credit entry.\n\nCredit purchases are posted to the credit side of the trade payables ledger because this is an increase in a liability.\n\nCash sales are recorded in the cash ledger.", calc:null
-},
 { id:442, type:"mcq",
   text:"Which of the following statements regarding sales tax are TRUE?\ni. Output tax is sales tax on sales\nii. Input tax is sales tax on sales\niii. A liability for sales tax will arise where output tax exceeds input tax\niv. A liability for sales tax will arise where input tax exceeds output tax",
   req:"Which of the following statements regarding sales tax are TRUE?",
@@ -6422,35 +6465,12 @@ const QUESTIONS = [
   options:["Trade discount allowed to a customer","Trade discount received from a supplier","Settlement discount allowed to a customer, who had not been expected to take the discount","Settlement discount received from a supplier"],
   correct:2, explanation:"Settlement discount allowed to a customer who had not been expected to take the discount is deducted from revenue. The original transaction will have recorded revenue at the full invoice amount, so revenue is now adjusted.", calc:null
 },
-{ id:444, type:"mcq-table",
-  text:"Which of the following is the correct journal entry for making a credit sale?",
-  req:"Which of the following is the correct journal entry for making a credit sale?",
-  marks:2,
-  columns:["Debit","Credit"],
-  options:[
-    ["Cash","Revenue"],
-    ["Revenue","Trade receivables"],
-    ["Trade receivables","Revenue"],
-    ["Cash","Trade receivables"]
-  ],
-  correct:2, explanation:"A sale gives rise to a credit entry to the revenue account. The corresponding debit entry is to trade receivables for a credit sale (rather than cash for a cash sale).", calc:null
-},
 { id:445, type:"mcq",
   text:"Which of the following statements about discounts allowed is/are true?\n1. When a settlement discount is allowed revenue can be recognised net of the discount\n2. When a trade discount is allowed a sale is recognised at the gross amount",
   req:"Which of the following statements about discounts allowed is/are true?",
   marks:2,
   options:["1 only","2 only","Both 1 and 2","Neither 1 nor 2"],
   correct:0, explanation:"A settlement discount is given for prompt payment. If the discount is expected to be taken up, a sale is recorded at the net amount. If the discount is not expected to be taken, a sale is initially recorded at the gross amount but when a discount is subsequently allowed revenue is reduced to the amount realised. Sales (and purchases) are always recognised net of trade discounts.", calc:null
-},
-{ id:446, type:"true-false-table",
-  text:"Indicate whether each of the following statements about receipts and payments is TRUE or FALSE.",
-  req:"Indicate whether each of the following statements about receipts and payments is TRUE or FALSE.",
-  marks:2,
-  rows:[
-    {statement:"A cash receipt is a credit entry in the cash account.", correct:"False"},
-    {statement:"Payments made to credit suppliers are debited to purchases.", correct:"False"}
-  ],
-  explanation:"Cash receipts are a debit in the cash account; they increase an asset. The original invoice will have been debited to purchases. The payment is debited to the trade payables balance.", calc:null
 },
 
 // ── Ch 5 Study Hub Questions (447-477) ──────────────────────────────
@@ -8476,13 +8496,13 @@ const CATEGORIES = [
   { id:'ch2_study_hub_questions', name:'Ch 2 Study Hub Questions', group:'Chapter 2', ids:[173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193] },
   { id:'ch2_kkit_questions', name:'Ch 2 : K-Kit questions', group:'Chapter 2', ids:[105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116] },
   { id:'ch3_past_questions', name:'Ch 3 past questions', group:'Chapter 3', ids:[285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299] },
-  { id:'ch3_study_hub_questions', name:'Ch 3 study hub questions', group:'Chapter 3', ids:[391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414] },
+  { id:'ch3_study_hub_questions', name:'Ch 3 study hub questions', group:'Chapter 3', ids:[626, 627, 628, 629, 630, 631, 632, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414] },
   { id:'ch3_kkit_questions', name:'Ch 3 : K-Kit questions', group:'Chapter 3', ids:[196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 209, 214, 215, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 238, 241, 247, 249, 250, 251, 252, 253, 254, 255, 257] },
   { id:'ch1_to_3_bkit_and_extra_questions', name:'Ch 1 to 3 - all B-Kit and extra questions including mock-1 residual questions', group:'Combined / Mocks', ids:[519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600] },
   { id:'ch1_to_3_study_hub_activities', name:'Ch 1 to 3 : Study Hub Activities', group:'Combined / Mocks', ids:[478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495] },
   { id:'fa_mock1_j26', name:'FA Mock-1 J26', group:'Combined / Mocks', ids:[601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625] },
-  { id:'ch4_past_questions', name:'Ch 4 past questions', group:'Chapter 4', ids:[323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345] },
-  { id:'ch4_study_hub_questions', name:'Ch 4 study hub questions', group:'Chapter 4', ids:[415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446] },
+  { id:'ch4_past_questions', name:'Ch 4 past questions', group:'Chapter 4', ids:[323, 325, 326, 327, 328, 329, 331, 332, 333, 334, 335, 337, 338, 339, 340, 341, 342, 343, 344, 345] },
+  { id:'ch4_study_hub_questions', name:'Ch 4 study hub questions', group:'Chapter 4', ids:[415, 416, 417, 418, 419, 421, 422, 423, 424, 425, 426, 427, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 442, 443, 445] },
   { id:'ch4_kkit_questions', name:'Ch 4 : K-Kit questions', group:'Chapter 4', ids:[210, 212, 213, 220, 239, 242, 244, 245, 246, 256, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 271, 272, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284] },
   { id:'ch5_past_questions', name:'Ch 5 past questions', group:'Chapter 5', ids:[346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390] },
   { id:'ch5_study_hub_questions', name:'Ch 5 study hub questions', group:'Chapter 5', ids:[447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477] },
