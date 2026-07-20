@@ -219,12 +219,13 @@
   .q-data-table th{background:var(--slate-light);font-weight:700;color:var(--navy);font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
   .q-data-table td.num,.q-data-table th.num{text-align:right;font-family:'IBM Plex Mono',monospace}
   .q-data-table tr.total td{font-weight:700;border-top:2px solid var(--navy)}
-  .calc-table{width:100%;border-collapse:collapse;margin-top:.75rem;font-size:.8rem;background:var(--slate-light);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-family:'IBM Plex Mono',monospace}
+  .calc-table{width:100%;border-collapse:collapse;margin-top:.75rem;font-size:.8rem;background:var(--slate-light);border-radius:8px;font-family:'IBM Plex Mono',monospace}
   .calc-table caption{caption-side:top;text-align:left;font-family:inherit;font-weight:700;color:var(--navy);padding:.6rem .8rem .2rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
-  .calc-table th,.calc-table td{border:1px solid var(--border);padding:.4rem .7rem;text-align:left}
+  .calc-table th,.calc-table td{padding:.4rem .7rem;text-align:left;border:none}
   .calc-table th{background:rgba(15,31,61,.06);font-weight:700}
   .calc-table td.num,.calc-table th.num{text-align:right}
   .calc-table tr.total td{font-weight:700;border-top:2px solid var(--navy)}
+  .calc-table tr.subtotal td{border-bottom:1px dashed var(--border)}
   .calc-note{padding:.5rem .8rem .7rem;font-family:'Inter',sans-serif;font-size:.78rem;color:var(--text);font-style:italic}
   .q-type-label{display:inline-block;font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);background:var(--border);border-radius:4px;padding:.15rem .5rem;margin-bottom:1rem}
   .options-list{display:flex;flex-direction:column;gap:.6rem}
@@ -5161,7 +5162,7 @@ const QUESTIONS = [
   correct:0, explanation:"In contrast, if periodic weighted average cost per unit is calculated, this would be done at the end of the accounting period.", calc:null
 },
 { id:318, type:"number-entry",
-  text:"If an entity uses the continuous weighted average cost method to value closing inventory, what is the value of closing inventory based upon the following information?",
+  text:"If an entity uses the continuous weighted average cost method to value closing inventory, what is the value of closing inventory based upon the following information? (to the nearest $)",
   dataTable:{
     columns:["",""],
     rows:[
@@ -5171,7 +5172,7 @@ const QUESTIONS = [
     ]
   },
     tableAnchor:"what is the value of closing inventory based upon the following information?",
-  req:"If an entity uses the continuous weighted average cost method to value closing inventory, what is the value of closing inventory based upon the following information?",
+  req:"If an entity uses the continuous weighted average cost method to value closing inventory, what is the value of closing inventory based upon the following information? (to the nearest $)",
   marks:2, prefix:"$", correct:"85", correctDisplay:"$85.00",
   explanation:"Recalculate the weighted average unit cost after each purchase and apply the latest average to the units remaining.",
   calcTable:{
@@ -5201,7 +5202,7 @@ const QUESTIONS = [
   explanation:"Total cost of purchases/total units = ((10 × $5.00) + (10 × $6.50))/20 units = $5.75 per unit. Closing inventory valuation is therefore 14 units × $5.75 = $80.50."
 },
 { id:320, type:"number-entry",
-  text:"Using the periodic weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information?",
+  text:"Using the periodic weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information? (write your answer to two decimal places)",
   dataTable:{
     columns:["",""],
     rows:[
@@ -5212,13 +5213,13 @@ const QUESTIONS = [
       ["25 Apr","Sold 8 units at a price of $8.50 per unit"]
     ]
   },
-    tableAnchor:"what is the value of cost of sales for April based upon the following information?",
-  req:"Using the periodic weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information?",
+    tableAnchor:"what is the value of cost of sales for April based upon the following information? (write your answer to two decimal places)",
+  req:"Using the periodic weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information? (write your answer to two decimal places)",
   marks:2, prefix:"$", correct:"73.50", correctDisplay:"$73.50",
   explanation:"Total cost of purchases (including opening inventory)/total units = ((4 × $4.00) + (10 × $5.00) + (10 × $6.00))/24 units = $5.25 per unit. Cost of sales is therefore 14 units × $5.25 = $73.50."
 },
 { id:321, type:"number-entry",
-  text:"Using the continuous weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information?",
+  text:"Using the continuous weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information? (Round unit costs to two decimal places at each stage of the calculation.)",
   dataTable:{
     columns:["",""],
     rows:[
@@ -5230,7 +5231,7 @@ const QUESTIONS = [
     ]
   },
     tableAnchor:"what is the value of cost of sales for April based upon the following information?",
-  req:"Using the continuous weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information?",
+  req:"Using the continuous weighted average cost method to value closing inventory, what is the value of cost of sales for April based upon the following information? (Round unit costs to two decimal places at each stage of the calculation.)",
   marks:2, prefix:"$", correct:"71.70", correctDisplay:"$71.70",
   explanation:"Cost of sales = $28.26 + $43.44 = $71.70, based on the recalculated weighted average unit cost after each purchase.",
   calcTable:{
@@ -5403,8 +5404,8 @@ const QUESTIONS = [
   }
 },
 { id:337, type:"number-entry",
-  text:"A sales tax registered trader has recorded the following transactions during the accounting period:\n\nStandard rated sales: $200,000\nPurchases: $150,000\n\nIncluded in purchases are a motor car for $20,000, a photocopier for $8,000, and entertaining expenses of $5,000. Sales tax is not recoverable on the motor car or entertainment expenses. All figures are given inclusive of sales tax at 17.5%.\n\nHow much input tax can be reclaimed by the trader?",
-  req:"How much input tax can be reclaimed by the trader?",
+  text:"A sales tax registered trader has recorded the following transactions during the accounting period:\n\nStandard rated sales: $200,000\nPurchases: $150,000\n\nIncluded in purchases are a motor car for $20,000, a photocopier for $8,000, and entertaining expenses of $5,000. Sales tax is not recoverable on the motor car or entertainment expenses. All figures are given inclusive of sales tax at 17.5%.\n\nHow much input tax can be reclaimed by the trader? (to the nearest $)",
+  req:"How much input tax can be reclaimed by the trader? (to the nearest $)",
   marks:2, prefix:"$", correct:"18617", correctDisplay:"$18,617",
   explanation:"The photocopier is not excluded, so it remains in the eligible total for input tax recovery.",
   calcTable:{
@@ -5495,7 +5496,7 @@ const QUESTIONS = [
   explanation:"Both statements are correct under IAS 2. FIFO and weighted average cost are both acceptable cost formulas. The cost of purchase includes the purchase price plus directly attributable costs such as import duties and other non-recoverable taxes.", calc:null
 },
 { id:347, type:"mcq",
-  text:"The closing inventory of ABC Stores consists of the following three lines of inventory.\n\n250 items that cost $2 each; these were all sold for $3 after the year end\n600 items that cost $5 each; these were all sold after the year end for $4 per item after incurring rectification costs of $150 in total\n1,000 items that cost $10 each, these were all sold after the year end for $15 after incurring total selling costs of $2,000\n\nWhat is the value of closing inventory?",
+  text:"The closing inventory of ABC Stores consists of the following three lines of inventory.\n\n1. 250 items that cost $2 each; these were all sold for $3 after the year end\n2. 600 items that cost $5 each; these were all sold after the year end for $4 per item after incurring rectification costs of $150 in total\n3. 1,000 items that cost $10 each, these were all sold after the year end for $15 after incurring total selling costs of $2,000\n\nWhat is the value of closing inventory?",
   req:"What is the value of closing inventory?",
   marks:2,
   options:["$16,000","$12,750","$13,500","$15,750"],
@@ -5518,8 +5519,17 @@ const QUESTIONS = [
   correctSet:[1,3], explanation:"The cost of inventory comprises the purchase price and directly attributable costs of bringing the inventory to its present location and condition, such as delivery and handling costs. Future costs to complete relate to work not yet done, and settlement discounts are a financing benefit, not a cost of inventory.", calc:null
 },
 { id:349, type:"number-entry",
-  text:"Sonja's opening inventory on 1 May 20X4 was 200 units costing $12 per unit. She made the following sales and purchases of inventory in May 20X4.\n\n6 May: Purchased 1,000 units at $15 per unit\n18 May: Sold 600 units at $22 per unit\n24 May: Purchased 400 units at $13 per unit\n\nWhat is the value of Sonja's closing inventory using the FIFO method of inventory valuation as at the end of May 20X4?",
+  text:"Sonja's opening inventory on 1 May 20X4 was 200 units costing $12 per unit. She made the following sales and purchases of inventory in May 20X4.\n\nWhat is the value of Sonja's closing inventory using the FIFO method of inventory valuation as at the end of May 20X4?",
   req:"What is the value of Sonja's closing inventory using the FIFO method of inventory valuation as at the end of May 20X4?",
+  tableAnchor:"She made the following sales and purchases of inventory in May 20X4.",
+  dataTable:{
+    columns:["Date","Transaction","Detail"],
+    rows:[
+      ["6 May","Purchased","1,000 units at $15 per unit"],
+      ["18 May","Sold","600 units at $22 per unit"],
+      ["24 May","Purchased","400 units at $13 per unit"]
+    ]
+  },
   marks:2, prefix:"$", correct:"14200", correctDisplay:"$14,200",
   explanation:"Under FIFO, the 600 units sold on 18 May are assumed to come from the earliest inventory first: all 200 opening units, then 400 of the units purchased on 6 May. This leaves 600 units from the 6 May purchase and all 400 units from the 24 May purchase in closing inventory.",
   calcTable:{
@@ -5552,7 +5562,7 @@ const QUESTIONS = [
   correct:1, explanation:"Opening inventory is expensed in the period (debit profit or loss, credit inventory account) and closing inventory is the current asset carried forward in the statement of financial position (debit inventory account, credit profit or loss). This is Option B: Dr Profit or loss $180,000, Cr Inventory account $180,000; Dr Inventory account $220,000, Cr Profit or loss $220,000.", calc:null
 },
 { id:352, type:"mcq",
-  text:"At 30 September 20X6 the closing inventory of a company amounted to $386,400. The following items were included in this total at cost:\n\n1,000 items which had cost $18 each. These items were all sold in October 20X6 for $15 each, with selling expenses of $800\n\nFive items which had been in inventory since 200X, when they were purchased for $100 each, sold in October 20X6 for $1,000 each, net of selling expenses\n\nWhat figure should appear in the company's statement of financial position at 30 September 20X6 for inventory in accordance with IAS2 Inventories?",
+  text:"At 30 September 20X6 the closing inventory of a company amounted to $386,400. The following items were included in this total at cost:\n\n1) 1,000 items which had cost $18 each. These items were all sold in October 20X6 for $15 each, with selling expenses of $800\n2) Five items which had been in inventory since 200X, when they were purchased for $100 each, sold in October 20X6 for $1,000 each, net of selling expenses\n\nWhat figure should appear in the company's statement of financial position at 30 September 20X6 for inventory in accordance with IAS2 Inventories?",
   req:"What figure should appear in the company's statement of financial position at 30 September 20X6 for inventory in accordance with IAS2 Inventories?",
   marks:2,
   options:["$382,600","$384,200","$387,100","$400,600"],
@@ -5567,7 +5577,7 @@ const QUESTIONS = [
   }
 },
 { id:353, type:"mcq",
-  text:"On 30 Nov 20X6, material inventory balance of AX is 430 kg while it's none at start on Nov. Receipts in Nov are: 4 Nov 800 kg at $45/kg, 19 Nov 700kg at $52/kg, 28 Nov 300kg at $60/kg. Issues in Nov are: 12 Nov 650kg, 23 Nov 720kg. Assume FIFO. What is the inventory value at 30 Nov 20X6 using first in first out method?",
+  text:"On 30 Nov 20X6, material inventory balance of AX is 430 kg while it's none at start on Nov. Receipts in Nov are:\n\n1. 4 Nov 800 kg at $45/kg\n2. 19 Nov 700kg at $52/kg\n3. 28 Nov 300kg at $60/kg\n\nIssues in Nov are:\n\n1. 12 Nov 650kg\n2. 23 Nov 720kg\n\nAssume FIFO.\n\nWhat is the inventory value at 30 Nov 20X6 using first in first out method?",
   req:"What is the inventory value at 30 Nov 20X6 using first in first out method?",
   marks:2,
   options:["$21,596 is inventory value at 30 Nov 20X6 using first in first out method","$23,850 is inventory value at 30 Nov 20X6 using first in first out method","$24,760 is inventory value at 30 Nov 20X6 using first in first out method","$25,800 is inventory value at 30 Nov 20X6 using first in first out method"],
@@ -5584,7 +5594,7 @@ const QUESTIONS = [
   }
 },
 { id:354, type:"mcq",
-  text:"Inventory held at 31 May 20X6: 2000 units held for item A, cost $14/unit, price $17/unit. 5000 units held for item B, cost $16/unit, price $20/unit. To sell at $17, $5/unit modification needed for item A. According to IAS 2, what is inventory value?",
+  text:"Inventory held at 31 May 20X6: 2000 units held for item A, cost $14/unit, price $17/unit. 5000 units held for item B, cost $16/unit, price $20/unit. To sell at $17, $5/unit modification needed for item A.\n\nAccording to IAS 2, what is inventory value?",
   req:"According to IAS 2, what is inventory value?",
   marks:2,
   options:["$108,000 is inventory value held at 31 May 20X6 under IAS 2 Inventories","$124,000 is inventory value held at 31 May 20X6 under IAS 2 Inventories","$134,000 is inventory value held at 31 May 20X6 under IAS 2 Inventories","$104,000 is inventory value held at 31 May 20X6 under IAS 2 Inventories"],
@@ -5628,7 +5638,7 @@ const QUESTIONS = [
   }
 },
 { id:358, type:"mcq",
-  text:"Woodpecker has produced an inventory list and cost of them: 5mm nuts $100, 7mm nuts $170, 10 mm nuts $180, 8mm washers $120, 15mm bolts $190. Their NRV are: 5mm nuts $180, 7mm nuts $190, 10mm nuts $150, 8mm washers $160, 15mm bolts $170.\n\nWhat is the value of inventory in statement of financial position?",
+  text:"Woodpecker has produced an inventory list and cost of them:\n\n1) 5mm nuts $100\n2) 7mm nuts $170\n3) 10 mm nuts $180\n4) 8mm washers $120\n5) 15mm bolts $190\n\nTheir NRV are:\n\n1) 5mm nuts $180\n2) 7mm nuts $190\n3) 10mm nuts $150\n4) 8mm washers $160\n5) 15mm bolts $170\n\nWhat is the value of inventory in statement of financial position?",
   req:"What is the value of inventory in statement of financial position?",
   marks:2,
   options:["The correct value of inventory in statement of financial position is $710","The correct value of inventory in statement of financial position is $740","The correct value of inventory in statement of financial position is $760","The correct value of inventory in statement of financial position is $850"],
@@ -5646,7 +5656,7 @@ const QUESTIONS = [
   }
 },
 { id:359, type:"mcq",
-  text:"At 31 March 20X6, inventory includes 2000 units of Product A: cost per unit $14; selling price $17, and 5000 units of Product B: cost per unit $16; selling price $20. To sell at $17, modifications cost $5 per unit needed for Product A. With IAS 2, what is the value of inventory held at 31 March 20X6?",
+  text:"At 31 March 20X6, inventory includes 2000 units of Product A: cost per unit $14; selling price $17, and 5000 units of Product B: cost per unit $16; selling price $20. To sell at $17, modifications cost $5 per unit needed for Product A.\n\nWith IAS 2, what is the value of inventory held at 31 March 20X6?",
   req:"what is the value of inventory held at 31 March 20X6?",
   marks:2,
   options:["The value of inventory held at 31 March 20X6 is $108,000","The value of inventory held at 31 March 20X6 is $124,000","The value of inventory held at 31 March 20X6 is $134,000","The value of inventory held at 31 March 20X6 is $104,000"],
@@ -5698,15 +5708,25 @@ const QUESTIONS = [
   correct:2, explanation:"Dr Drawings $1,920 (to charge the owner with the cost of the goods taken). Cr Purchases $1,920 (to remove those purchases not used by the business). Drawings of inventory are recorded at cost, not at selling price.", calc:null
 },
 { id:364, type:"mcq",
-  text:"According to IAS 2 Inventories, which of the following costs should be included in valuing the inventories of a manufacturing company?\n(1) Carriage inwards\n(2) Carriage outwards\n(3) Depreciation of factory plant\n(4) General administrative overheads",
+  text:"According to IAS 2 Inventories, which of the following costs should be included in valuing the inventories of a manufacturing company?\n\n1. Carriage inwards\n2. Carriage outwards\n3. Depreciation of factory plant\n4. General administrative overheads",
   req:"According to IAS 2 Inventories, which of the following costs should be included in valuing the inventories of a manufacturing company?",
   marks:2,
   options:["1 and 3 only","All four items","2 and 3 only","1, 2 and 4 only"],
   correct:0, explanation:"Carriage outwards is delivery to customers and is not a cost of production, and general administrative overheads are not directly attributable to bringing inventory to its present condition, so neither is included. Carriage inwards and depreciation of factory plant are directly attributable production costs and are included.", calc:null
 },
 { id:365, type:"mcq",
-  text:"A company values its inventory using the first in, first out (FIFO) method. At 1 May 2007 the company had 700 engines in inventory, valued at $190 each.\n\nDuring the year ended 30 April 2008 the following transactions took place:\n1 July 2007: Purchased 500 engines at $220 each\n1 November 2007: Sold 400 engines for $160,000\n1 February 2008: Purchased 300 engines at $230 each\n15 April 2008: Sold 250 engines for $125,000\n\nWhat is the value of the company's closing inventory of engines at 30 April 2008?",
+  text:"A company values its inventory using the first in, first out (FIFO) method. At 1 May 2007 the company had 700 engines in inventory, valued at $190 each.\n\nDuring the year ended 30 April 2008 the following transactions took place:\n\nWhat is the value of the company's closing inventory of engines at 30 April 2008?",
   req:"What is the value of the company's closing inventory of engines at 30 April 2008?",
+  tableAnchor:"During the year ended 30 April 2008 the following transactions took place:",
+  dataTable:{
+    columns:["Date","Detail"],
+    rows:[
+      ["1 July 2007","Purchased 500 engines at $220 each"],
+      ["1 November 2007","Sold 400 engines for $160,000"],
+      ["1 February 2008","Purchased 300 engines at $230 each"],
+      ["15 April 2008","Sold 250 engines for $125,000"]
+    ]
+  },
   marks:2,
   options:["$195,500","$106,000","$166,000","$188.500"],
   correct:3, explanation:"Under FIFO, total sales of 650 engines (400+250) are matched against the earliest inventory first — all 700 opening engines less 650, leaving 50 opening engines. All later purchases remain in closing inventory.",
@@ -5721,15 +5741,15 @@ const QUESTIONS = [
   }
 },
 { id:366, type:"number-entry",
-  text:"A business had 50 units in inventory on 1 November that had been valued at $8 per unit.\n\nOn 8 November they bought another 100 units at a cost of $9 per unit.\n\nOn 16 November they sold 70 units for $15 each.\n\nOn 20 November they bought another 80 units at a cost of $10 per unit.\n\nIf the business uses the first-in-first-out approach to the valuation of inventory, what is the value of inventory at 30 November?",
+  text:"A business had 50 units in inventory on 1 November that had been valued at $8 per unit.\n\n1. On 8 November they bought another 100 units at a cost of $9 per unit.\n2. On 16 November they sold 70 units for $15 each.\n3. On 20 November they bought another 80 units at a cost of $10 per unit.\n\nIf the business uses the first-in-first-out approach to the valuation of inventory, what is the value of inventory at 30 November?",
   req:"If the business uses the first-in-first-out approach to the valuation of inventory, what is the value of inventory at 30 November?",
   marks:2, prefix:"$", correct:"1520", correctDisplay:"$1,520",
-  explanation:"Under FIFO, the 70 units sold on 16 November are matched against the earliest inventory first: all 50 opening units, then 20 of the units purchased on 8 November.",
+  explanation:"Inventory at the end of the period = 50 + 100 - 70 + 80 = 160 units\n\nFIFO value = (80 x $10) + (80 x $9) = $1,520",
   calcTable:{
     columns:["","Units","$/unit","$"],
     rows:[
-      ["Remaining from 8 Nov purchase (100-20)","80","9","720"],
-      ["Purchased 20 Nov","80","10","800"]
+      ["Purchased 20 Nov","80","10","800"],
+      ["Remaining from 8 Nov purchase (100-20)","80","9","720"]
     ],
     totalRow:["Closing inventory (160 units)","160","","1,520"]
   }
@@ -5739,7 +5759,7 @@ const QUESTIONS = [
   req:"What effect will this have had on the business?",
   marks:2,
   options:["Inventory at 30 June 2013 will not be understated","Profit for the year ended 30 June 2014 will be overstated","Profit for the year ended 30 June 2013 will be overstated","Net assets at 30 June 2013 will not be misstated."],
-  correct:3, explanation:"Net assets at 30 June 2013 will not be misstated.\n\nExplanation:\n\nThere are 2 things to consider :\n1. The invoice should have been recorded within the year but was recorded in next year (Dr Purchase Cr Payable) - means purchase and payables are understated for current year and overstated for next year.\n2. The inventory should have been included in counting means closing inventory for current year is understated and opening inventory for next year is understated.\nCurrent year :\n1. Profit : purchase has been understated and closing inventory has been understated as well - so net 0 effect on profit\n2. Asset : asset will be understated i.e. closing inventory will be understated.\n3. Net asset : since asset is understated but liability (payable) has been understated as well - so net 0 effect on net assets.\nNext year :\n1. Profit : opening inventory has been understated but purchase has been overstated means net effect on profit is again 0.", calc:null
+  correct:3, explanation:"There are 2 things to consider:\n\n1. The invoice should have been recorded within the year but was recorded in the next year (Dr Purchases, Cr Payables) — meaning purchases and payables are understated for the current year and overstated for the next year.\n2. The inventory should have been included in the count, meaning closing inventory for the current year is understated and opening inventory for next year is understated.\n\nCurrent year:\n\n1. Profit — purchases has been understated and closing inventory has been understated as well, so the net effect on profit is $0.\n2. Assets — assets will be understated, i.e. closing inventory will be understated.\n3. Net assets — since assets are understated but liabilities (payables) are understated by the same amount, there is a net $0 effect on net assets.\n\nNext year:\n\n1. Profit — opening inventory has been understated but purchases has been overstated, meaning the net effect on profit is again $0.", calc:null
 },
 { id:368, type:"checkbox",
   text:"Which TWO of the following statements about inventory valuation for Statement of financial position purposes are true?",
@@ -5748,27 +5768,13 @@ const QUESTIONS = [
   options:["Inventories may be valued at labour and materials cost only, without including overheads","Inventories should be valued at the lower of cost and net realisable value","According to IAS 2 Inventories, average cost and FIFO (first in first out) are both acceptable methods of arriving at the cost of inventories","It can be acceptable to value inventories using LIFO (last in first out)"],
   correctSet:[1,2], explanation:"Inventories should be valued at the lower of cost and net realisable value, and IAS 2 permits both average cost and FIFO as acceptable cost formulas. Valuing finished goods on labour and materials only (ignoring overheads) is not permitted, and LIFO is not an acceptable method under IAS 2.", calc:null
 },
-// CH5 PAST QUESTIONS PART 2 — ids 369-390
-{ id:369, type:"number-entry",
-  text:"A manufacturing company receives an invoice on 29 February 2002 for work done on one of its machines. $25,500 of the cost is for a machine upgrade which will improve its efficiency. The accounts department do not notice and charge the whole of the invoice amount to maintenance costs. Machinery is depreciated at 25% per annum on a straight-line basis, with a proportional charge in the years of acquisition and disposal.\n\nBy what amount will the profit for the year to 30 June 2002 be understated?",
-  req:"By what amount will the profit for the year to 30 June 2002 be understated?",
-  marks:2, prefix:"$", correct:"23375", correctDisplay:"$23,375",
-  explanation:"The $25,500 upgrade should have been capitalised, not expensed as maintenance. Capitalising it removes the full $25,500 expense but adds back four months of depreciation (March to June) at 25% per annum, so profit is understated by the net effect.",
-  calcTable:{
-    columns:["",{v:"$",num:true}],
-    rows:[
-      ["Upgrade cost wrongly expensed",{v:"25,500",num:true}],
-      ["Less: depreciation that should be charged (25,500 x 25% x 4/12)",{v:"(2,125)",num:true}]
-    ],
-    totalRow:["Profit understated by",{v:"23,375",num:true}]
-  }
-},
+// CH5 PAST QUESTIONS PART 2 — ids 370-390
 { id:370, type:"mcq",
-  text:"A business received a delivery of goods on 29 June 2006, which was included in inventory at 30 June 2006. The invoice for the goods was recorded in July 2006.\n\nWhat effect will this have on the business?\n(1) Profit for the year ended 30 June 2006 will be overstated.\n(2) Inventory at 30 June 2006 will be understated.\n(3) Profit for the year ending 30 June 2007 will be misstated.\n(4) Inventory at 30 June 2006 will be overstated.",
+  text:"A business received a delivery of goods on 29 June 2006, which was included in inventory at 30 June 2006. The invoice for the goods was recorded in July 2006.\n\nWhat effect will this have on the business?\n\n1. Profit for the year ended 30 June 2006 will be overstated.\n2. Inventory at 30 June 2006 will be understated.\n3. Profit for the year ending 30 June 2007 will be misstated.\n4. Inventory at 30 June 2006 will be overstated.",
   req:"What effect will this have on the business?",
   marks:2,
   options:["1 and 4","1 only","1 and 3","1 and 2"],
-  correct:2, explanation:"1 and 3\n\nExplanation:\n\nThe goods were correctly included in inventory at 30 June 2006 so inventory is not misstated.\n\nThe invoice had not been entered for the goods and therefore the profit for the year ended 30 June 2006 will have been overstated.\nAlso, the invoice was mistakenly recorded in the accounts of next year so next year's purchase will be under-stated i.e. profit for the year ended 30 June 2007.", calc:null
+  correct:2, explanation:"The goods were correctly included in inventory at 30 June 2006, so inventory is not misstated. The invoice had not been entered for the goods, so profit for the year ended 30 June 2006 will have been overstated. Also, the invoice was mistakenly recorded in the accounts of the next year, so next year's purchases will be understated — meaning profit for the year ended 30 June 2007 will be misstated too. So the answer is 1 and 3.", calc:null
 },
 { id:371, type:"checkbox-any",
   text:"According to IAS 2 Inventories, which of the following costs should be included in valuing the inventories of a manufacturing company? (tick all that apply)",
@@ -5820,22 +5826,31 @@ const QUESTIONS = [
   correct:3, explanation:"Unsold goods held at the year end are inventory, which is recorded as a current asset in the statement of financial position.", calc:null
 },
 { id:377, type:"mcq",
-  text:"A company values its inventory using the FIFO method. At 1 May 20X5 the company had 700 engines in inventory, valued at $190 each. During the year ended 30 April 20X6 the following transactions took place:\n1 July 20X5: Purchased 500 engines at $220 each\n1 November 20X5: Sold 400 engines for $160,000\n1 February 20X6: Purchased 300 engines at $230 each\n15 April 20X6: Sold 250 engines for $125,000\n\nWhat is the value of the company's closing inventory of engines at 30 April 20X6?",
+  text:"A company values its inventory using the FIFO method. At 1 May 20X5 the company had 700 engines in inventory, valued at $190 each. During the year ended 30 April 20X6 the following transactions took place:\n\nWhat is the value of the company's closing inventory of engines at 30 April 20X6?",
   req:"What is the value of the company's closing inventory of engines at 30 April 20X6?",
   marks:2,
   options:["$106,000","$195,500","$188,500","$166,000"],
   correct:2, explanation:"Under FIFO, the total 650 engines sold (400+250) are matched against the earliest inventory: all 700 opening engines less 650 sold, leaving 50 opening engines. All later purchases remain in closing inventory.",
-  calcTable:{
-    columns:["Date of issue and purchase","Quantity units","Valued issues","Cost of issues"],
+  dataTable:{
     rows:[
-      ["Sale 1 November","400","400 at $190","76,000"],
-      ["Sale 15 April","250","250 at $190","47,500"],
-      ["Issued","650","",""],
-      ["Opening inventory","700","",""],
-      ["Closing inventory","50","50 at $190","9,500"]
+      ["20X5","",""],
+      ["1 July","Purchased","500 engines at $220 each"],
+      ["1 November","Sold","400 engines for $160,000"],
+      ["20X6","",""],
+      ["1 February","Purchased","300 engines at $230 each"],
+      ["15 April","Sold","250 engines for $125,000"]
+    ]
+  },
+  tableAnchor:"During the year ended 30 April 20X6 the following transactions took place:",
+  calcTable:{
+    columns:["Batch","Units Bought","Units Sold From This Batch","Units Left","Unit Cost","Value"],
+    rows:[
+      ["Opening (1 May)","700","650","50","$190","$9,500"],
+      ["Purchased 1 July","500","0","500","$220","$110,000"],
+      ["Purchased 1 Feb","300","0","300","$230","$69,000"]
     ],
-    totalRow:["Closing inventory value","","","188,500"],
-    note:"Closing inventory = 50 x $190 (b/f) + 500 x $220 (1 July) + 300 x $230 (1 Feb) = $9,500 + $110,000 + $69,000 = $188,500."
+    totalRow:["Total","1,500","650","850","—","$188,500"],
+    note:"Closing inventory value = $9,500 + $110,000 + $69,000 = $188,500"
   }
 },
 { id:378, type:"mcq",
@@ -5853,7 +5868,7 @@ const QUESTIONS = [
   correct:2, explanation:"Closing inventory is deducted when calculating cost of sales (opening inventory + purchases − closing inventory), so a higher closing inventory decreases cost of sales.", calc:null
 },
 { id:380, type:"mcq",
-  text:"State which of the followings are true about inventory counting;\n1. If there are relatively small amount of inventory, they should be counted every day.\n2. It is difficult to count large amount of inventory with different types. So they should be counted once in a year.",
+  text:"State which of the followings are true about inventory counting;\n\n1. If there are relatively small amount of inventory, they should be counted every day.\n2. It is difficult to count large amount of inventory with different types. So they should be counted once in a year.",
   req:"State which of the followings are true about inventory counting;",
   marks:2,
   options:["1","2","1 & 2","None of them"],
@@ -5874,7 +5889,7 @@ const QUESTIONS = [
   correct:1, explanation:"In a period of rapid inflation, prices are rising, so AVCO issues inventory at a cost that blends older, cheaper purchases with newer, more expensive ones, giving a higher cost of sales (and therefore lower gross profit) than FIFO, which issues the oldest, cheapest inventory first.", calc:null
 },
 { id:383, type:"mcq",
-  text:"Below is the stock record of Jessie for the month of July 2014.\n\n01 July: stock in hand 100 kg @ $5/kg\n05 July: purchased 120 kg @ $5.5/kg\n10 July: sold 150 kg @ $7/kg\n20 July: purchased 80 kg @ $5.2/kg\n\nWhat will be the value of closing inventory on FIFO?",
+  text:"Below is the stock record of Jessie for the month of July 2014.\n\n1) 01 July: stock in hand 100 kg @ $5/kg\n2) 05 July: purchased 120 kg @ $5.5/kg\n3) 10 July: sold 150 kg @ $7/kg\n4) 20 July: purchased 80 kg @ $5.2/kg\n\nWhat will be the value of closing inventory on FIFO?",
   req:"What will be the value of closing inventory on FIFO?",
   marks:2,
   options:["775","416","766","801"],
@@ -5889,7 +5904,7 @@ const QUESTIONS = [
   }
 },
 { id:384, type:"mcq",
-  text:"Below is the stock record of Jessie for the month of July 2014.\n\n01 July: stock in hand 100 kg @ $5/kg\n05 July: purchased 120 kg @ $5.5/kg\n10 July: sold 150 kg @ $7/kg\n20 July: purchased 80 kg @ $5.2/kg\n\nWhat will be the value of closing inventory AVCO?",
+  text:"Below is the stock record of Jessie for the month of July 2014.\n\n1) 01 July: stock in hand 100 kg @ $5/kg\n2) 05 July: purchased 120 kg @ $5.5/kg\n3) 10 July: sold 150 kg @ $7/kg\n4) 20 July: purchased 80 kg @ $5.2/kg\n\nWhat will be the value of closing inventory AVCO?",
   req:"What will be the value of closing inventory AVCO?",
   marks:2,
   options:["801","416","766","785"],
@@ -5906,8 +5921,18 @@ const QUESTIONS = [
   }
 },
 { id:385, type:"mcq",
-  text:"A company values its inventory using the FIFO method. At 1 May 20X8 the company had 800 engines in inventory, valued at $200 each. During the year ended 30 April 20X9 the following transactions took place:\n1 July 20X8: Purchased 300 engines at $210 each\n1 November 20X8: Sold 400 engines for $160,000\n1 February 20X9: Purchased 300 engines at $250 each\n15 April 20X9: Sold 300 engines for $125,000\n\nWhat is the value of the company's closing inventory of engines at 30 April 20X9?",
+  text:"A company values its inventory using the FIFO method. At 1 May 20X8 the company had 800 engines in inventory, valued at $200 each. During the year ended 30 April 20X9 the following transactions took place:\n\nWhat is the value of the company's closing inventory of engines at 30 April 20X9?",
   req:"What is the value of the company's closing inventory of engines at 30 April 20X9?",
+  tableAnchor:"During the year ended 30 April 20X9 the following transactions took place:",
+  dataTable:{
+    columns:["Date","Transaction","Detail"],
+    rows:[
+      ["1 July 20X8","Purchased","300 engines at $210 each"],
+      ["1 November 20X8","Sold","400 engines for $160,000"],
+      ["1 February 20X9","Purchased","300 engines at $250 each"],
+      ["15 April 20X9","Sold","300 engines for $125,000"]
+    ]
+  },
   marks:2,
   options:["$123,000","$175,000","$158,000","$166,000"],
   correct:2, explanation:"Under FIFO, the total 700 engines sold (400+300) are matched against the earliest inventory: all 800 opening engines less 700, leaving 100 opening engines, plus all engines purchased on 1 July and 1 February remaining in closing inventory.",
@@ -5951,7 +5976,7 @@ const QUESTIONS = [
   correct:2, explanation:"Net realisable value = estimated selling price less costs to sell = $7 − $0.50 = $6.5. Purchase price/cost is not relevant to the NRV calculation itself.", calc:null
 },
 { id:389, type:"mcq",
-  text:"From the following figures, what is the closing inventory using AVCO method?\n\nBought March: 100 at $16 each\nBought September: 220 at $19 each\nSold December: 130 at $24 each",
+  text:"From the following figures, what is the closing inventory using AVCO method?\n\n1) Bought March: 100 at $16 each\n2) Bought September: 220 at $19 each\n3) Sold December: 130 at $24 each",
   req:"From the following figures, what is the closing inventory using AVCO method?",
   marks:2,
   options:["3040","3431","3610","3310"],
@@ -6523,7 +6548,7 @@ const QUESTIONS = [
   correct:3, explanation:"Trade payables will increase by $2,000 and purchases will increase by $2,000 reflects how Ali's accounts would be affected by his purchase of $2,000 of inventory on credit. Trade payables will increase because Ali owes more money to his suppliers. The purchases balance will increase to record the extra goods bought by Ali during the period.", calc:null
 },
 { id:453, type:"mcq",
-  text:"Malik had the following inventory movements in his business during the first quarter of 20X5.\n\nOn 1 January 20X5 Malik had 3,000 units in inventory valued at $150,000. Assuming Malik uses a cumulative weighted average approach to inventory valuation, what value would be included for inventory in the statement of financial position at 31 January 20X5?",
+  text:"Malik had the following inventory movements in his business during the first quarter of 20X5.\n\nOn 1 January 20X5 Malik had 3,000 units in inventory valued at $150,000.\n\nAssuming Malik uses a cumulative weighted average approach to inventory valuation, what value would be included for inventory in the statement of financial position at 31 January 20X5?",
   dataTable:{
     columns:["Date","Movement",{v:"Number of units",num:true},{v:"Value $",num:true}],
     rows:[
@@ -6534,7 +6559,7 @@ const QUESTIONS = [
     ]
   },
     tableAnchor:"Malik had the following inventory movements in his business during the first quarter of 20X5.",
-  req:"On 1 January 20X5 Malik had 3,000 units in inventory valued at $150,000. Assuming Malik uses a cumulative weighted average approach to inventory valuation, what value would be included for inventory in the statement of financial position at 31 January 20X5?",
+  req:"Assuming Malik uses a cumulative weighted average approach to inventory valuation, what value would be included for inventory in the statement of financial position at 31 January 20X5?",
   marks:2,
   options:["$758,571","$978,000","$774,000","$603,273"],
   correct:0, explanation:"The correct answer is $758,571. If you chose this answer you correctly adjusted for the sales made by reducing the inventory value by the average cost at the point of the last delivery. Hence 4,000 units × ($150,000 + $270,000 + $348,000) ÷ (3,000 + 5,000 + 6,000) units = $219,429. Thus goods in inventory were valued at $758,571 = $978,000 − $219,429.\n\nThe answer of $978,000 is incorrect because it ignores the sales that have been made. $150,000 + $270,000 + $348,000 + $210,000 = $978,000.\n\nThe answer of $774,000 is incorrect because it values the cost of sales using FIFO which is the opening inventory unit value of $50/unit, and $54/unit, the price paid on 2 January. Thus $978,000 − (($3,000 units × $50/unit) + (1,000 units × $54/unit)) = $774,000.\n\nThe answer of $603,273 is incorrect because it does not include opening inventory. Thus 4,000 units × ($270,000 + $348,000) ÷ (5,000 + 6,000) units = $224,727. Thus goods in were valued at $828,000 less the sale of $224,727 = $603,273.",
@@ -6596,7 +6621,7 @@ const QUESTIONS = [
   correct:1, explanation:"The correct answer is $76,080.\n\nIf you chose $68,400 you ignored the opening and closing inventory and calculated the gross profit as $126,000 − $57,600 = $68,400.\n\nIf you chose $76,080 as your answer then you correctly included the opening and closing inventory and calculated the gross profit as $126,000 − ($2,400 + $57,600 − ($12/unit × 840 units)) = $76,080.\n\nIf you chose $60,720 then you correctly included the opening and closing inventory but you incorrectly added closing inventory and deducted opening inventory when calculating the gross profit figure $126,000 − (($12/unit × 840 units) + $57,600 − $2,400) = $60,720.\n\nIf you selected $75,600 as then you incorrectly costed all units sold at $12 instead of including the opening inventory at $10/unit when calculating the gross profit figure $126,000 − ($12/unit × 4,200 units) = $75,600.", calc:null
 },
 { id:461, type:"number-entry",
-  text:"Yin purchased the following inventory during the current accounting period.\n\nThe business had no inventory on 1 January 20X2. Assuming that Yin uses the FIFO approach to stock valuation what amount should be shown for inventory in the statement of financial position at 30 April 20X2 (to two decimal places)?",
+  text:"Yin purchased the following inventory during the current accounting period.\n\nThe business had no inventory on 1 January 20X2.\n\nAssuming that Yin uses the FIFO approach to stock valuation what amount should be shown for inventory in the statement of financial position at 30 April 20X2 (to two decimal places)?",
   dataTable:{
     columns:["Month",{v:"Units received",num:true},{v:"Total value($)",num:true},"Months",{v:"Units Sold",num:true}],
     rows:[
@@ -6606,7 +6631,7 @@ const QUESTIONS = [
     ]
   },
     tableAnchor:"Yin purchased the following inventory during the current accounting period.",
-  req:"The business had no inventory on 1 January 20X2. Assuming that Yin uses the FIFO approach to stock valuation what amount should be shown for inventory in the statement of financial position at 30 April 20X2 (to two decimal places)?",
+  req:"Assuming that Yin uses the FIFO approach to stock valuation what amount should be shown for inventory in the statement of financial position at 30 April 20X2 (to two decimal places)?",
   marks:2, prefix:"$", correct:"684.50", correctDisplay:"$684.50",
   explanation:"The 90 units of inventory sold in February would have been purchased in January leaving 55 units. The March sales would have come from 55 left in January plus 265 units from February, leaving 5 units at the end of March. Therefore the closing inventory would be all of the April purchases valued at $672 plus the 5 units remaining from the February purchases costed at $2.50 each.\n\nValue of inventory = $672 + ( 5 units × $675 ÷ 270 units) = $684.50",
   calc:"April purchases                         $672.00\n5 units from Feb (5 × $675 ÷ 270)        $12.50\n                                        ───────\nClosing inventory                       $684.50"
@@ -6624,7 +6649,7 @@ const QUESTIONS = [
   explanation:"Period-end inventory records are generated by the inventory count that takes place, therefore inventory will be checked for damage as well as being counted.\n\nA period-end inventory check will provide an accurate record of the inventory held.\n\nPeriod-end inventory recording needs to be carried out when there is no movement of stock. It clearly affects the operational side of the business and is often carried out outside of normal working hours or following the closure of some areas of the business.\n\nStaff taking part in the count will do so outside of normal working hours so will be required to work overtime.", calc:null
 },
 { id:463, type:"mcq",
-  text:"A product called a zed has the following attributes:\n\nTrade discount of 10% of the purchase cost has been agreed with the supplier. According to IAS 2 Inventories, what value should be included in inventories for a unit of zed?",
+  text:"A product called a zed has the following attributes:\n\nTrade discount of 10% of the purchase cost has been agreed with the supplier.\n\nAccording to IAS 2 Inventories, what value should be included in inventories for a unit of zed?",
   dataTable:{
     columns:["$ per unit",{v:"",num:true}],
     rows:[
@@ -6634,7 +6659,7 @@ const QUESTIONS = [
     ]
   },
     tableAnchor:"A product called a zed has the following attributes:",
-  req:"Trade discount of 10% of the purchase cost has been agreed with the supplier. According to IAS 2 Inventories, what value should be included in inventories for a unit of zed?",
+  req:"According to IAS 2 Inventories, what value should be included in inventories for a unit of zed?",
   marks:2,
   options:["$36.00","$39.50","$35.90","$38.00"],
   correct:2, explanation:"IAS 2 states that inventory is valued at the lower of cost or net realisable value.\n\n$36.00 is incorrect because it ignores the discount and the carriage costs.\n\n$39.50 is incorrect because it ignores the discount and is higher than the net realisable value.\n\nThe correct answer is $35.90.\n\n$38.00 is incorrect because the net realisable value is higher than the cost.",
@@ -6649,7 +6674,7 @@ const QUESTIONS = [
   }
 },
 { id:464, type:"mcq",
-  text:"Xin had the following inventory at 31 March 20X8.\n\nTo sell all of product X, Xin will have to make minor modifications costing $67.20. What value should be included for inventory in the statement of financial position at 31 March 20X8?",
+  text:"Xin had the following inventory at 31 March 20X8.\n\nTo sell all of product X, Xin will have to make minor modifications costing $67.20.\n\nWhat value should be included for inventory in the statement of financial position at 31 March 20X8?",
   dataTable:{
     columns:["Product",{v:"Unit cost ($)",num:true},{v:"Quantity",num:true},{v:"Total cost ($)",num:true},{v:"Sales price ($)",num:true},{v:"Total sales value($)",num:true}],
     rows:[
@@ -6660,7 +6685,7 @@ const QUESTIONS = [
     totalRow:["","","",{v:"2,300",num:true},"",{v:"2,346",num:true}]
   },
     tableAnchor:"Xin had the following inventory at 31 March 20X8.",
-  req:"To sell all of product X, Xin will have to make minor modifications costing $67.20. What value should be included for inventory in the statement of financial position at 31 March 20X8?",
+  req:"What value should be included for inventory in the statement of financial position at 31 March 20X8?",
   marks:2,
   options:["$2,300.00","$2,346.00","$2,154.00","$2,170.80"],
   correct:2, explanation:"The answer of $2,300 is incorrect because it includes all products at cost not the lower of cost and net realisable value.\n\nThe answer of $2,346 is incorrect because it includes all products at their sales value not the lower of cost and net realisable value.\n\nThe answer of $2,154 is correct because it includes inventory at the lower of cost and net realisable value that is $336 + $1,314 + $504 = $2,154.\n\nThe answer of $2,170.80 is incorrect because it adjusts for the minor modification required for product X but the cost is still lower than its realisable value therefore no adjustment is required. $420 − $67.20 + $1,314 + $504 = $2,170.80", calc:null
@@ -6690,7 +6715,7 @@ const QUESTIONS = [
   }
 },
 { id:466, type:"mcq",
-  text:"Shadi has purchased an item of inventory, incurring the following costs:\n\nA trade discount of 10% on the purchase price was given to Shadi. The item has a selling price of $51 and costs to sell of $1. What amount should Shadi include in closing inventory to represent the value of this item of inventory?",
+  text:"Shadi has purchased an item of inventory, incurring the following costs:\n\nA trade discount of 10% on the purchase price was given to Shadi. The item has a selling price of $51 and costs to sell of $1.\n\nWhat amount should Shadi include in closing inventory to represent the value of this item of inventory?",
   dataTable:{
     columns:["",{v:"$",num:true}],
     rows:[
@@ -6700,7 +6725,7 @@ const QUESTIONS = [
     ]
   },
     tableAnchor:"Shadi has purchased an item of inventory, incurring the following costs:",
-  req:"A trade discount of 10% on the purchase price was given to Shadi. The item has a selling price of $51 and costs to sell of $1. What amount should Shadi include in closing inventory to represent the value of this item of inventory?",
+  req:"What amount should Shadi include in closing inventory to represent the value of this item of inventory?",
   marks:2,
   options:["$43.10","$46.50","$48.40","$50.00"],
   correct:1, explanation:"Option (A) is incorrect because this fails to add in the irrecoverable import duty. If the import duty were recoverable, it would not be included in the cost of inventory, but irrecoverable import duties must be added to the cost of inventory.\n\nOption (B) is correct because all the costs and discounts are valid according to IAS 2 Inventories. Because this value is less than the net realisable value of $50 then $46.50 should be included.\n\nOption (C) is incorrect as it ignores the delivery cost and the trade discount, both of which should be included in the calculation.\n\nOption (D) is incorrect as this is the net realisable value and in this case it is higher than the cost of the item.",
@@ -6719,12 +6744,12 @@ const QUESTIONS = [
   text:"A business has opening inventory of $15,000 at the start of an accounting period and closing inventory of $18,500 at the end of the accounting period.\n\nWhich of the following trial balance extracts correctly shows how opening and closing inventory will be recorded in the general ledger? (SFP = statement of financial position; SPL = statement of profit or loss)",
   req:"Which of the following trial balance extracts correctly shows how opening and closing inventory will be recorded in the general ledger?",
   marks:2,
-  columns:["Entry"],
+  columns:["","$"],
   options:[
-    ["DR Closing Inventory $15,000; CR Opening Inventory $18,500"],
-    ["DR Opening inventory $15,000; CR Closing inventory $18,500"],
-    ["DR Opening Inventory $15,000; DR Closing Inventory – SFP $18,500; CR Closing Inventory - SPL $18,500"],
-    ["DR Closing Inventory – SFP $18,500; CR Opening Inventory $15,000; CR Closing Inventory - SPL $18,500"]
+    ["DR Closing Inventory\nCR Opening Inventory","15,000\n18,500"],
+    ["DR Opening inventory\nCR Closing inventory","15,000\n18,500"],
+    ["DR Opening Inventory\nDR Closing Inventory – SFP\nCR Closing Inventory - SPL","15,000\n18,500\n18,500"],
+    ["DR Closing Inventory – SFP\nCR Opening Inventory\nCR Closing Inventory - SPL","18,500\n15,000\n18,500"]
   ],
   correct:2, explanation:"Opening inventory is a debit balance that is charged to cost of sales as an expense. Closing inventory is included twice as a debit and credit to reflect that it is included in the statement of profit or loss and other comprehensive income and the statement of financial position.", calc:null
 },
@@ -6767,7 +6792,7 @@ const QUESTIONS = [
   }
 },
 { id:470, type:"mcq",
-  text:"The following figures relate to inventory held at 31 March 20X6:\n\nModifications costing $5 per unit would need to be made to product A to achieve the selling price of $17. What is the value of inventory held at 31 March 20X6 in accordance with IAS 2 Inventories?",
+  text:"The following figures relate to inventory held at 31 March 20X6:\n\nModifications costing $5 per unit would need to be made to product A to achieve the selling price of $17.\n\nWhat is the value of inventory held at 31 March 20X6 in accordance with IAS 2 Inventories?",
   dataTable:{
     columns:["",{v:"Product A",num:true},{v:"Product B",num:true}],
     rows:[
@@ -6777,7 +6802,7 @@ const QUESTIONS = [
     ]
   },
     tableAnchor:"The following figures relate to inventory held at 31 March 20X6:",
-  req:"Modifications costing $5 per unit would need to be made to product A to achieve the selling price of $17. What is the value of inventory held at 31 March 20X6 in accordance with IAS 2 Inventories?",
+  req:"What is the value of inventory held at 31 March 20X6 in accordance with IAS 2 Inventories?",
   marks:2,
   options:["$108,000","$124,000","$134,000","$104,000"],
   correct:3, explanation:"Inventory is included in the statement of financial position at the lower of cost and net realisable value (NRV). Comparison must be made on an item-by-item; not on the total inventory value.\n\nThe NRV of a unit of product A is $17 selling price less $5 modifications costs i.e. $12.",
@@ -7257,7 +7282,7 @@ const QUESTIONS = [
     }
   },
   { id:503, type:"mcq-table", noMark:true,
-    text:"After receiving the invoice, Maya discovered that half the products by value were faulty and sent them back, requesting a credit note. Arushi agreed and issued a credit note for $375 plus sales tax.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
+    text:"Maya had bought goods from Arushi on credit, subject to sales tax at 25%. She later discovered that half the products by value were faulty and sent them back, requesting a credit note. Arushi agreed and issued a credit note for $375 plus sales tax.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
     req:"Show the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -8504,7 +8529,7 @@ const CATEGORIES = [
   { id:'ch4_past_questions', name:'Ch 4 past questions', group:'Chapter 4', ids:[323, 325, 326, 327, 328, 329, 331, 332, 333, 334, 335, 337, 338, 339, 340, 341, 342, 343, 344, 345] },
   { id:'ch4_study_hub_questions', name:'Ch 4 study hub questions', group:'Chapter 4', ids:[415, 416, 417, 418, 419, 421, 422, 423, 424, 425, 426, 427, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 442, 443, 445] },
   { id:'ch4_kkit_questions', name:'Ch 4 : K-Kit questions', group:'Chapter 4', ids:[210, 212, 213, 220, 239, 242, 244, 245, 246, 256, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 271, 272, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284] },
-  { id:'ch5_past_questions', name:'Ch 5 past questions', group:'Chapter 5', ids:[346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390] },
+  { id:'ch5_past_questions', name:'Ch 5 past questions', group:'Chapter 5', ids:[346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390] },
   { id:'ch5_study_hub_questions', name:'Ch 5 study hub questions', group:'Chapter 5', ids:[447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477] },
   { id:'ch5_kkit_questions', name:'Ch 5 : K-Kit questions', group:'Chapter 5', ids:[207, 211, 273, 300, 301, 302, 303, 304, 305, 306, 307, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322] },
   { id:'ch4_5_study_hub_activities', name:'Ch 4 & 5 : Study Hub Activities', group:'Combined / Mocks', ids:[496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 507, 508, 509, 510, 511, 512, 517, 518] }
@@ -19514,10 +19539,13 @@ function renderCalc(q){
     }
     html+=`<tbody>`;
     (ct.rows||[]).forEach(r=>{
-      html+=`<tr>`+r.map(c=>{
+      const rowData=Array.isArray(r)?r:r.cells;
+      const isSubtotal=!Array.isArray(r)&&!!r.subtotal;
+      html+=`<tr class="${isSubtotal?'subtotal':''}">`+rowData.map(c=>{
         const val=(typeof c==='object'&&c!==null)?c.v:c;
         const isNum=(typeof c==='object'&&c!==null)?!!c.num:false;
-        return `<td class="${isNum?'num':''}">${escHTML(String(val==null?'':val))}</td>`;
+        const isBold=(typeof c==='object'&&c!==null)?!!c.bold:false;
+        return `<td class="${isNum?'num':''}" style="${isBold?'font-weight:700':''}">${escHTML(String(val==null?'':val))}</td>`;
       }).join('')+`</tr>`;
     });
     if(ct.totalRow){
