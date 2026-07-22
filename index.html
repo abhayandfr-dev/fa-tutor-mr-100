@@ -92,7 +92,7 @@
   body.auth-pending #mobile-bottom-nav{display:none!important;}
   body.maintenance-lockout-active #mobile-bottom-nav{display:none!important;}
   /* FEATURE MAINTENANCE — any element marked .feature-blocked (applied by
-     applyFeatureBlockLockdownToDom() to buttons/cards/nav-links for a currently
+     applyFeatureBlockLockdown() to buttons/cards/nav-links for a currently
      blocked feature) becomes visibly greyed out and fully unclickable,
      without needing every call site to duplicate this styling by hand. A
      tiny badge is injected so it's obvious at a glance why it's disabled. */
@@ -861,7 +861,8 @@
 
       <div id="faculty-goal-accuracy-wrap" style="display:none;">
         <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Minimum accuracy required (%) <span style="font-weight:600;color:#94a3b8;">— optional</span></label>
-        <input id="faculty-goal-min-accuracy" type="number" min="1" max="100" placeholder="Leave blank for no minimum" style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;">
+        <input id="faculty-goal-min-accuracy" type="number" min="1" max="100" placeholder="Leave blank for no minimum" style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:.4rem;box-sizing:border-box;">
+        <div style="font-size:.72rem;color:#94a3b8;line-height:1.5;margin-bottom:1rem;">This is the bar for the <b>task itself</b> to count as completed. If a student reaches the required number of questions but their combined accuracy falls below this %, the task stays open (not completed) and they can keep trying. Leave this blank and there's <b>no</b> accuracy requirement at all — the task completes as soon as the question count is reached, regardless of score.</div>
       </div>
 
       <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Due within</label>
@@ -883,7 +884,8 @@
         <input id="faculty-goal-counts-toward-leaderboard" type="checkbox" style="margin-top:.15rem;flex:0 0 auto;">
         <span style="font-size:.8rem;color:#9a3412;line-height:1.4;">
           <b>Count this task toward leaderboards</b><br>
-          <span style="font-weight:600;color:#c2410c;">If checked, completing this task gives the student a flat Weekly Prize point boost (2 points per question in the task). If left unchecked, completing this task contributes nothing to any leaderboard — it's just tracked as a completed task.</span>
+          <span style="font-weight:600;color:#c2410c;">If checked, completing this task gives the student a Weekly Prize point boost (scaled by accuracy — up to 1.5 points per question) plus a Mastery Board top-up, on top of their normal points for answering the questions. If left unchecked, completing this task contributes nothing to any leaderboard — it's just tracked as a completed task.<br><br>
+          <u>Note on accuracy:</u> the leaderboard bonus has its own accuracy bar, separate from the task-completion requirement above. It uses whatever minimum accuracy you set above — but if you left that blank, the leaderboard bonus still requires a <b>default 50%</b> combined accuracy on the task (even though the task itself completes at any score). Fall short of that 50% and the task still shows as completed, it just earns no leaderboard bonus.</span>
         </span>
       </label>
 
@@ -1155,7 +1157,7 @@
             <li>Got it wrong first, then <strong>correct on retry</strong> = <strong>0.3 points</strong> instead of 1.0.</li>
             <li>Only your <strong>first 2 retries</strong> of the same question count toward your score each period — further retries on that question this period earn 0, though you can keep practicing them for your own learning.</li>
             <li>Each question can only contribute points <strong>once per period</strong>, on whichever of your counted attempts was correct.</li>
-            <li>Completing a task your teacher assigned can add a <strong>one-time bonus</strong> on top — but only if your teacher checked "Count this task toward leaderboards" when assigning it, and only if your accuracy on that task met the required minimum. The bonus size scales with the number of questions in the task and your accuracy on it.</li>
+            <li>Completing a task your teacher assigned can add a <strong>one-time bonus</strong> on top — but only if your teacher checked "Count this task toward leaderboards" when assigning it. You still need to clear an accuracy bar for the <strong>bonus</strong> specifically: your teacher's own minimum if they set one, or a <strong>default 50%</strong> if they didn't. (This is separate from — and can be different from — whatever accuracy bar decides if the task counts as completed at all.) The bonus size scales with the number of questions in the task and your accuracy on it.</li>
             <li>Answering your <strong>Daily Warm-Up</strong> correctly adds a flat <strong>+10 point bonus</strong> to this board — once per day, the day it's completed.</li>
           </ul>
           <div style="font-size:.74rem;color:#94a3b8;">Ties are broken by first-try accuracy %, then by number of distinct questions attempted.</div>
@@ -1508,13 +1510,10 @@
       <button onclick="openFacultyCategoryMaintenanceScreen()" style="padding:.75rem 1rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.86rem;font-weight:700;cursor:pointer;width:100%;">🗂️ Manage Category Maintenance →</button>
     </div>
 
-    <!-- FEATURE MAINTENANCE — a third, even narrower lock: instead of locking
-         the whole platform or one category, temporarily disable individual
-         platform features (Tasks & Goals, Milestones, Battle Mode, etc.)
-         independently of each other. -->
+    <!-- FEATURE MAINTENANCE — block/unblock individual platform features (Practice, Battle, Leaderboards, etc) for all students, with exceptions and timers, without touching the whole-platform or category locks above. -->
     <div style="border-top:2px solid #e2e8f0;padding-top:1.3rem;margin-top:1.3rem;">
-      <div style="font-size:.95rem;font-weight:700;color:#0f1f3d;margin-bottom:.3rem;">🧩 Block Features</div>
-      <div style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Temporarily disable individual features — e.g. Tasks & Goals, Milestones, Battle Mode — without touching anything else. Students still see the feature, but it's greyed out and unclickable, until you turn it back off.</div>
+      <div style="font-size:.95rem;font-weight:700;color:#0f1f3d;margin-bottom:.3rem;">🧩 Block Individual Features</div>
+      <div style="font-size:.82rem;color:#64748b;margin-bottom:1rem;">Temporarily disable specific platform features — Practice, Battle Mode, Leaderboards, Study Groups, and more — one at a time or several at once. Blocked features become greyed out and unclickable for students, with an optional exception list and an auto or manual timer, until you turn each one back on.</div>
       <button onclick="openFeatureBlockScreen()" style="padding:.75rem 1rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.86rem;font-weight:700;cursor:pointer;width:100%;">🧩 Manage Blocked Features →</button>
     </div>
   </div>
@@ -1595,6 +1594,14 @@
     <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;margin-bottom:.4rem;">Notice for students (optional)</div>
     <textarea id="catmaint-notice-text" rows="2" placeholder="e.g. Updating these questions — back shortly!" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;font-family:inherit;resize:vertical;margin-bottom:1.4rem;"></textarea>
 
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <div style="font-size:.85rem;font-weight:700;color:#0f1f3d;">Exceptions (optional)</div>
+      <button id="catmaint-setup-exc-selectall-btn" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;color:#1a3260;cursor:pointer;">☑ Select All</button>
+    </div>
+    <div style="font-size:.78rem;color:#64748b;margin-bottom:.6rem;">Checked students can still practice (unsaved) every category you lock in this step, right from when the lock goes on — no need to set this up separately afterward.</div>
+    <div id="catmaint-setup-exc-sub" style="font-size:.8rem;color:#64748b;margin-bottom:.5rem;">Loading users…</div>
+    <div id="catmaint-setup-exc-list" style="display:flex;flex-direction:column;gap:.4rem;max-height:260px;overflow-y:auto;border:2px solid #e2e8f0;border-radius:10px;padding:.6rem;margin-bottom:1.4rem;"></div>
+
     <div id="catmaint-setup-error" style="display:none;font-size:.82rem;color:#ef4444;font-weight:600;margin-bottom:1rem;"></div>
 
     <div style="display:flex;gap:.6rem;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding-top:.6rem;">
@@ -1604,7 +1611,6 @@
   </div>
 </div>
 
-<!-- FACULTY MODE: RECENTLY DELETED (attempts temporarily deleted by a teacher, across ALL categories) -->
 <!-- FACULTY MODE: FEATURE MAINTENANCE — status/list screen -->
 <div id="faculty-feature-block-screen" class="screen">
   <div style="max-width:680px;width:100%;margin:0 auto;">
@@ -1695,6 +1701,7 @@
   </div>
 </div>
 
+<!-- FACULTY MODE: RECENTLY DELETED (attempts temporarily deleted by a teacher, across ALL categories) -->
 <div id="faculty-recently-deleted-screen" class="screen">
   <div style="max-width:760px;width:100%;margin:0 auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
@@ -1740,6 +1747,16 @@
 
 <!-- HOME -->
 <!-- STUDENT-SIDE: MAINTENANCE LOCKOUT (shown after successful login/signup while maintenance mode is on and the student has no exception) -->
+<div id="maintenance-lockout-screen" class="screen">
+  <div style="max-width:480px;width:100%;margin:0 auto;text-align:center;padding:2rem 1.2rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;">🛠</div>
+    <div style="font-size:1.2rem;font-weight:700;color:#0f1f3d;margin-bottom:.7rem;">The platform is currently unavailable</div>
+    <div style="font-size:.92rem;color:#64748b;margin-bottom:1.2rem;line-height:1.5;">The platform is currently inaccessible because of maintenance work going on. Please check back later.</div>
+    <div id="maintenance-lockout-notice" style="display:none;background:#fef3c7;border:2px solid #fde68a;border-radius:12px;padding:1rem 1.1rem;font-size:.85rem;color:#92400e;line-height:1.5;margin-bottom:1.4rem;white-space:pre-wrap;"></div>
+    <button onclick="handleLogout()" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.6rem 1.2rem;font-size:.82rem;font-weight:600;color:#64748b;cursor:pointer;">🚪 Log out</button>
+  </div>
+</div>
+
 <!-- STUDENT-SIDE: BLOCKED-FEATURE NOTICE — small centered popup shown whenever a student tries to use a feature currently blocked by Feature Maintenance. Feature buttons stay unclickable (see .feature-blocked CSS + disabled attr), but this also covers any non-button access path (keyboard, direct function call, stale cached UI) as a second line of defense. -->
 <div id="feature-blocked-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,31,61,.55);z-index:9000;align-items:center;justify-content:center;padding:1rem;">
   <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;padding:1.8rem 1.6rem;text-align:center;box-shadow:0 8px 40px rgba(15,31,61,.25);">
@@ -1748,16 +1765,6 @@
     <div id="feature-blocked-message" style="font-size:.88rem;color:#64748b;line-height:1.5;margin-bottom:1rem;">This feature is temporarily disabled because maintenance work is going on. Please check back later.</div>
     <div id="feature-blocked-notice" style="display:none;background:#fef3c7;border:2px solid #fde68a;border-radius:12px;padding:.85rem .9rem;font-size:.82rem;color:#92400e;line-height:1.5;margin-bottom:1.1rem;white-space:pre-wrap;text-align:left;"></div>
     <button onclick="document.getElementById('feature-blocked-overlay').style.display='none';" style="background:#1a3260;color:#fff;border:none;border-radius:8px;padding:.6rem 1.4rem;font-size:.85rem;font-weight:700;cursor:pointer;">Got it</button>
-  </div>
-</div>
-
-<div id="maintenance-lockout-screen" class="screen">
-  <div style="max-width:480px;width:100%;margin:0 auto;text-align:center;padding:2rem 1.2rem;">
-    <div style="font-size:3rem;margin-bottom:1rem;">🛠</div>
-    <div style="font-size:1.2rem;font-weight:700;color:#0f1f3d;margin-bottom:.7rem;">The platform is currently unavailable</div>
-    <div style="font-size:.92rem;color:#64748b;margin-bottom:1.2rem;line-height:1.5;">The platform is currently inaccessible because of maintenance work going on. Please check back later.</div>
-    <div id="maintenance-lockout-notice" style="display:none;background:#fef3c7;border:2px solid #fde68a;border-radius:12px;padding:1rem 1.1rem;font-size:.85rem;color:#92400e;line-height:1.5;margin-bottom:1.4rem;white-space:pre-wrap;"></div>
-    <button onclick="handleLogout()" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.6rem 1.2rem;font-size:.82rem;font-weight:600;color:#64748b;cursor:pointer;">🚪 Log out</button>
   </div>
 </div>
 
@@ -2426,34 +2433,6 @@
 // yes, merge as multi-part. If each stands alone with its own self
 // contained facts, keep them separate.
 
-// ══════════════════════════════════════════════════════════
-// QUESTION-EDITING POLICY — READ BEFORE EDITING ANY QUESTION BELOW
-// Leaderboard scoring (Mastery Board + Weekly Prize) is FROZEN: it grades
-// every past attempt using the isCorrect value stored at the moment the
-// student answered, and never re-checks it against today's version of the
-// question (see the policy note above computeMasteryFromAttempts). This is
-// intentional — it's what stops a teacher's edit from ever making a
-// student's already-earned score fall.
-//
-// For that freeze to actually work, question IDENTITY (the `id` field) must
-// follow this rule whenever a question is edited:
-//   • MEANINGFUL edit (scenario/wording of the question, any option/choice,
-//     the correct answer, or the answer structure/type) -> give it a BRAND
-//     NEW id (e.g. next unused number). Do NOT edit the old object's id or
-//     fields in place. Instead, either delete the old object (if you're
-//     confident no one should ever practice it again) or leave it in the
-//     array untouched so old attempts tied to that id still resolve and
-//     keep scoring exactly as they always did. The new id starts with zero
-//     history and only earns points from attempts made after the edit —
-//     it is treated as a genuinely new question, never merged with the old
-//     one's history.
-//   • COSMETIC-ONLY fix (typo, formatting, broken image link, anything that
-//     does not change what's being asked or what the correct answer is) ->
-//     keep the SAME id. This is safe because it doesn't change grading.
-// When in doubt whether an edit is "meaningful," treat it as meaningful —
-// a new id is always safe; reusing an id for a substantive change is what
-// causes past scores to move.
-// ══════════════════════════════════════════════════════════
 const QUESTIONS = [
   { id:1, type:"true-false-table",
     text:"Identify whether each of the following statements about directors is true or false.",
@@ -7296,8 +7275,8 @@ const QUESTIONS = [
     calc:null
   },
   { id:492, type:"mcq-table", noMark:true,
-    text:"Rent expense was debited in error to the repair expense ledger account. The amount concerned is $50.\n\nRecord the journal entry to correct the error.",
-    req:"Record the journal entry to correct the error.",
+    text:"For each of the transactions listed below, record the journal entries to correct the error.\n\nRent expense debited in error to repair expense ledger account. The amount concerned is $50.",
+    req:"For each of the transactions listed below, record the journal entries to correct the error.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
     options:[
@@ -7315,8 +7294,8 @@ const QUESTIONS = [
     }
   },
   { id:493, type:"mcq-table", noMark:true,
-    text:"Car repair expense was debited in error of $60 to the car asset ledger account.\n\nRecord the journal entry to correct the error.",
-    req:"Record the journal entry to correct the error.",
+    text:"For each of the transactions listed below, record the journal entries to correct the error.\n\nCar repair expense was debited in error of $60 to the car asset ledger account.",
+    req:"For each of the transactions listed below, record the journal entries to correct the error.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
     options:[
@@ -7409,7 +7388,7 @@ const QUESTIONS = [
     calc:"Sale 1 (net $800):    20% × $800     = $160\nSale 2 (gross $1,200): 20/120 × $1,200 = $200\n                                       ──────\nTotal sales tax                        $360"
   },
   { id:500, type:"mcq-table", noMark:true,
-    text:"On 1 March, Darek sold goods to Jan. The goods had a list price of $1,000, excluding sales tax, which is levied at 15% in the country where Darek and Jan live. The goods were dispatched on 1 March and Darek issued the invoice on that date.\n\nOn 2 March Jan checked the goods and discovered that some of the items were broken. The broken items had a value of $150 excluding sales tax. Jan called Darek, who was extremely apologetic and agreed to issue a credit note for the faulty goods.\n\nShow the journal entry that would be posted in Darek's general ledger accounts on the original sale.",
+    text:"On 1 March, Darek sold goods to Jan. The goods had a list price of $1,000, excluding sales tax, which is levied at 15% in the country where Darek and Jan live. The goods were dispatched on 1 March and Darek issued the invoice on that date.\n\nShow the journal entry that would be posted in Darek's general ledger accounts on the original sale.",
     req:"Show the journal entry that would be posted in Darek's general ledger accounts on the original sale.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -7428,7 +7407,7 @@ const QUESTIONS = [
     }
   },
   { id:501, type:"mcq-table", noMark:true,
-    text:"On 1 March, Darek sold goods to Jan. The goods had a list price of $1,000, excluding sales tax, which is levied at 15% in the country where Darek and Jan live. The goods were dispatched on 1 March and Darek issued the invoice on that date.\n\nOn 2 March Jan checked the goods and discovered that some of the items were broken. The broken items had a value of $150 excluding sales tax. Jan called Darek, who was extremely apologetic and agreed to issue a credit note for the faulty goods.\n\nShow the journal entry that would be posted in Darek's general ledger accounts on the issue of the credit note.",
+    text:"On 2 March Jan checked the goods and discovered that some of the items were broken. The broken items had a value of $150 excluding sales tax. Darek agreed to issue a credit note for the faulty goods.\n\nShow the journal entry that would be posted in Darek's general ledger accounts on the issue of the credit note.",
     req:"Show the journal entry that would be posted in Darek's general ledger accounts on the issue of the credit note.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -7447,7 +7426,7 @@ const QUESTIONS = [
     }
   },
   { id:502, type:"mcq-table", noMark:true,
-    text:"Maya bought some goods from Arushi for $750 plus sales tax at 25%. After receiving the invoice, Maya discovered that half the products by value were faulty and sent them back, requesting a credit note. Arushi agreed and issued a credit note for $375 plus sales tax.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the original sale.",
+    text:"Maya bought some goods from Arushi for $750 plus sales tax at 25%.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the original sale.",
     req:"Show the journal entry that would be posted in Maya's general ledger accounts on the original sale.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -7466,7 +7445,7 @@ const QUESTIONS = [
     }
   },
   { id:503, type:"mcq-table", noMark:true,
-    text:"Maya bought some goods from Arushi for $750 plus sales tax at 25%. After receiving the invoice, Maya discovered that half the products by value were faulty and sent them back, requesting a credit note. Arushi agreed and issued a credit note for $375 plus sales tax.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
+    text:"Maya had bought goods from Arushi on credit, subject to sales tax at 25%. She later discovered that half the products by value were faulty and sent them back, requesting a credit note. Arushi agreed and issued a credit note for $375 plus sales tax.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
     req:"Show the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -7526,7 +7505,7 @@ const QUESTIONS = [
     }
   },
   { id:507, type:"true-false-table", noMark:true,
-    text:"A business has opening inventory of $45,000 and closing inventory of $54,000 for the period. For each statement below, state if they are True or False.",
+    text:"For each statement below, state if they are True or False.",
     req:"For each statement below, state if they are True or False.",
     marks:0,
     rows:[
@@ -10189,6 +10168,7 @@ async function checkMock1ReportAvailable(){
     hasReport = !error && !!data;
   }catch(e){ hasReport=false; }
   if(entry) entry.style.display = hasReport ? 'block' : 'none';
+  applyFeatureBlockLockdownToDom();
   // Once a student has a mock report actually linked to their account (i.e.
   // their gmail-based username matches an existing mock_reports row), the
   // "change username" flow no longer applies to them — they're already on
@@ -10712,16 +10692,12 @@ function openFacultyMaintenanceScreen(){
 async function fetchMaintenanceRow(){
   try{
     const res=await fetch(SUPABASE_URL+'/rest/v1/platform_maintenance?id=eq.1&select=*',{headers:facultyAuthHeaders()});
-    if(!res.ok){
-      let bodyText='';
-      try{ bodyText=await res.text(); }catch(e2){}
-      return {missing:true, debugStatus:res.status, debugBody:bodyText};
-    }
+    if(!res.ok) return {missing:true};
     const rows=await res.json();
-    if(rows && rows.error) return {missing:true, debugStatus:res.status, debugBody:JSON.stringify(rows)};
+    if(rows && rows.error) return {missing:true};
     if(!rows || !rows.length) return {missing:false, row:null};
     return {missing:false, row:rows[0]};
-  }catch(e){ return {missing:true, debugStatus:'exception', debugBody:String(e&&e.message||e)}; }
+  }catch(e){ return {missing:true}; }
 }
 
 async function loadFacultyMaintenanceStatus(){
@@ -10730,10 +10706,10 @@ async function loadFacultyMaintenanceStatus(){
   statusCard.innerHTML='Loading status…';
   actionsEl.innerHTML='';
 
-  const {missing,row,debugStatus,debugBody}=await fetchMaintenanceRow();
+  const {missing,row}=await fetchMaintenanceRow();
   if(missing){
     statusCard.style.cssText='border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;background:#fef2f2;border:2px solid #ef4444;';
-    statusCard.innerHTML='⚠️ Maintenance Mode isn\'t set up yet — the <code>platform_maintenance</code> table is missing. Run <code>migration_maintenance.sql</code> in the Supabase SQL Editor, then reload this page.<br><br><b>Debug info:</b><br>Status: '+escapeHtml(String(debugStatus))+'<br>Body: <span style="word-break:break-all;">'+escapeHtml(String(debugBody||''))+'</span>';
+    statusCard.innerHTML='⚠️ Maintenance Mode isn\'t set up yet — the <code>platform_maintenance</code> table is missing. Run <code>migration_maintenance.sql</code> in the Supabase SQL Editor, then reload this page.';
     return;
   }
 
@@ -11019,6 +10995,41 @@ async function loadCatMaintExceptionsChecklist(rowId){
   }
 }
 
+// Same student-list fetch as above, but for the Lock Categories setup screen
+// — there's no existing category_maintenance row yet at this point (the
+// categories haven't been locked yet), so nobody starts pre-checked. The
+// exception IDs chosen here get applied to every category row created by
+// confirmActivateCategoryMaintenance() below, in a single batch.
+async function loadCatMaintSetupExceptionsChecklist(){
+  const subEl=document.getElementById('catmaint-setup-exc-sub');
+  const listEl=document.getElementById('catmaint-setup-exc-list');
+  subEl.textContent='Loading users…';
+  listEl.innerHTML='';
+  try{
+    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
+    const data=await res.json();
+    const users=(data.users||[]).map(u=>({
+      id:u.id,
+      label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
+    })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+    if(!users.length){ subEl.textContent='No registered users found.'; return; }
+    subEl.textContent=users.length+' registered user'+(users.length!==1?'s':'')+'. Check anyone who should be able to practice these categories (unsaved) once locked.';
+    listEl.innerHTML=users.map(u=>`
+      <label style="display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border:2px solid #e2e8f0;border-radius:8px;font-size:.85rem;color:#334155;cursor:pointer;">
+        <input type="checkbox" class="catmaint-setup-exc-checkbox" value="${u.id}">
+        ${escapeHtml(u.label)}
+      </label>
+    `).join('');
+    document.getElementById('catmaint-setup-exc-selectall-btn').onclick=()=>{
+      const boxes=[...listEl.querySelectorAll('.catmaint-setup-exc-checkbox')];
+      const allChecked=boxes.every(b=>b.checked);
+      boxes.forEach(b=>b.checked=!allChecked);
+    };
+  }catch(err){
+    subEl.textContent='Error loading users. Check your service_role key is correct.';
+  }
+}
+
 async function saveCategoryMaintExceptions(){
   if(!catMaintExcRowId) return;
   const btn=document.getElementById('catmaint-exc-save-btn');
@@ -11065,6 +11076,7 @@ function openFacultyCategoryMaintenanceSetupScreen(){
   updateCatMaintTimerInputState();
   showScreen('faculty-category-maintenance-setup-screen');
   loadCatMaintCategoryChecklist();
+  loadCatMaintSetupExceptionsChecklist();
 }
 function updateCatMaintTimerInputState(){
   const isTimer=document.querySelector('input[name="catmaint-duration-mode"]:checked').value==='timer';
@@ -11149,6 +11161,7 @@ async function confirmActivateCategoryMaintenance(){
     autoOffAt=new Date(Date.now()+ms).toISOString();
   }
   const notice=document.getElementById('catmaint-notice-text').value.trim();
+  const exceptionIds=[...document.querySelectorAll('.catmaint-setup-exc-checkbox:checked')].map(b=>b.value);
   btn.disabled=true; btn.textContent='Locking…';
   try{
     const rows=checked.map(box=>({
@@ -11156,7 +11169,8 @@ async function confirmActivateCategoryMaintenance(){
       category_name: box.dataset.name,
       is_active: true,
       auto_off_at: autoOffAt,
-      notice_text: notice
+      notice_text: notice,
+      exception_user_ids: exceptionIds
     }));
     const res=await fetch(SUPABASE_URL+'/rest/v1/category_maintenance',{
       method:'POST',
@@ -15051,6 +15065,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // no point polling before login.
 setInterval(()=>{ if(currentUser) refreshAndApplyFeatureBlocks(); }, 120000);
 
+
 // ── STUDENT: SELF-SERVICE PASSWORD CHANGE (no approval needed) ───────────
 // Unlike username changes, a student already has full control over their own
 // password via Supabase Auth (anon key + their own session), so this is
@@ -16134,8 +16149,8 @@ async function loadEngagementCard(){
 }
 
 function startWeakTopicDrill(){
-  if(!gateFeature('bounty')) return;
   if(!weakTopicPool) return;
+  if(!gateFeature('bounty')) return;
   mode='practice';
   document.getElementById('card-practice').classList.add('selected');
   document.getElementById('card-quiz').classList.remove('selected');
@@ -17051,8 +17066,8 @@ function hideWarmupPillUntilNext(evt){
 }
 
 function openDailyWarmup(){
-  if(!gateFeature('daily_warmup')) return;
   if(!warmupQuestion) return;
+  if(!gateFeature('daily_warmup')) return;
   const overlay=document.getElementById('warmup-modal-overlay');
   const qText=document.getElementById('warmup-question-text');
   const optsList=document.getElementById('warmup-options-list');
@@ -17268,7 +17283,7 @@ function toggleLevelExplainer(context){
       <li>Attempting a question only once and getting it right contributes a full <strong>1.0</strong>; attempting it once and getting it wrong contributes <strong>0</strong>.</li>
       <li>Attempt more of the question bank — an unattempted question contributes 0, so working through new categories raises your mastery directly.</li>
       <li>Use <strong>Redo My Mistakes</strong> on the home screen — since scoring is an average across all your attempts on a question, getting it right on a retry raises that question's average (though attempting it and getting it wrong again would lower it).</li>
-      <li>Completing a task your teacher assigned (with "Count this task toward leaderboards" checked, and meeting the required accuracy) gives a small extra boost to every question in that task you currently have correct — on top of its normal average.</li>
+      <li>Completing a task your teacher assigned (with "Count this task toward leaderboards" checked) gives a small extra boost to every question in that task you currently have correct — on top of its normal average. This boost has its own accuracy bar: your teacher's minimum if they set one, otherwise a default 50% — separate from whatever accuracy bar decided the task counted as completed.</li>
     </ul>
     <div style="font-size:.74rem;color:#94a3b8;">Your level updates automatically the moment your mastery % crosses into a new band — no need to refresh.</div>`;
   body.style.display='block';
@@ -17339,19 +17354,8 @@ async function loadHomeSnapshot(){
 // correct answer's log entry averages right back to the same 1.0, which
 // was tried and rejected as not actually rewarding anything.
 function computeMasteryFromAttempts(attemptsRows, topupQuestionIds){
-  // FROZEN-GRADE POLICY (do not reintroduce live re-grading here):
-  // Mastery/Weekly Prize must NEVER re-check a past answer against today's
-  // version of a question. Whether an answer was correct is decided once,
-  // at submission time, and stored as a.isCorrect on the attempt row — that
-  // value is final and permanent. If a question's scenario/options/correct
-  // answer are edited later, the edit must be given a NEW question id (old
-  // id kept, retired from new practice) rather than mutated in place — see
-  // the note above the QUESTIONS array. That way old attempts (tied to the
-  // old id) keep scoring exactly as they always did, and the edited version
-  // only ever earns points from fresh attempts made after the edit. This
-  // function intentionally does NOT look up QUESTIONS/liveById at all, so a
-  // question being edited, retired, or removed from the bank can never
-  // change any student's already-earned score.
+  const liveById={};
+  QUESTIONS.forEach(q=>{ liveById[q.id]=q; });
 
   // Per-question log of every attempt's correct/wrong, in any order (order
   // doesn't matter for a plain average).
@@ -17361,7 +17365,10 @@ function computeMasteryFromAttempts(attemptsRows, topupQuestionIds){
     qs.forEach(snapshotQ=>{
       const a=ans[snapshotQ.id];
       if(!a) return;
-      const isCorrect = !!a.isCorrect; // frozen at submission time — never re-graded
+      const liveQ=liveById[snapshotQ.id];
+      if(!liveQ) return;
+      const regraded=regradeAgainstLive(liveQ, a.userAnswer);
+      const isCorrect = regraded===null ? !!a.isCorrect : regraded;
       (perQuestion[snapshotQ.id]=perQuestion[snapshotQ.id]||[]).push(isCorrect);
     });
   });
@@ -17593,53 +17600,6 @@ function closeLeaderboard(){
   if(leaderboardRealtimeChannel){ sb.removeChannel(leaderboardRealtimeChannel); leaderboardRealtimeChannel=null; }
 }
 
-// Shared, short-TTL cache of {allTasks, completionsByUser} for the Mastery
-// top-up calculation, fetched once and reused rather than re-querying every
-// time the leaderboard screen opens. Works whether called from a student's
-// RLS-scoped session or Faculty Mode's service_role REST path, same pattern
-// as getProfilesAndAttemptsWithCreatedAt() above.
-let masteryTaskDataCache=null; // {allTasks, completionsByUser, fetchedAt}
-let masteryTaskDataCacheInflight=null;
-const MASTERY_TASK_DATA_CACHE_TTL_MS=30000;
-async function getTasksAndCompletionsForMasteryTopup(){
-  const now=Date.now();
-  if(masteryTaskDataCache && (now-masteryTaskDataCache.fetchedAt)<MASTERY_TASK_DATA_CACHE_TTL_MS){
-    return masteryTaskDataCache;
-  }
-  if(masteryTaskDataCacheInflight) return masteryTaskDataCacheInflight;
-  const useFacultyRest = !!window.facultyServiceRoleKey;
-  masteryTaskDataCacheInflight=(async()=>{
-    let allTasks=[], completionsByUser={};
-    try{
-      if(useFacultyRest){
-        const [tasksRes,compRes]=await Promise.all([
-          fetch(SUPABASE_URL+'/rest/v1/tasks?select=id,counts_toward_leaderboard,min_accuracy,category_ids,mode,created_at,target_count&archived=eq.false',{headers:facultyAuthHeaders()}),
-          fetch(SUPABASE_URL+'/rest/v1/task_completions?select=task_id,user_id',{headers:facultyAuthHeaders()})
-        ]);
-        if(tasksRes.ok){ const rows=await tasksRes.json(); if(Array.isArray(rows)) allTasks=rows; }
-        if(compRes.ok){
-          const compRows=await compRes.json();
-          if(Array.isArray(compRows)) compRows.forEach(c=>{ (completionsByUser[c.user_id]=completionsByUser[c.user_id]||new Set()).add(c.task_id); });
-        }
-      }else{
-        const [tasksRes,compRes]=await Promise.all([
-          sb.from('tasks').select('id,counts_toward_leaderboard,min_accuracy,category_ids,mode,created_at,target_count').eq('archived',false).then(r=>r).catch(()=>({data:[],error:null})),
-          sb.from('task_completions').select('task_id,user_id').then(r=>r).catch(()=>({data:[],error:null}))
-        ]);
-        if(tasksRes && !tasksRes.error && tasksRes.data) allTasks=tasksRes.data;
-        if(compRes && !compRes.error && compRes.data){
-          compRes.data.forEach(c=>{ (completionsByUser[c.user_id]=completionsByUser[c.user_id]||new Set()).add(c.task_id); });
-        }
-      }
-    }catch(_){ /* fails open to "no top-ups" — matches existing behavior elsewhere */ }
-    const result={allTasks, completionsByUser, fetchedAt:Date.now()};
-    masteryTaskDataCache=result;
-    masteryTaskDataCacheInflight=null;
-    return result;
-  })();
-  return masteryTaskDataCacheInflight;
-}
-
 async function loadLeaderboardData(){
   const sub=document.getElementById('leaderboard-sub');
   const tiersWrap=document.getElementById('leaderboard-tiers-wrap');
@@ -17649,28 +17609,26 @@ async function loadLeaderboardData(){
   emptyMsg.style.display='none';
 
   try{
-    // LIVE COMPUTE (matches Faculty Mastery tab + Weekly Prize exactly) —
-    // no more reading a pre-computed leaderboard_scores cache here. That
-    // cache only updated on the score-owner's own device after their next
-    // attempt, so it went stale/out-of-sync with the faculty view any time
-    // a teacher edited attempts/tasks elsewhere. Computing live from the
-    // same shared data both sides already fetch keeps student and teacher
-    // boards permanently in agreement, with no separate sync step needed.
-    // (Scoring itself is frozen against edits — see the note above
-    // computeMasteryFromAttempts — so this is safe to recompute on every
-    // load without old scores ever moving because of a question edit.)
-    const [{profiles,attemptsByUser},{allTasks,completionsByUser}]=await Promise.all([
-      getProfilesAndAttemptsWithCreatedAt(),
-      getTasksAndCompletionsForMasteryTopup()
+    // Each student's mastery is pre-computed (by updateMyLeaderboardScore())
+    // the moment they submit/hide an attempt, and stored in the small
+    // leaderboard_scores table. So opening the leaderboard just reads that
+    // small table + profiles — no more downloading everyone's full
+    // questions_json/answers_json history to recompute mastery live here.
+    const [{data:profiles,error:pErr},{data:scores,error:sErr}]=await Promise.all([
+      sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard'),
+      sb.from('leaderboard_scores').select('user_id,mastery,attempted_count')
     ]);
+    if(pErr||sErr){ sub.textContent='Could not load leaderboard right now.'; return; }
+
+    const scoreByUser={};
+    (scores||[]).forEach(s=>{ scoreByUser[s.user_id]=s; });
 
     const students=(profiles||[])
       .filter(p=>!p.hidden_from_leaderboard)
       .map(p=>{
-        const rows=attemptsByUser[p.id]||[];
-        const myCompletedTaskIds=completionsByUser[p.id]||new Set();
-        const topupQuestionIds=computeTaskMasteryTopupQuestionIds(allTasks, rows, myCompletedTaskIds);
-        const {mastery,attemptedCount}=rows.length?computeMasteryFromAttempts(rows, topupQuestionIds):{mastery:0,attemptedCount:0};
+        const s=scoreByUser[p.id];
+        const mastery=s?Number(s.mastery)||0:0;
+        const attemptedCount=s?Number(s.attempted_count)||0:0;
         // Display name: gmail-linked accounts show full_name only, never the
         // gmail itself; plain usernames show the username as-is.
         const looksLikeGmail=/@gmail\.com$/i.test(p.username||'');
@@ -17891,16 +17849,18 @@ function computeWeeklyPrizeScore(attemptsRows, periodStart, taskBonusRows, warmu
       const createdAt=new Date(attempt.created_at);
       if(createdAt<periodStart) return; // outside the current period
     }
-    // FROZEN-GRADE POLICY: same as computeMasteryFromAttempts — never
-    // re-check a past answer against the current/live question. isCorrect
-    // was decided once, at submission time, and is permanent. See the note
-    // above computeMasteryFromAttempts and the note above the QUESTIONS
-    // array for the full policy.
     const qs=attempt.questions_json||[], ans=attempt.answers_json||{};
     qs.forEach(snapshotQ=>{
       const a=ans[snapshotQ.id];
       if(!a) return;
-      const isCorrect = !!a.isCorrect; // frozen at submission time — never re-graded
+      const liveQ=QUESTIONS_BY_ID_CACHE[snapshotQ.id];
+      let isCorrect;
+      if(liveQ){
+        const regraded=regradeAgainstLive(liveQ, a.userAnswer);
+        isCorrect = regraded===null ? !!a.isCorrect : regraded;
+      }else{
+        isCorrect = !!a.isCorrect; // question removed from bank since — fall back to stored grade
+      }
       (perQuestion[snapshotQ.id]=perQuestion[snapshotQ.id]||[]).push(isCorrect);
     });
   });
@@ -20186,7 +20146,8 @@ function showScreen(id){
   if(leavingBattle){ sb.removeChannel(battleRealtimeChannel); battleRealtimeChannel=null; }
   if(leavingLeaderboard){ sb.removeChannel(leaderboardRealtimeChannel); leaderboardRealtimeChannel=null; }
   if(leavingGroupsHub){ sb.removeChannel(groupLeaderboardRealtimeChannel); groupLeaderboardRealtimeChannel=null; }
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);updateStickyOffsets()
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);updateStickyOffsets();
+  applyFeatureBlockLockdownToDom(); // re-sync any newly-rendered buttons/cards on this screen with current block state
 }
 
 // ── Standalone entry pages (moved off the homepage) ────────────
