@@ -554,6 +554,7 @@
     color:#5eead4;margin-bottom:1.1rem;padding:0 .5rem;
   }
   .faculty-sidebar-brand b{display:block;font-family:'Inter',sans-serif;font-size:1rem;color:#fff;letter-spacing:0;text-transform:none;margin-top:.2rem;font-weight:700;}
+  .faculty-sidebar-hint{display:block;font-family:'Inter',sans-serif;font-size:.66rem;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.4);margin-top:.3rem;font-weight:500;}
   .faculty-nav-link{
     display:flex;align-items:center;gap:.6rem;padding:.6rem .7rem;border-radius:9px;
     color:rgba(255,255,255,.72);font-size:.82rem;font-weight:600;text-decoration:none;
@@ -563,9 +564,14 @@
   .faculty-nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
   .faculty-nav-link.active{background:rgba(94,234,212,.14);color:#5eead4;}
   .faculty-nav-link .ico{width:1.1rem;text-align:center;flex-shrink:0;}
-  .faculty-nav-divider{height:1px;background:rgba(255,255,255,.1);margin:.6rem .5rem;}
+  .faculty-nav-link .drag-handle{cursor:grab;color:rgba(255,255,255,.3);width:.9rem;text-align:center;flex-shrink:0;font-size:.85rem;}
+  .faculty-nav-link .drag-handle:active{cursor:grabbing;}
+  .faculty-nav-divider{height:1px;background:rgba(255,255,255,.1);margin:.6rem .5rem;cursor:grab;}
   .faculty-nav-exit{margin-top:auto;color:rgba(255,255,255,.5)!important;}
   .faculty-nav-badge{margin-left:auto;background:#ef4444;color:#fff;border-radius:999px;padding:.05rem .45rem;font-size:.62rem;font-weight:800;}
+  .faculty-sidebar [draggable="true"].dragging{opacity:.4;}
+  .faculty-sidebar [draggable="true"].drag-over{box-shadow:inset 0 2px 0 #5eead4;}
+  .faculty-sidebar .faculty-nav-divider.drag-over{box-shadow:0 -2px 0 #5eead4;}
   .faculty-main-col{
     flex:1 1 auto;min-width:0;min-height:100vh;padding:2rem 2.4rem 3rem;box-sizing:border-box;
   }
@@ -598,7 +604,40 @@
   }
   @media (max-width:1079px){
     body.faculty-shell-on .screen[id^="faculty-"].active{display:block;}
-    .faculty-main-col{padding:1.25rem 1rem 2.5rem;}
+    .faculty-main-col{padding:1.25rem 3.4rem 2.5rem 1rem;}
+    /* Mobile: the sidebar becomes a slide-in drawer instead of a permanent
+       column, opened via the floating tab on the right edge. All the same
+       nav links/features are inside it — nothing is removed for teachers,
+       it's just tucked away until opened so it doesn't eat the whole screen. */
+    .faculty-sidebar{
+      display:flex;
+      position:fixed;
+      top:0;right:0;bottom:0;
+      width:min(78vw,300px);
+      transform:translateX(100%);
+      transition:transform .22s ease;
+      z-index:5000;
+      box-shadow:-6px 0 24px rgba(15,23,42,.28);
+      max-height:100vh;overflow-y:auto;overflow-x:hidden;
+    }
+    body.faculty-mobile-nav-open .faculty-sidebar{transform:translateX(0);}
+    .faculty-mobile-nav-scrim{
+      display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:4999;
+    }
+    body.faculty-mobile-nav-open .faculty-mobile-nav-scrim{display:block;}
+    .faculty-mobile-nav-toggle{
+      display:flex;align-items:center;justify-content:center;
+      position:fixed;top:50%;right:0;transform:translateY(-50%);
+      width:2.1rem;height:3.4rem;
+      background:linear-gradient(180deg,#0f1f3d 0%,#132a52 100%);
+      color:#5eead4;border:none;border-radius:10px 0 0 10px;
+      font-size:1.05rem;z-index:4998;cursor:pointer;
+      box-shadow:-3px 0 10px rgba(15,23,42,.2);
+    }
+    body.faculty-mobile-nav-open .faculty-mobile-nav-toggle{display:none;}
+  }
+  @media (min-width:1080px){
+    .faculty-mobile-nav-toggle,.faculty-mobile-nav-scrim{display:none!important;}
   }
 </style>
 <script>
@@ -1500,6 +1539,7 @@
     <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">When maintenance mode is on, students can still log in or sign up as normal, but instead of the platform they'll only see a notice that the platform is under maintenance — until you turn it back off.</div>
     <div id="faculty-maintenance-status-card" style="border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;"></div>
     <div id="faculty-maintenance-actions" style="display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.6rem;"></div>
+    <div id="faculty-version-kick-card"></div>
 
     <!-- CATEGORY MAINTENANCE — a separate, narrower lock: instead of locking
          the whole platform, temporarily disable specific question categories
@@ -1768,6 +1808,29 @@
   </div>
 </div>
 
+<!-- NEW-VERSION BANNER — slim, dismissible, never blocks interaction. Shown
+     the moment platform_maintenance.app_version differs from the version
+     baked into this loaded page, on ANY screen including mid-quiz, per
+     spec: "any on-platform student should be shown immediate notification". -->
+<div id="new-version-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9500;background:linear-gradient(135deg,#0f766e 0%,#134e4a 100%);color:#fff;padding:.6rem 1rem;font-size:.82rem;font-weight:600;align-items:center;justify-content:center;gap:.8rem;flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,.15);">
+  <span>🔄 A newer version of this platform is available. Reload as soon as you can.</span>
+  <button onclick="location.reload();" style="background:#fff;color:#134e4a;border:none;border-radius:6px;padding:.35rem .8rem;font-size:.78rem;font-weight:700;cursor:pointer;">Reload now</button>
+  <button onclick="dismissVersionBanner();" style="background:transparent;border:1.5px solid rgba(255,255,255,.6);color:#fff;border-radius:6px;padding:.35rem .8rem;font-size:.78rem;font-weight:700;cursor:pointer;">Dismiss</button>
+</div>
+
+<!-- FORCE-KICK NOTICE — emergency "end this practice session now" modal.
+     Only ever shown if a teacher explicitly flips force_kick_practice on
+     while a student is mid-session. Explains what happened; never a silent
+     kick. -->
+<div id="force-kick-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,31,61,.7);z-index:9600;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#fff;border-radius:16px;max-width:400px;width:100%;padding:1.8rem 1.6rem;text-align:center;box-shadow:0 8px 40px rgba(15,31,61,.3);">
+    <div style="font-size:2.4rem;margin-bottom:.8rem;">⚠️</div>
+    <div style="font-size:1.05rem;font-weight:700;color:#0f1f3d;margin-bottom:.5rem;">Session ended by your teacher</div>
+    <div style="font-size:.88rem;color:#64748b;line-height:1.5;margin-bottom:1.1rem;">Your teacher has ended Practice Sessions right now. Your answers up to your last question have been saved.</div>
+    <button onclick="acknowledgeForceKick();" style="background:#1a3260;color:#fff;border:none;border-radius:8px;padding:.6rem 1.4rem;font-size:.85rem;font-weight:700;cursor:pointer;">OK, take me home</button>
+  </div>
+</div>
+
 <div id="home-screen" class="screen">
   <div id="impersonation-banner" style="display:none;width:100%;max-width:760px;margin:0 auto .6rem;background:#b45309;color:#fff;border-radius:10px;padding:.6rem .9rem;font-size:.8rem;font-weight:700;display:none;align-items:center;justify-content:space-between;gap:.6rem;">
     <span>🕵️ Viewing as <span id="impersonation-banner-username">student</span> (Faculty Mode)</span>
@@ -1828,8 +1891,8 @@
   <div id="warmup-pill-wrap" style="width:100%;display:none;box-sizing:border-box;">
     <div style="display:flex;align-items:stretch;gap:.5rem;width:100%;">
       <button id="warmup-pill" data-feature="daily_warmup" onclick="openDailyWarmup()" style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex:1;min-width:0;background:linear-gradient(135deg,#ecfdf5 0%,#fff 100%);border:2px solid #34d399;border-radius:12px;padding:.65rem 1rem;font-size:.85rem;font-weight:700;color:#065f46;cursor:pointer;font-family:inherit;text-align:left;">
-        <span><span id="warmup-pill-emoji">⚡</span> <span id="warmup-pill-text">Today's warm-up waiting — 30 seconds</span></span>
-        <span style="font-size:.78rem;font-weight:600;color:#059669;">Go →</span>
+        <span><span id="warmup-pill-emoji">⚡</span> <span id="warmup-pill-text">Today's warm-up waiting — 1 minute</span></span>
+        <span style="font-size:.78rem;font-weight:600;color:#ea580c;">Go →</span>
       </button>
       <button id="warmup-pill-hide-btn" onclick="hideWarmupPillUntilNext(event)" title="Hide until next warm-up" style="display:none;flex:0 0 auto;background:#fff;border:2px solid #cbd5e1;border-radius:12px;padding:.5rem .7rem;font-size:.85rem;color:#64748b;cursor:pointer;">✕</button>
     </div>
@@ -1913,13 +1976,13 @@
   <!-- DAILY WARM-UP MODAL -->
   <div id="warmup-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,31,61,.7);backdrop-filter:blur(3px);z-index:9998;align-items:center;justify-content:center;padding:1rem;">
     <div id="warmup-modal-card" style="background:#fff;border-radius:20px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);max-height:90vh;overflow-y:auto;animation:warmupPopIn .35s cubic-bezier(.34,1.56,.64,1);">
-      <div style="background:linear-gradient(135deg,#f59e0b 0%,#f97316 50%,#ef4444 100%);border-radius:20px 20px 0 0;padding:1.3rem 1.6rem;position:relative;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#fdba74 0%,#fb923c 50%,#f97316 100%);border-radius:20px 20px 0 0;padding:1.3rem 1.6rem;position:relative;overflow:hidden;">
         <div style="position:absolute;top:-20px;right:-10px;font-size:5rem;opacity:.15;transform:rotate(15deg);">⚡</div>
         <div style="display:flex;align-items:center;gap:.6rem;position:relative;">
           <span style="font-size:1.6rem;">⚡</span>
           <div>
             <div style="font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.01em;">Today's Warm-Up</div>
-            <div style="font-size:.76rem;color:rgba(255,255,255,.9);font-weight:600;">🔥 One question, 30 seconds, everyone gets the same one</div>
+            <div style="font-size:.76rem;color:rgba(255,255,255,.92);font-weight:600;">🔥 One question, 1 minute, everyone gets the same one</div>
           </div>
         </div>
       </div>
@@ -1936,7 +1999,12 @@
   <style>
     @keyframes warmupPopIn{0%{opacity:0;transform:scale(.85) translateY(10px);}100%{opacity:1;transform:scale(1) translateY(0);}}
     .warmup-opt-btn{position:relative;overflow:hidden;transition:transform .12s, box-shadow .12s;}
-    .warmup-opt-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.1);}
+    .warmup-opt-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 4px 14px rgba(251,146,60,.18);border-color:#fdba74 !important;}
+    #warmup-options-list .btn-primary{background:linear-gradient(135deg,#fb923c 0%,#f97316 100%);border:none;}
+    #warmup-options-list .tf-btn:hover:not(:disabled) .tf-dot{border-color:#fb923c;background:#fff7ed;}
+    #warmup-options-list .tf-btn:hover:not(:disabled){color:#c2410c;}
+    #warmup-options-list .tf-btn.selected .tf-dot{border-color:#f97316;background:#f97316;}
+    #warmup-options-list .tf-btn.selected{color:#c2410c;}
     .warmup-opt-btn:disabled{cursor:default;}
   </style>
 
@@ -7275,8 +7343,8 @@ const QUESTIONS = [
     calc:null
   },
   { id:492, type:"mcq-table", noMark:true,
-    text:"For each of the transactions listed below, record the journal entries to correct the error.\n\nRent expense debited in error to repair expense ledger account. The amount concerned is $50.",
-    req:"For each of the transactions listed below, record the journal entries to correct the error.",
+    text:"Rent expense was debited in error to the repair expense ledger account. The amount concerned is $50.\n\nRecord the journal entry to correct the error.",
+    req:"Record the journal entry to correct the error.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
     options:[
@@ -7294,8 +7362,8 @@ const QUESTIONS = [
     }
   },
   { id:493, type:"mcq-table", noMark:true,
-    text:"For each of the transactions listed below, record the journal entries to correct the error.\n\nCar repair expense was debited in error of $60 to the car asset ledger account.",
-    req:"For each of the transactions listed below, record the journal entries to correct the error.",
+    text:"Car repair expense was debited in error of $60 to the car asset ledger account.\n\nRecord the journal entry to correct the error.",
+    req:"Record the journal entry to correct the error.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
     options:[
@@ -7388,7 +7456,7 @@ const QUESTIONS = [
     calc:"Sale 1 (net $800):    20% × $800     = $160\nSale 2 (gross $1,200): 20/120 × $1,200 = $200\n                                       ──────\nTotal sales tax                        $360"
   },
   { id:500, type:"mcq-table", noMark:true,
-    text:"On 1 March, Darek sold goods to Jan. The goods had a list price of $1,000, excluding sales tax, which is levied at 15% in the country where Darek and Jan live. The goods were dispatched on 1 March and Darek issued the invoice on that date.\n\nShow the journal entry that would be posted in Darek's general ledger accounts on the original sale.",
+    text:"On 1 March, Darek sold goods to Jan. The goods had a list price of $1,000, excluding sales tax, which is levied at 15% in the country where Darek and Jan live. The goods were dispatched on 1 March and Darek issued the invoice on that date.\n\nOn 2 March Jan checked the goods and discovered that some of the items were broken. The broken items had a value of $150 excluding sales tax. Jan called Darek, who was extremely apologetic and agreed to issue a credit note for the faulty goods.\n\nShow the journal entry that would be posted in Darek's general ledger accounts on the original sale.",
     req:"Show the journal entry that would be posted in Darek's general ledger accounts on the original sale.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -7407,7 +7475,7 @@ const QUESTIONS = [
     }
   },
   { id:501, type:"mcq-table", noMark:true,
-    text:"On 2 March Jan checked the goods and discovered that some of the items were broken. The broken items had a value of $150 excluding sales tax. Darek agreed to issue a credit note for the faulty goods.\n\nShow the journal entry that would be posted in Darek's general ledger accounts on the issue of the credit note.",
+    text:"On 1 March, Darek sold goods to Jan. The goods had a list price of $1,000, excluding sales tax, which is levied at 15% in the country where Darek and Jan live. The goods were dispatched on 1 March and Darek issued the invoice on that date.\n\nOn 2 March Jan checked the goods and discovered that some of the items were broken. The broken items had a value of $150 excluding sales tax. Jan called Darek, who was extremely apologetic and agreed to issue a credit note for the faulty goods.\n\nShow the journal entry that would be posted in Darek's general ledger accounts on the issue of the credit note.",
     req:"Show the journal entry that would be posted in Darek's general ledger accounts on the issue of the credit note.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -7426,7 +7494,7 @@ const QUESTIONS = [
     }
   },
   { id:502, type:"mcq-table", noMark:true,
-    text:"Maya bought some goods from Arushi for $750 plus sales tax at 25%.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the original sale.",
+    text:"Maya bought some goods from Arushi for $750 plus sales tax at 25%. After receiving the invoice, Maya discovered that half the products by value were faulty and sent them back, requesting a credit note. Arushi agreed and issued a credit note for $375 plus sales tax.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the original sale.",
     req:"Show the journal entry that would be posted in Maya's general ledger accounts on the original sale.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -7445,7 +7513,7 @@ const QUESTIONS = [
     }
   },
   { id:503, type:"mcq-table", noMark:true,
-    text:"Maya had bought goods from Arushi on credit, subject to sales tax at 25%. She later discovered that half the products by value were faulty and sent them back, requesting a credit note. Arushi agreed and issued a credit note for $375 plus sales tax.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
+    text:"Maya bought some goods from Arushi for $750 plus sales tax at 25%. After receiving the invoice, Maya discovered that half the products by value were faulty and sent them back, requesting a credit note. Arushi agreed and issued a credit note for $375 plus sales tax.\n\nShow the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
     req:"Show the journal entry that would be posted in Maya's general ledger accounts on the receipt of the credit note.",
     marks:0,
     columns:["Debit","Credit","Amount ($)"],
@@ -7505,7 +7573,7 @@ const QUESTIONS = [
     }
   },
   { id:507, type:"true-false-table", noMark:true,
-    text:"For each statement below, state if they are True or False.",
+    text:"A business has opening inventory of $45,000 and closing inventory of $54,000 for the period. For each statement below, state if they are True or False.",
     req:"For each statement below, state if they are True or False.",
     marks:0,
     rows:[
@@ -9145,7 +9213,10 @@ function usernameToEmail(u){
     initFacultyShell();
     renderFacultyCategoryList();
     loadFacultyStatsStrip();
-    showScreen('faculty-categories-screen');
+    // Opens whichever nav item the teacher has dragged to the top of their
+    // sidebar (defaults to Overview if they haven't customized it), so
+    // "whatever's on top" really is what loads first on entry.
+    openFacultyTopScreen();
     if(window.refreshUnameReqBadgeNow) window.refreshUnameReqBadgeNow();
   };
 })();
@@ -9156,7 +9227,7 @@ function usernameToEmail(u){
 // shared sidebar built from FACULTY_NAV_ITEMS. This fills wide/PC viewports
 // with real structure (nav + stat strip) instead of one centered 760px column
 // floating in empty space, without having to hand-edit 14 separate screens.
-const FACULTY_NAV_ITEMS=[
+const FACULTY_NAV_ITEMS_DEFAULT=[
   {id:'faculty-categories-screen', icon:'🏠', label:'Overview', action:"showScreen('faculty-categories-screen')"},
   {id:'faculty-mock1search-screen', icon:'🔎', label:"Search Student", action:'openFacultyMock1Search()'},
   {id:'faculty-mockdata-screen', icon:'🧾', label:"View Mock Data", action:'openFacultyMockDataScreen()'},
@@ -9171,19 +9242,128 @@ const FACULTY_NAV_ITEMS=[
   {id:'faculty-recently-deleted-screen', icon:'🕓', label:'Recycle Bin', action:'openFacultyRecentlyDeleted()', badge:'recently-deleted-badge'},
   {id:'faculty-maintenance-screen', icon:'🛠', label:'Maintenance Mode', action:'openFacultyMaintenanceScreen()', badge:'maintenance-badge'},
 ];
+
+// ── FACULTY SIDEBAR: user-customizable order (drag & drop) ─────────────────
+// The teacher can drag nav items (and the divider) to reorder the sidebar
+// exactly how they like it. The order is saved to localStorage so it
+// persists across sessions, and whichever real screen ends up FIRST in that
+// order is what Faculty Mode opens to on entry (the divider is skipped when
+// picking the "top" screen, since it isn't a real screen).
+const FACULTY_NAV_ORDER_KEY='facultyNavOrderV1';
+
+function getFacultyNavOrder(){
+  let savedIds=null;
+  try{ savedIds=JSON.parse(localStorage.getItem(FACULTY_NAV_ORDER_KEY)||'null'); }catch(e){ savedIds=null; }
+  if(!Array.isArray(savedIds)) return FACULTY_NAV_ITEMS_DEFAULT.slice();
+  const byId={};
+  FACULTY_NAV_ITEMS_DEFAULT.forEach((it,i)=>{ byId[it.id+'::'+i]=it; }); // divider has no unique id, index it
+  // Build an id->item map, but since '__divider__' can repeat in theory we
+  // track it positionally the first time it's needed.
+  const itemsById={};
+  FACULTY_NAV_ITEMS_DEFAULT.forEach(it=>{ if(it.id!=='__divider__') itemsById[it.id]=it; });
+  const dividerItem={id:'__divider__'};
+  const ordered=[];
+  const seen=new Set();
+  savedIds.forEach(id=>{
+    if(id==='__divider__'){ ordered.push(dividerItem); return; }
+    if(itemsById[id] && !seen.has(id)){ ordered.push(itemsById[id]); seen.add(id); }
+  });
+  // Append any items that exist in the default list but weren't in the saved
+  // order yet (e.g. a new nav item shipped after the teacher last customized
+  // their sidebar) so nothing silently disappears.
+  FACULTY_NAV_ITEMS_DEFAULT.forEach(it=>{
+    if(it.id==='__divider__') return;
+    if(!seen.has(it.id)){ ordered.push(it); seen.add(it.id); }
+  });
+  return ordered;
+}
+
+function saveFacultyNavOrder(orderedIds){
+  try{ localStorage.setItem(FACULTY_NAV_ORDER_KEY, JSON.stringify(orderedIds)); }catch(e){}
+}
+
+function resetFacultyNavOrder(){
+  try{ localStorage.removeItem(FACULTY_NAV_ORDER_KEY); }catch(e){}
+  document.querySelectorAll('.faculty-sidebar').forEach(sb=>{
+    const screen=sb.closest('.screen');
+    sb.outerHTML=buildFacultySidebarHTML(screen?screen.id:null);
+  });
+  wireFacultySidebarDragAndDrop();
+}
+
+// The first real (non-divider) screen in the current custom order — this is
+// what Faculty Mode opens to, so "whatever's on top" really does load first.
+function getFacultyTopScreenId(){
+  const order=getFacultyNavOrder();
+  const top=order.find(it=>it.id!=='__divider__');
+  return top?top.id:'faculty-categories-screen';
+}
+
+// Fires the same action a click on that nav item would (openFacultyX() where
+// one exists, else a plain showScreen) so the top screen's data actually
+// loads, not just its shell.
+function openFacultyTopScreen(){
+  const order=getFacultyNavOrder();
+  const top=order.find(it=>it.id!=='__divider__');
+  if(!top){ showScreen('faculty-categories-screen'); return; }
+  try{ (0,eval)(top.action); }catch(e){ showScreen(top.id); }
+}
+const FACULTY_NAV_ITEMS=FACULTY_NAV_ITEMS_DEFAULT;
 function buildFacultySidebarHTML(activeId){
-  const items=FACULTY_NAV_ITEMS.map(it=>{
-    if(it.id==='__divider__') return '<div class="faculty-nav-divider"></div>';
+  const order=getFacultyNavOrder();
+  const items=order.map((it,idx)=>{
+    if(it.id==='__divider__') return `<div class="faculty-nav-divider" draggable="true" data-nav-id="__divider__" data-nav-idx="${idx}"></div>`;
     const activeCls=(it.id===activeId)?' active':'';
     const badge=it.badge?`<span id="${it.badge}__sb" class="faculty-nav-badge" style="display:none;"></span>`:'';
-    return `<button class="faculty-nav-link${activeCls}" onclick="${it.action}"><span class="ico">${it.icon}</span>${it.label}${badge}</button>`;
+    return `<button class="faculty-nav-link${activeCls}" draggable="true" data-nav-id="${it.id}" data-nav-idx="${idx}" onclick="${it.action}"><span class="drag-handle" title="Drag to reorder">⠿</span><span class="ico">${it.icon}</span>${it.label}${badge}</button>`;
   }).join('');
-  return `<div class="faculty-sidebar">
-    <div class="faculty-sidebar-brand">Faculty Mode<b>🎓 Sir Mr. 100</b></div>
+  return `<button type="button" class="faculty-mobile-nav-toggle" onclick="toggleFacultyMobileNav(true)" aria-label="Open faculty menu">☰</button>
+  <div class="faculty-mobile-nav-scrim" onclick="toggleFacultyMobileNav(false)"></div>
+  <div class="faculty-sidebar">
+    <div class="faculty-sidebar-brand">Faculty Mode<b>🎓 Sir Mr. 100</b><span class="faculty-sidebar-hint">↕ Drag items to reorder — top item opens first</span></div>
     ${items}
     <div class="faculty-nav-divider"></div>
+    <button class="faculty-nav-link" onclick="resetFacultyNavOrder()" style="font-size:.72rem;color:rgba(255,255,255,.45);"><span class="ico">↺</span>Reset sidebar order</button>
     <button class="faculty-nav-link faculty-nav-exit" onclick="exitFacultyMode()"><span class="ico">🚪</span>Exit Faculty Mode</button>
   </div>`;
+}
+// Mobile drawer open/close for the faculty sidebar (PC is unaffected — the
+// toggle/scrim are CSS-hidden at >=1080px).
+function toggleFacultyMobileNav(open){
+  document.body.classList.toggle('faculty-mobile-nav-open', !!open);
+}
+
+// Drag-and-drop reordering. Delegated on document so it works for every
+// sidebar copy (each faculty-*-screen gets its own rebuilt sidebar).
+let _facultyDragSrcIdx=null;
+function wireFacultySidebarDragAndDrop(){
+  document.querySelectorAll('.faculty-sidebar [draggable="true"]').forEach(el=>{
+    el.addEventListener('dragstart', e=>{
+      _facultyDragSrcIdx=Number(el.getAttribute('data-nav-idx'));
+      e.dataTransfer.effectAllowed='move';
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', ()=>{ el.classList.remove('dragging'); });
+    el.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', ()=>{ el.classList.remove('drag-over'); });
+    el.addEventListener('drop', e=>{
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      const targetIdx=Number(el.getAttribute('data-nav-idx'));
+      if(_facultyDragSrcIdx===null || targetIdx===_facultyDragSrcIdx) return;
+      const order=getFacultyNavOrder();
+      const [moved]=order.splice(_facultyDragSrcIdx,1);
+      order.splice(targetIdx,0,moved);
+      saveFacultyNavOrder(order.map(it=>it.id));
+      const activeScreen=document.querySelector('.screen[id^="faculty-"].active');
+      document.querySelectorAll('.faculty-sidebar').forEach(sb=>{
+        const screen=sb.closest('.screen');
+        sb.outerHTML=buildFacultySidebarHTML(screen?screen.id:(activeScreen?activeScreen.id:null));
+      });
+      wireFacultySidebarDragAndDrop();
+      _facultyDragSrcIdx=null;
+    });
+  });
 }
 function initFacultyShell(){
   document.body.classList.add('faculty-shell-on');
@@ -9196,6 +9376,7 @@ function initFacultyShell(){
     screen.appendChild(inner);
   });
   syncFacultySidebarBadges();
+  wireFacultySidebarDragAndDrop();
 }
 // Mirrors the two existing notification badges (username requests, recently
 // deleted) into the sidebar copies, since the originals now live inside a
@@ -9215,15 +9396,10 @@ window.showScreen=function(id){
   _origShowScreenForFaculty(id);
   if(id.indexOf('faculty-')===0){
     document.querySelectorAll('.faculty-sidebar .faculty-nav-link').forEach(b=>b.classList.remove('active'));
-    const item=FACULTY_NAV_ITEMS.find(it=>it.id===id);
-    if(item){
-      document.querySelectorAll('.faculty-sidebar').forEach(sb=>{
-        const btn=[...sb.querySelectorAll('.faculty-nav-link')].find(b=>b.textContent.trim().startsWith(item.icon));
-        if(btn) btn.classList.add('active');
-      });
-    }
+    document.querySelectorAll('.faculty-sidebar .faculty-nav-link[data-nav-id="'+id+'"]').forEach(b=>b.classList.add('active'));
     syncFacultySidebarBadges();
   }
+  toggleFacultyMobileNav(false);
 };
 
 window.exitFacultyMode = function(){
@@ -9289,6 +9465,46 @@ function invalidateFacultyProfilesAttemptsCache(){
 const FACULTY_ATTEMPTS_SELECT='id,user_id,category,mode,questions_attempted,percent,score_correct,score_total,marks,marks_attempted,time_taken_seconds,was_partial,questions_json,answers_json,hidden_by_student,hidden_by_teacher,task_id,created_at';
 const FACULTY_PROFILES_SELECT='id,username,full_name,section,hidden_from_leaderboard';
 
+// ── FACULTY: SHARED "admin users list" CACHE ──────────────────────────────
+// 8 separate faculty screens (Delete Users picker, Maintenance-mode exception
+// checklists x2, Category-maintenance exception checklist, Feature-block
+// exception checklist, Manage Users, Leaderboard block/unblock picker) each
+// independently called GET /auth/v1/admin/users?per_page=1000 — a full
+// re-download of every registered user's auth record. Same fix as the
+// profiles+attempts cache above: first caller in the TTL window pays for
+// the request, everyone else in that window reads from memory. This is the
+// raw Supabase Auth admin endpoint (not a Postgrest table), so its response
+// can't be trimmed with a select= column list the way the other fixes in
+// this file were — caching the whole response is the only lever available.
+// Call invalidateFacultyAdminUsersCache() after any create/delete of a user
+// so the next screen that needs the list sees the change immediately
+// instead of waiting out the TTL.
+let facultyAdminUsersCache=null; // {users, fetchedAt}
+let facultyAdminUsersCacheInflight=null;
+const FACULTY_ADMIN_USERS_CACHE_TTL_MS=20000;
+
+function invalidateFacultyAdminUsersCache(){
+  facultyAdminUsersCache=null;
+}
+
+async function getFacultyAdminUsers(){
+  const now=Date.now();
+  if(facultyAdminUsersCache && (now-facultyAdminUsersCache.fetchedAt)<FACULTY_ADMIN_USERS_CACHE_TTL_MS){
+    return facultyAdminUsersCache.users;
+  }
+  if(facultyAdminUsersCacheInflight) return facultyAdminUsersCacheInflight; // dedupe simultaneous callers
+
+  facultyAdminUsersCacheInflight=(async()=>{
+    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
+    const data=await res.json();
+    const users=data.users||[];
+    facultyAdminUsersCache={users, fetchedAt:Date.now()};
+    facultyAdminUsersCacheInflight=null;
+    return users;
+  })();
+  return facultyAdminUsersCacheInflight;
+}
+
 async function getFacultyProfilesAndAttempts(){
   const now=Date.now();
   if(facultyProfilesAttemptsCache && (now-facultyProfilesAttemptsCache.fetchedAt)<FACULTY_PROFILES_ATTEMPTS_CACHE_TTL_MS){
@@ -9327,22 +9543,33 @@ async function loadFacultyStatsStrip(){
   if(!requireFacultyKey()) return;
   _facultyTickClock();
   try{
-    const [{attempts:rows}, tasksRes] = await Promise.all([
-      getFacultyProfilesAndAttempts(),
+    // LIGHTWEIGHT ON PURPOSE: no longer calls getFacultyProfilesAndAttempts(),
+    // which downloads every column of every attempt row — including
+    // questions_json/answers_json, the biggest columns in the whole table —
+    // just to derive four small numbers. Opening Faculty Mode used to
+    // re-download the entire attempts history before a teacher clicked
+    // anything. Now it pulls only the tiny columns these stats need.
+    const [attRes, tasksRes] = await Promise.all([
+      fetch(SUPABASE_URL+'/rest/v1/attempts?select=user_id,hidden_by_student,hidden_by_teacher,score_correct,score_total,marks,marks_attempted',{headers:facultyAuthHeaders()}).catch(()=>null),
       fetch(SUPABASE_URL+'/rest/v1/tasks?select=id,deadline&archived=eq.false',{headers:facultyAuthHeaders()}).catch(()=>null)
     ]);
+    const rows=attRes?await attRes.json().catch(()=>null):null;
     if(!Array.isArray(rows)) return;
     const live=rows.filter(r=>!r.hidden_by_student&&!r.hidden_by_teacher);
     const uniqueStudents=new Set(live.map(r=>r.user_id));
     document.getElementById('fss-students').textContent=uniqueStudents.size;
     document.getElementById('fss-attempts').textContent=live.length;
+    // Uses the already-selected score_correct/score_total columns instead of
+    // parsing questions_json/answers_json for every attempt — this stat only
+    // needs the frozen-at-attempt-time correct/total counts (not a live
+    // regrade against the current question bank), and those numbers already
+    // exist as plain columns on the same row. Falls back to marks/marks_attempted
+    // for any legacy attempt shape, then is excluded if neither is present.
     let correct=0,total=0;
     live.forEach(a=>{
-      try{
-        const qs=typeof a.questions_json==='string'?JSON.parse(a.questions_json):a.questions_json;
-        const ans=typeof a.answers_json==='string'?JSON.parse(a.answers_json):a.answers_json;
-        if(Array.isArray(qs)&&ans){ total+=qs.length; correct+=Object.values(ans).filter(x=>x&&x.isCorrect).length; }
-      }catch(e){}
+      const c = a.score_correct!=null ? a.score_correct : a.marks;
+      const t = a.score_total!=null ? a.score_total : a.marks_attempted;
+      if(c!=null && t!=null){ correct+=Number(c)||0; total+=Number(t)||0; }
     });
     document.getElementById('fss-accuracy').textContent=total>0?Math.round(correct/total*100)+'%':'—';
     if(tasksRes){
@@ -9358,46 +9585,96 @@ async function loadFacultyStatsStrip(){
   }catch(e){ /* non-fatal — stats strip just stays at placeholders */ }
 }
 
+// ── FACULTY OVERVIEW: paginated category list ──────────────────────────────
+// This used to fetch category,hidden_by_student,hidden_by_teacher for EVERY
+// attempt row ever recorded, just to count them up into per-category totals
+// — meaning simply opening Faculty Mode downloaded the entire attempts
+// table's worth of rows before a teacher had clicked anything. Now it pulls
+// rows in small batches (FACULTY_CATEGORY_PAGE_SIZE at a time, oldest-first
+// via Supabase's Range header) and renders whatever categories that batch
+// reveals — with a "Load more" button that pulls the next batch and merges
+// it in, instead of grabbing everything up front.
+const FACULTY_CATEGORY_PAGE_SIZE=10;
+let facultyCategoryListState=null; // {counts, nextOffset, exhausted}
+
 async function renderFacultyCategoryList(){
   if(!requireFacultyKey()) return;
+  facultyCategoryListState={counts:{}, nextOffset:0, exhausted:false};
   const listEl=document.getElementById('faculty-category-list');
   listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">Loading categories…</div>';
+  await loadMoreFacultyCategoryRows(true);
+}
+
+// Fetches the next page of attempt rows (id+category+hidden flags only —
+// no heavy JSON columns), folds them into the running per-category counts,
+// and re-renders. `isFirstLoad` controls whether the listEl is cleared
+// fresh or a "Loading more…" state is appended to the existing cards.
+async function loadMoreFacultyCategoryRows(isFirstLoad){
+  const listEl=document.getElementById('faculty-category-list');
+  const st=facultyCategoryListState;
+  if(!st || st.exhausted) return;
+  const rangeStart=st.nextOffset;
+  const rangeEnd=rangeStart+FACULTY_CATEGORY_PAGE_SIZE-1;
   try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?select=category,hidden_by_student,hidden_by_teacher',{headers:facultyAuthHeaders()});
+    const res=await fetch(
+      SUPABASE_URL+'/rest/v1/attempts?select=category,hidden_by_student,hidden_by_teacher&order=created_at.desc',
+      {headers:{...facultyAuthHeaders(), 'Range-Unit':'items', 'Range':rangeStart+'-'+rangeEnd}}
+    );
     const rows=await res.json();
-    if(!Array.isArray(rows)){ listEl.innerHTML='<div style="font-size:.85rem;color:#ef4444;">Could not load attempts. Check your service_role key.</div>'; return; }
-    const counts={};
-    rows.forEach(r=>{ if(r.hidden_by_student||r.hidden_by_teacher) return; const c=r.category||'Sample Mock'; counts[c]=(counts[c]||0)+1; });
-    listEl.innerHTML='';
-    // Only show categories that currently have at least 1 attempt. This includes
-    // categories from the static CATEGORIES list (only if counts[name]>0 — so a
-    // category whose attempts were all deleted correctly disappears from this list)
-    // as well as categories present in real attempt data but not in the static list
-    // (e.g. the synthetic "🔁 Redo My Mistakes" drill category).
-    const knownNames=new Set(CATEGORIES.map(c=>c.name));
-    const staticNamesWithAttempts=CATEGORIES.map(c=>c.name).filter(name=>(counts[name]||0)>0);
-    const extraNames=Object.keys(counts).filter(name=>!knownNames.has(name) && counts[name]>0).sort();
-    const allCards=[...staticNamesWithAttempts.map(name=>({name})), ...extraNames.map(name=>({name}))];
-    if(allCards.length===0){ listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">No attempts recorded yet.</div>'; return; }
-    allCards.forEach(cat=>{
-      const n=counts[cat.name]||0;
-      const card=document.createElement('div');
-      card.style.cssText='border:2px solid #e2e8f0;border-radius:12px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;gap:.7rem;background:#fff;';
-      card.innerHTML=`
-        <div style="flex:1;min-width:0;cursor:pointer;" class="fac-cat-open">
-          <div style="font-weight:700;color:#0f1f3d;font-size:.95rem;">${escHTML(cat.name)}</div>
-          <div style="font-size:.78rem;color:#64748b;margin-top:.2rem;">${n} attempt${n!==1?'s':''}</div>
-        </div>
-        <button class="fac-cat-view-btn" style="background:none;border:none;color:#1a3260;font-weight:600;font-size:.85rem;cursor:pointer;padding:.4rem .2rem;white-space:nowrap;">View →</button>
-        <button class="fac-cat-delete-btn" title="Delete all attempts in this category (moves them to the Recycle Bin)" style="background:none;border:2px solid var(--red);color:var(--red);border-radius:8px;padding:.5rem .8rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">🗑 Delete All</button>
-      `;
-      card.querySelector('.fac-cat-open').onclick=()=>openFacultyAttemptsForCategory(cat.name);
-      card.querySelector('.fac-cat-view-btn').onclick=()=>openFacultyAttemptsForCategory(cat.name);
-      card.querySelector('.fac-cat-delete-btn').onclick=(e)=>{ e.stopPropagation(); facultyDeleteWholeCategoryFromList(cat.name); };
-      listEl.appendChild(card);
-    });
+    if(!Array.isArray(rows)){
+      if(isFirstLoad) listEl.innerHTML='<div style="font-size:.85rem;color:#ef4444;">Could not load attempts. Check your service_role key.</div>';
+      return;
+    }
+    if(rows.length<FACULTY_CATEGORY_PAGE_SIZE) st.exhausted=true;
+    st.nextOffset=rangeStart+rows.length;
+    rows.forEach(r=>{ if(r.hidden_by_student||r.hidden_by_teacher) return; const c=r.category||'Sample Mock'; st.counts[c]=(st.counts[c]||0)+1; });
+    renderFacultyCategoryListFromState();
   }catch(err){
-    listEl.innerHTML='<div style="font-size:.85rem;color:#ef4444;">Network error loading categories.</div>';
+    if(isFirstLoad) listEl.innerHTML='<div style="font-size:.85rem;color:#ef4444;">Network error loading categories.</div>';
+  }
+}
+
+function renderFacultyCategoryListFromState(){
+  const listEl=document.getElementById('faculty-category-list');
+  const st=facultyCategoryListState;
+  const counts=st.counts;
+  listEl.innerHTML='';
+  // Only show categories seen so far. This includes categories from the
+  // static CATEGORIES list (only if counts[name]>0) as well as categories
+  // present in real attempt data but not in the static list (e.g. the
+  // synthetic "🔁 Redo My Mistakes" drill category).
+  const knownNames=new Set(CATEGORIES.map(c=>c.name));
+  const staticNamesWithAttempts=CATEGORIES.map(c=>c.name).filter(name=>(counts[name]||0)>0);
+  const extraNames=Object.keys(counts).filter(name=>!knownNames.has(name) && counts[name]>0).sort();
+  const allCards=[...staticNamesWithAttempts.map(name=>({name})), ...extraNames.map(name=>({name}))];
+  if(allCards.length===0 && st.exhausted){ listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">No attempts recorded yet.</div>'; return; }
+  allCards.forEach(cat=>{
+    const n=counts[cat.name]||0;
+    const card=document.createElement('div');
+    card.style.cssText='border:2px solid #e2e8f0;border-radius:12px;padding:1rem 1.2rem;display:flex;justify-content:space-between;align-items:center;gap:.7rem;background:#fff;';
+    card.innerHTML=`
+      <div style="flex:1;min-width:0;cursor:pointer;" class="fac-cat-open">
+        <div style="font-weight:700;color:#0f1f3d;font-size:.95rem;">${escHTML(cat.name)}</div>
+        <div style="font-size:.78rem;color:#64748b;margin-top:.2rem;">${n} attempt${n!==1?'s':''}${st.exhausted?'':' so far'}</div>
+      </div>
+      <button class="fac-cat-view-btn" style="background:none;border:none;color:#1a3260;font-weight:600;font-size:.85rem;cursor:pointer;padding:.4rem .2rem;white-space:nowrap;">View →</button>
+      <button class="fac-cat-delete-btn" title="Delete all attempts in this category (moves them to the Recycle Bin)" style="background:none;border:2px solid var(--red);color:var(--red);border-radius:8px;padding:.5rem .8rem;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">🗑 Delete All</button>
+    `;
+    card.querySelector('.fac-cat-open').onclick=()=>openFacultyAttemptsForCategory(cat.name);
+    card.querySelector('.fac-cat-view-btn').onclick=()=>openFacultyAttemptsForCategory(cat.name);
+    card.querySelector('.fac-cat-delete-btn').onclick=(e)=>{ e.stopPropagation(); facultyDeleteWholeCategoryFromList(cat.name); };
+    listEl.appendChild(card);
+  });
+  if(!st.exhausted){
+    const loadMoreBtn=document.createElement('button');
+    loadMoreBtn.textContent='⬇ Load more attempts ('+FACULTY_CATEGORY_PAGE_SIZE+' at a time)';
+    loadMoreBtn.style.cssText='background:#fff;border:2px dashed #cbd5e1;border-radius:12px;padding:.8rem;font-size:.82rem;font-weight:700;color:#1a3260;cursor:pointer;';
+    loadMoreBtn.onclick=()=>{
+      loadMoreBtn.disabled=true;
+      loadMoreBtn.textContent='Loading…';
+      loadMoreFacultyCategoryRows(false);
+    };
+    listEl.appendChild(loadMoreBtn);
   }
 }
 
@@ -9562,7 +9839,7 @@ async function openFacultyAttemptsForCategory(categoryName){
   listEl.innerHTML='';
   showScreen('faculty-attempts-screen');
   try{
-    const url=SUPABASE_URL+'/rest/v1/attempts?select=*&category=eq.'+encodeURIComponent(categoryName)+'&order=created_at.desc';
+    const url=SUPABASE_URL+'/rest/v1/attempts?select=id,created_at,time_taken_seconds,mode,category,score_total,questions_attempted,marks_attempted,marks,percent,score_correct,was_partial,hidden_by_student,hidden_by_teacher,username,user_id&category=eq.'+encodeURIComponent(categoryName)+'&order=created_at.desc';
     const res=await fetch(url,{headers:facultyAuthHeaders()});
     const rows=await res.json();
     if(!Array.isArray(rows)){ subEl.textContent='Could not load attempts. Check your service_role key.'; return; }
@@ -9597,9 +9874,37 @@ async function openFacultyAttemptsForCategory(categoryName){
       listEl.appendChild(toolbar);
     }
 
-    normalRows.forEach(a=>{
-      listEl.appendChild(buildFacultyAttemptRow(a, { showUsername:true, deleteHandler:facultyDeleteAttempt, selectable:true }));
-    });
+    // PAGINATION: render 10 at a time with a "Load More" button, so a very
+    // active category (whole class, long history) doesn't build hundreds of
+    // DOM rows on open. This query already excludes questions_json/
+    // answers_json (see the select= above), so it isn't an egress cost either
+    // way — this purely keeps the screen responsive. The bulk-delete toolbar
+    // above still operates on the full normalRows array (getAllIds), not just
+    // what's currently rendered, so "select all" style flows are unaffected.
+    const CATEGORY_ATTEMPTS_PAGE_SIZE=10;
+    let categoryAttemptsRendered=0;
+    const catLoadMoreBar=document.createElement('div');
+    catLoadMoreBar.style.cssText='display:flex;justify-content:center;margin:1rem 0;';
+    function renderNextCategoryAttemptsPage(){
+      const nextSlice=normalRows.slice(categoryAttemptsRendered, categoryAttemptsRendered+CATEGORY_ATTEMPTS_PAGE_SIZE);
+      nextSlice.forEach(a=>{
+        listEl.insertBefore(buildFacultyAttemptRow(a, { showUsername:true, deleteHandler:facultyDeleteAttempt, selectable:true }), catLoadMoreBar);
+      });
+      categoryAttemptsRendered+=nextSlice.length;
+      const remaining=normalRows.length-categoryAttemptsRendered;
+      catLoadMoreBar.innerHTML='';
+      if(remaining>0){
+        const btn=document.createElement('button');
+        btn.textContent=`Load ${Math.min(CATEGORY_ATTEMPTS_PAGE_SIZE,remaining)} More (${remaining} left)`;
+        btn.style.cssText='padding:.6rem 1.2rem;background:#fff;border:2px solid var(--border);border-radius:10px;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer;';
+        btn.onclick=renderNextCategoryAttemptsPage;
+        catLoadMoreBar.appendChild(btn);
+      }
+    }
+    if(normalRows.length>0){
+      listEl.appendChild(catLoadMoreBar);
+      renderNextCategoryAttemptsPage();
+    }
 
     // "Deleted by Students" folder — appended at the very end of this category's
     // list. Clicking it opens a dedicated view of just those removed attempts,
@@ -9726,7 +10031,7 @@ async function openFacultyRecentlyDeleted(){
   showScreen('faculty-recently-deleted-screen');
   await purgeExpiredRecycleBinAttempts();
   try{
-    const url=SUPABASE_URL+'/rest/v1/attempts?select=*&hidden_by_teacher=eq.true&order=created_at.desc';
+    const url=SUPABASE_URL+'/rest/v1/attempts?select=id,created_at,time_taken_seconds,mode,category,score_total,questions_attempted,marks_attempted,marks,percent,score_correct,was_partial,hidden_by_student,hidden_by_teacher,username,user_id,teacher_deleted_at&hidden_by_teacher=eq.true&order=created_at.desc';
     const res=await fetch(url,{headers:facultyAuthHeaders()});
     const rows=await res.json();
     if(!Array.isArray(rows)){ subEl.textContent='Could not load recently deleted attempts. Check your service_role key.'; return; }
@@ -10187,7 +10492,8 @@ async function openStudentMockReport(){
   bodyEl.innerHTML='Loading…';
   try{
     const {data,error}=await sb.from('mock_reports')
-      .select('*').eq('user_id', currentUser.id).eq('mock_id','fa_mock1_j26').maybeSingle();
+      .select('chapter_breakdown,full_name,no_attempt,pass_fail,recommendations,score,score_max,score_percent,section,strengths,student_email,time_taken_seconds,weaknesses,mock_id')
+      .eq('user_id', currentUser.id).eq('mock_id','fa_mock1_j26').maybeSingle();
     if(error || !data){
       bodyEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">No mock-1 report found for your account yet.</div>';
       return;
@@ -10338,7 +10644,7 @@ async function wireMock1ReportPracticeButtons(report){
     return;
   }
   try{
-    const {data,error}=await sb.from('question_topics').select('*').eq('mock_id',report.mock_id||'fa_mock1_j26');
+    const {data,error}=await sb.from('question_topics').select('chapter,question_id').eq('mock_id',report.mock_id||'fa_mock1_j26');
     if(error || !data){ wrap.innerHTML=''; return; }
     wrap.innerHTML='';
     weakChapters.forEach(chNum=>{
@@ -10389,8 +10695,22 @@ async function openFacultyMock1Search(){
       const ids = KNOWN_MOCKS.map(m=>'"'+m.mock_id+'"').join(',');
       const res=await fetch(SUPABASE_URL+'/rest/v1/mock_reports?select=*&mock_id=in.('+ids+')',{headers:facultyAuthHeaders()});
       const rows=await res.json();
-      mock1SearchCache=Array.isArray(rows)?rows:[];
-    }catch(e){ mock1SearchCache=[]; }
+      // Only cache a genuinely successful response. Previously this cached
+      // `[]` on ANY failure (network error, bad/expired key, non-array error
+      // body from Supabase) as if it were a real "no data" result — and
+      // since mock1SearchCache is shared across this screen, View Mock Data,
+      // and Search Student, that false-empty result then stuck for the rest
+      // of the session: whichever of those screens was opened next would see
+      // !mock1SearchCache as false (it's `[]`, not null) and skip re-fetching
+      // entirely, showing "0 students" even though the data was really there.
+      // Leaving mock1SearchCache as null on failure lets the next screen
+      // opened retry the fetch instead of silently reusing a stale failure.
+      if(res.ok && Array.isArray(rows)){
+        mock1SearchCache=rows;
+      } else {
+        console.error('mock_reports fetch failed:', res.status, rows);
+      }
+    }catch(e){ console.error('mock_reports fetch error:', e); }
   }
 }
 
@@ -10479,31 +10799,56 @@ async function loadFacultyStudentData(studentEmail){
 }
 
 // ── FACULTY: VIEW MOCK DATA (all students' scores for one mock, sortable) ──
-// Reuses the same mock1SearchCache (all mock_reports rows across every
-// KNOWN_MOCKS entry) that "Search for Student's Data" already loads, so
-// adding a future mock only ever requires adding one line to KNOWN_MOCKS —
-// both features pick it up automatically with no other code changes.
-let mockDataCache=null; // rows for the currently-selected mock_id
+// SPLIT ON PURPOSE to cut egress: the overview table only ever shows name,
+// section, score, percent, time, and pass/fail — so it fetches ONLY those
+// light columns for every student. The heavier report fields
+// (chapter_breakdown, strengths, weaknesses, recommendations — the bulk of
+// each row's size) are fetched ONLY for the one student a teacher actually
+// clicks into, via a separate single-row fetch. This does mean the overview
+// table and "Search Student" no longer share one big cache (mock1SearchCache
+// stays as the full-column cache Search Student still uses for its instant
+// local search), but View Mock Data's initial load is now a small fraction
+// of the size it used to be.
+const MOCKDATA_OVERVIEW_SELECT='mock_id,student_email,full_name,section,score,score_max,score_percent,time_taken_seconds,pass_fail,no_attempt';
+const MOCKDATA_DETAIL_SELECT='mock_id,student_email,full_name,section,score,score_max,score_percent,time_taken_seconds,pass_fail,no_attempt,chapter_breakdown,strengths,weaknesses,recommendations';
+let mockDataCache=null; // lightweight overview rows for the currently-selected mock_id
+let mockDataOverviewCache=null; // lightweight overview rows across ALL known mocks
 let mockDataCurrentMockId=null;
 async function openFacultyMockDataScreen(){
   if(!requireFacultyKey()) return;
   showScreen('faculty-mockdata-screen');
   const selectEl=document.getElementById('mockdata-mock-select');
   selectEl.innerHTML=KNOWN_MOCKS.map(m=>`<option value="${escAttr(m.mock_id)}">${escHTML(m.label)}</option>`).join('');
-  if(!mock1SearchCache){
+  if(!mockDataOverviewCache){
+    document.getElementById('mockdata-sub').textContent='Loading…';
     try{
       const ids = KNOWN_MOCKS.map(m=>'"'+m.mock_id+'"').join(',');
-      const res=await fetch(SUPABASE_URL+'/rest/v1/mock_reports?select=*&mock_id=in.('+ids+')',{headers:facultyAuthHeaders()});
+      const res=await fetch(SUPABASE_URL+'/rest/v1/mock_reports?select='+MOCKDATA_OVERVIEW_SELECT+'&mock_id=in.('+ids+')',{headers:facultyAuthHeaders()});
       const rows=await res.json();
-      mock1SearchCache=Array.isArray(rows)?rows:[];
-    }catch(e){ mock1SearchCache=[]; }
+      // Only cache a genuinely successful response — see matching comment on
+      // mock1SearchCache below for why a transient failure must NOT get
+      // cached as an empty result.
+      if(res.ok && Array.isArray(rows)){
+        mockDataOverviewCache=rows;
+      } else {
+        console.error('mock_reports overview fetch failed:', res.status, rows);
+      }
+    }catch(e){ console.error('mock_reports overview fetch error:', e); }
+  }
+  if(!mockDataOverviewCache){
+    // Genuinely couldn't load — distinct from a real "0 students for this
+    // mock" result, so this doesn't get silently misread as empty data.
+    document.getElementById('mockdata-sub').textContent='Could not load mock data — check your service_role key or network, then reopen this screen to retry.';
+    document.getElementById('mockdata-tbody').innerHTML='';
+    document.getElementById('mockdata-empty').style.display='none';
+    return;
   }
   mockDataCurrentMockId=KNOWN_MOCKS[0]?KNOWN_MOCKS[0].mock_id:null;
   onMockDataMockChange();
 }
 function onMockDataMockChange(){
   mockDataCurrentMockId=document.getElementById('mockdata-mock-select').value;
-  mockDataCache=(mock1SearchCache||[]).filter(r=>r.mock_id===mockDataCurrentMockId);
+  mockDataCache=(mockDataOverviewCache||[]).filter(r=>r.mock_id===mockDataCurrentMockId);
   document.getElementById('mockdata-sub').textContent=mockDataCache.length+' student'+(mockDataCache.length!==1?'s':'')+' with data for this mock.';
   renderMockDataTable();
 }
@@ -10541,13 +10886,27 @@ function renderMockDataTable(){
     </tr>`;
   }).join('');
 }
-function openMockDataStudentDetail(studentEmail){
-  const report=(mockDataCache||[]).find(r=>r.student_email===studentEmail);
-  if(!report) return;
+// Fetches the FULL report row (with chapter_breakdown/strengths/weaknesses/
+// recommendations) for just this one student, only when clicked — this is
+// the piece that used to be pulled for every student up front.
+async function openMockDataStudentDetail(studentEmail){
   showScreen('faculty-mockdata-detail-screen');
   const mockDef=KNOWN_MOCKS.find(m=>m.mock_id===mockDataCurrentMockId);
-  document.getElementById('mockdata-detail-title').textContent='📊 '+(report.full_name||studentEmail)+' — '+(mockDef?mockDef.label:'Mock')+' Report';
-  document.getElementById('mockdata-detail-body').innerHTML=renderMock1ReportHTML(report, {forStudent:false});
+  document.getElementById('mockdata-detail-title').textContent='📊 '+(mockDef?mockDef.label:'Mock')+' Report';
+  document.getElementById('mockdata-detail-body').innerHTML='Loading…';
+  try{
+    const res=await fetch(
+      SUPABASE_URL+'/rest/v1/mock_reports?select='+MOCKDATA_DETAIL_SELECT+'&mock_id=eq.'+encodeURIComponent(mockDataCurrentMockId)+'&student_email=eq.'+encodeURIComponent(studentEmail),
+      {headers:facultyAuthHeaders()}
+    );
+    const rows=await res.json();
+    const report=Array.isArray(rows)?rows[0]:null;
+    if(!report){ document.getElementById('mockdata-detail-body').innerHTML='<div style="font-size:.85rem;color:#ef4444;">Could not load this student\'s report.</div>'; return; }
+    document.getElementById('mockdata-detail-title').textContent='📊 '+(report.full_name||studentEmail)+' — '+(mockDef?mockDef.label:'Mock')+' Report';
+    document.getElementById('mockdata-detail-body').innerHTML=renderMock1ReportHTML(report, {forStudent:false});
+  }catch(e){
+    document.getElementById('mockdata-detail-body').innerHTML='<div style="font-size:.85rem;color:#ef4444;">Network error loading report.</div>';
+  }
 }
 
 // ── FACULTY: user management ─────────────────────────────────
@@ -10586,6 +10945,7 @@ async function facultyBulkDeleteUsers(userIds, listEl, deleteAttemptsToo){
     const {failed:attemptsFailed}=await facultyDeleteAttemptsForUsers(successfulIds);
     attemptsNote = attemptsFailed ? ' Their attempt records could not be deleted.' : ' Their attempt records were also deleted.';
   }
+  if(successfulIds.length) invalidateFacultyAdminUsersCache();
   alert(`Deleted ${deleted} user(s).`+(failed?` ${failed} failed.`:'')+attemptsNote);
 }
 
@@ -10628,9 +10988,7 @@ async function loadFacultyDeleteUsersPicker(){
   subEl.textContent='Loading users…';
   listEl.innerHTML='';
   try{
-    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
-    const data=await res.json();
-    const users=data.users||[];
+    const users=await getFacultyAdminUsers();
     if(!users.length){ subEl.textContent='No registered users found.'; return; }
     users.sort((a,b)=>{
       const na=(a.user_metadata&&a.user_metadata.username)?a.user_metadata.username.toLowerCase():'';
@@ -10687,11 +11045,12 @@ function openFacultyMaintenanceScreen(){
   if(!requireFacultyKey()) return;
   showScreen('faculty-maintenance-screen');
   loadFacultyMaintenanceStatus();
+  loadFacultyVersionAndKickControls();
 }
 
 async function fetchMaintenanceRow(){
   try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/platform_maintenance?id=eq.1&select=*',{headers:facultyAuthHeaders()});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/platform_maintenance?id=eq.1&select=app_version,auto_off_at,exception_user_ids,force_kick_practice,is_active,notice_text',{headers:facultyAuthHeaders()});
     if(!res.ok) return {missing:true};
     const rows=await res.json();
     if(rows && rows.error) return {missing:true};
@@ -10744,6 +11103,57 @@ async function loadFacultyMaintenanceStatus(){
 
 function escapeHtml(s){
   const d=document.createElement('div'); d.textContent=s; return d.innerHTML;
+}
+
+// ── FACULTY: APP VERSION + EMERGENCY FORCE-KICK CONTROLS ──
+// Small, separate card appended below the main maintenance status card.
+// Deliberately independent of on/off maintenance mode above — you may want
+// to bump the version or force-kick a session without touching whole-
+// platform maintenance at all.
+async function loadFacultyVersionAndKickControls(){
+  const el=document.getElementById('faculty-version-kick-card');
+  if(!el) return;
+  const {missing,row}=await fetchMaintenanceRow();
+  if(missing){ el.innerHTML=''; return; }
+  const lastAnnounced = row && row.app_version;
+  const lastAnnouncedLabel = lastAnnounced ? new Date(lastAnnounced).toLocaleString() : 'never';
+  const kickOn = !!(row && row.force_kick_practice);
+  el.innerHTML=`
+    <div style="border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;background:#f8fafc;border:2px solid #e2e8f0;">
+      <div style="font-weight:700;color:#0f1f3d;font-size:.92rem;margin-bottom:.6rem;">🔄 New Version Announcement (for the "reload" banner)</div>
+      <div style="font-size:.8rem;color:#64748b;margin-bottom:.6rem;">Click this any time AFTER you've redeployed to Netlify. Nothing to edit in the HTML file — just click it once the new build is live. Every student currently on the platform will see a "new version available — reload" banner within about 45 seconds, without being interrupted. Dismissing the banner sticks, so it won't nag them again for this same deploy.</div>
+      <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:1rem;">
+        <span style="font-size:.82rem;color:#334155;">Last announced: <b>${escapeHtml(lastAnnouncedLabel)}</b></span>
+        <button onclick="announceNewVersion()" style="padding:.5rem 1rem;background:#0f766e;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">📣 Announce New Version</button>
+      </div>
+      <div style="border-top:1px solid #e2e8f0;padding-top:1rem;">
+        <div style="font-weight:700;color:#0f1f3d;font-size:.92rem;margin-bottom:.4rem;">⚠️ Emergency: Force-End Practice Sessions</div>
+        <div style="font-size:.8rem;color:#64748b;margin-bottom:.7rem;">Use only when you truly need to interrupt a Practice Session already in progress — e.g. wrong content live, exam-integrity issue. Any student mid-session gets a clear notice and is routed home; their progress up to that point is saved. Turn this back off once done, or they'll be blocked from starting a new session too.</div>
+        <button onclick="toggleForceKick(${!kickOn})" style="padding:.6rem 1.1rem;background:${kickOn?'#059669':'#b91c1c'};color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;">${kickOn?'✅ Turn OFF force-kick (currently ACTIVE)':'🛑 Force-end all active Practice Sessions now'}</button>
+      </div>
+    </div>
+  `;
+}
+
+async function announceNewVersion(){
+  const ok=await appConfirm({title:'Announce new version?', message:'Only do this after your Netlify redeploy has finished and is live. Every student currently on the platform will see a "reload" banner within ~45 seconds.', icon:'🔄', confirmText:'Announce Now', cancelText:'Cancel'});
+  if(!ok) return;
+  try{
+    await writeMaintenanceRow({ app_version:new Date().toISOString() });
+    await loadFacultyVersionAndKickControls();
+  }catch(e){ alert('Failed to announce new version: '+e.message); }
+}
+
+async function toggleForceKick(turnOn){
+  const msg = turnOn
+    ? 'Any student currently mid-Practice-Session will be interrupted with a clear notice within ~45 seconds. Their progress is saved. Continue?'
+    : 'Students will be able to start and continue Practice Sessions normally again.';
+  const ok=await appConfirm({title: turnOn?'Force-end active sessions?':'Turn off force-kick?', message: msg, icon:'⚠️', confirmText: turnOn?'Force-End Now':'Turn Off', cancelText:'Cancel'});
+  if(!ok) return;
+  try{
+    await writeMaintenanceRow({ force_kick_practice: turnOn });
+    await loadFacultyVersionAndKickControls();
+  }catch(e){ alert('Failed to update: '+e.message); }
 }
 
 // Writes a partial update to the single settings row via upsert (so it works
@@ -10802,9 +11212,7 @@ async function loadMaintenanceExceptionsChecklist(){
   subEl.textContent='Loading users…';
   listEl.innerHTML='';
   try{
-    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
-    const data=await res.json();
-    const users=(data.users||[]).map(u=>({
+    const users=(await getFacultyAdminUsers()).map(u=>({
       id:u.id,
       label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
     })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
@@ -10868,7 +11276,7 @@ function openFacultyCategoryMaintenanceScreen(){
 
 async function fetchActiveCategoryMaintenanceRows(){
   try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/category_maintenance?is_active=eq.true&select=*&order=created_at.desc',{headers:facultyAuthHeaders()});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/category_maintenance?is_active=eq.true&select=id,auto_off_at,category_name,notice_text,exception_user_ids&order=created_at.desc',{headers:facultyAuthHeaders()});
     if(!res.ok) return {missing:true};
     const rows=await res.json();
     if(rows && rows.error) return {missing:true};
@@ -10971,9 +11379,7 @@ async function loadCatMaintExceptionsChecklist(rowId){
     const rowData=await rowRes.json();
     const currentExceptions=new Set((Array.isArray(rowData)&&rowData[0]&&Array.isArray(rowData[0].exception_user_ids))?rowData[0].exception_user_ids:[]);
 
-    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
-    const data=await res.json();
-    const users=(data.users||[]).map(u=>({
+    const users=(await getFacultyAdminUsers()).map(u=>({
       id:u.id,
       label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
     })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
@@ -11006,9 +11412,7 @@ async function loadCatMaintSetupExceptionsChecklist(){
   subEl.textContent='Loading users…';
   listEl.innerHTML='';
   try{
-    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
-    const data=await res.json();
-    const users=(data.users||[]).map(u=>({
+    const users=(await getFacultyAdminUsers()).map(u=>({
       id:u.id,
       label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
     })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
@@ -11205,7 +11609,7 @@ function openFeatureBlockScreen(){
 
 async function fetchActiveFeatureBlockRows(){
   try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/feature_maintenance?is_active=eq.true&select=*&order=created_at.desc',{headers:facultyAuthHeaders()});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/feature_maintenance?is_active=eq.true&select=id,auto_off_at,feature_key,notice_text,exception_user_ids&order=created_at.desc',{headers:facultyAuthHeaders()});
     if(!res.ok) return {missing:true};
     const rows=await res.json();
     if(rows && rows.error) return {missing:true};
@@ -11299,9 +11703,7 @@ async function loadFeatBlockExceptionsChecklist(rowId){
     const rowData=await rowRes.json();
     const currentExceptions=new Set((Array.isArray(rowData)&&rowData[0]&&Array.isArray(rowData[0].exception_user_ids))?rowData[0].exception_user_ids:[]);
 
-    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
-    const data=await res.json();
-    const users=(data.users||[]).map(u=>({
+    const users=(await getFacultyAdminUsers()).map(u=>({
       id:u.id,
       label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
     })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
@@ -11329,9 +11731,7 @@ async function loadFeatBlockSetupExceptionsChecklist(){
   subEl.textContent='Loading users…';
   listEl.innerHTML='';
   try{
-    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
-    const data=await res.json();
-    const users=(data.users||[]).map(u=>({
+    const users=(await getFacultyAdminUsers()).map(u=>({
       id:u.id,
       label:(u.user_metadata&&u.user_metadata.username)?u.user_metadata.username:u.email
     })).sort((a,b)=>a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
@@ -11487,9 +11887,7 @@ async function loadFacultyUsers(){
   subEl.textContent='Loading users…';
   listEl.innerHTML='';
   try{
-    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
-    const data=await res.json();
-    const users=data.users||[];
+    const users=await getFacultyAdminUsers();
     if(!users.length){ subEl.textContent='No registered users found.'; return; }
     users.sort((a,b)=>{
       const na=(a.user_metadata&&a.user_metadata.username)?a.user_metadata.username.toLowerCase():'';
@@ -11656,9 +12054,7 @@ async function loadFacultyLbUsersPicker(){
   subEl.textContent='Loading users…';
   listEl.innerHTML='';
   try{
-    const res=await fetch(SUPABASE_URL+'/auth/v1/admin/users?per_page=1000',{headers:facultyAuthHeaders()});
-    const data=await res.json();
-    const users=data.users||[];
+    const users=await getFacultyAdminUsers();
     if(!users.length){ subEl.textContent='No registered users found.'; return; }
     users.sort((a,b)=>{
       const na=(a.user_metadata&&a.user_metadata.username)?a.user_metadata.username.toLowerCase():'';
@@ -12514,7 +12910,7 @@ async function loadFacultyGoalTasksList(){
     // that's filled in a moment later once the heavier attempts fetch (which
     // is shared/cached across the app) resolves.
     const [tasksRes, profilesRes, completionsRes]=await Promise.all([
-      fetch(SUPABASE_URL+'/rest/v1/tasks?select=*&archived=eq.false&order=created_at.desc',{headers:facultyAuthHeaders()}),
+      fetch(SUPABASE_URL+'/rest/v1/tasks?select=id,target_type,student_id,student_ids,section,metric,target_count,min_accuracy,created_at,category_ids,mode,label,note,deadline,duration_days,duration_hours,counts_toward_leaderboard,archived&archived=eq.false&order=created_at.desc',{headers:facultyAuthHeaders()}),
       fetch(SUPABASE_URL+'/rest/v1/profiles?select=id,username,full_name',{headers:facultyAuthHeaders()}),
       fetch(SUPABASE_URL+'/rest/v1/task_completions?select=task_id,user_id',{headers:facultyAuthHeaders()})
     ]);
@@ -12673,7 +13069,7 @@ async function openTaskClassProgress(taskId){
   listEl.innerHTML=''; emptyEl.style.display='none'; loadingEl.style.display='block';
   overlay.classList.add('open');
   try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/tasks?select=*&id=eq.'+encodeURIComponent(taskId),{headers:facultyAuthHeaders()});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/tasks?select=id,target_type,student_id,student_ids,section,metric,target_count,min_accuracy,created_at,category_ids,mode,label,note,deadline,duration_days,duration_hours,counts_toward_leaderboard,archived&id=eq.'+encodeURIComponent(taskId),{headers:facultyAuthHeaders()});
     const rows=await res.json();
     if(!Array.isArray(rows)||!rows.length){ loadingEl.style.display='none'; emptyEl.style.display='block'; return; }
     const task=rows[0];
@@ -12731,7 +13127,7 @@ async function openTaskDetailsPage(taskId){
   const emptyEl=document.getElementById('task-details-empty');
   subEl.textContent='Loading…'; listEl.innerHTML=''; emptyEl.style.display='none';
   try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/tasks?select=*&id=eq.'+encodeURIComponent(taskId),{headers:facultyAuthHeaders()});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/tasks?select=id,target_type,student_id,student_ids,section,metric,target_count,min_accuracy,created_at,category_ids,mode,label,note,deadline,duration_days,duration_hours,counts_toward_leaderboard,archived&id=eq.'+encodeURIComponent(taskId),{headers:facultyAuthHeaders()});
     const trows=await res.json();
     if(!Array.isArray(trows)||!trows.length){ subEl.textContent='Task not found.'; return; }
     const task=trows[0];
@@ -12748,7 +13144,7 @@ async function openTaskDetailsPage(taskId){
       // identical combined record, never two separately-derived versions
       // that can silently disagree (e.g. one including an organic
       // contributor attempt the other's calculation missed).
-      fetch(SUPABASE_URL+'/rest/v1/tasks?select=*&archived=eq.false',{headers:facultyAuthHeaders()}),
+      fetch(SUPABASE_URL+'/rest/v1/tasks?select=id,target_type,student_id,student_ids,section,metric,target_count,min_accuracy,created_at,category_ids,mode,label,note,deadline,duration_days,duration_hours,counts_toward_leaderboard,archived&archived=eq.false',{headers:facultyAuthHeaders()}),
       fetch(SUPABASE_URL+'/rest/v1/task_completions?select=task_id,user_id',{headers:facultyAuthHeaders()})
     ]);
     const allTasksRows=await allTasksRes.json().catch(()=>[]);
@@ -12879,9 +13275,32 @@ function openTaskStudentAttempts(profileId){
   document.getElementById('task-student-attempts-sub').textContent=`${row.attempts.length} attempt${row.attempts.length!==1?'s':''} counted toward "${taskDetailsCache.task.label||'this task'}" so far (task not yet completed). Click Review to see every question, the student's answer, and whether it was correct.`;
   const sorted=[...row.attempts].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   annotateAttemptOrdinals(sorted);
-  sorted.forEach(a=>{
-    listEl.appendChild(buildFacultyAttemptRow(a, { showUsername:false }));
-  });
+  // PAGINATION: render 10 at a time with a "Load More" button, same pattern
+  // as the student-facing Past Attempts screen. Each row only needs light
+  // columns to display (score/percent/date/etc — see buildFacultyAttemptRow);
+  // clicking "Review" still fetches that one attempt's questions_json/
+  // answers_json on demand via reviewPastAttempt, so this purely limits how
+  // many DOM rows get built at once and costs no extra egress either way.
+  const TASK_ATTEMPTS_PAGE_SIZE=10;
+  let taskAttemptsRendered=0;
+  const loadMoreBar=document.createElement('div');
+  loadMoreBar.style.cssText='display:flex;justify-content:center;margin-top:1rem;';
+  function renderNextTaskAttemptsPage(){
+    const nextSlice=sorted.slice(taskAttemptsRendered, taskAttemptsRendered+TASK_ATTEMPTS_PAGE_SIZE);
+    nextSlice.forEach(a=>{ listEl.appendChild(buildFacultyAttemptRow(a, { showUsername:false })); });
+    taskAttemptsRendered+=nextSlice.length;
+    loadMoreBar.innerHTML='';
+    if(taskAttemptsRendered<sorted.length){
+      const remaining=sorted.length-taskAttemptsRendered;
+      const btn=document.createElement('button');
+      btn.textContent=`Load ${Math.min(TASK_ATTEMPTS_PAGE_SIZE,remaining)} More (${remaining} left)`;
+      btn.style.cssText='padding:.6rem 1.2rem;background:#fff;border:2px solid var(--border);border-radius:10px;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer;';
+      btn.onclick=renderNextTaskAttemptsPage;
+      loadMoreBar.appendChild(btn);
+    }
+  }
+  renderNextTaskAttemptsPage();
+  listEl.appendChild(loadMoreBar);
 }
 // Faculty-side equivalent of reviewMergedTaskAttempt — reuses the same
 // in-memory render path but flags viewingAsFaculty so the results screen
@@ -12917,6 +13336,22 @@ function reviewMergedTaskAttemptAsFaculty(mergedRow){
 // preview card and the full Tasks page. Also silently writes a completion
 // row (task_completions) the first time a task is detected as met, so "who
 // completed it" is a permanent record from that point on.
+// Short cache for just the STUDENT'S OWN TASKS LIST (the "which assignments
+// apply to me" query) — this rarely changes within a session, unlike
+// attempts/completions which change every time the student submits
+// something. Deliberately NOT caching attempts or task_completions: those
+// must always be fetched fresh so completion-detection/bonus-awarding below
+// (which runs on every single call, including right after a student submits
+// an answer) always sees the student's very latest action. Caching only the
+// task list itself means a teacher's brand-new assignment can take up to
+// this TTL to appear — acceptable per explicit instruction ("once it's
+// loaded on student side it will be fine"). Invalidated automatically by
+// the TTL; also cleared by invalidateMyTasksListCache() after any
+// student-visible task list changes (e.g. faculty realtime push, if wired).
+let myTasksListCache=null; // {tasks, fetchedAt}
+const MY_TASKS_LIST_CACHE_TTL_MS=120000; // 2 minutes
+function invalidateMyTasksListCache(){ myTasksListCache=null; }
+
 async function fetchMyTasksData(){
   // Fetch all four target-type variants: class-wide is unconditional;
   // student/students/section are narrowed server-side where Postgrest can
@@ -12928,28 +13363,35 @@ async function fetchMyTasksData(){
   // mock_reports.section if their profile row was never backfilled with a
   // section. Without this fallback, section-wise tasks silently never
   // reached students whose section only ever lived on their mock report.
-  const {data:myProfile}=await sb.from('profiles').select('section').eq('id',currentUser.id).single();
-  let mySection=myProfile&&myProfile.section?myProfile.section:null;
-  if(!mySection){
-    try{
-      const {data:myMockReport}=await sb.from('mock_reports').select('section').eq('user_id',currentUser.id).not('section','is',null).limit(1).maybeSingle();
-      if(myMockReport&&myMockReport.section) mySection=myMockReport.section;
-    }catch(e){ /* no linked mock report — mySection stays null, task just won't apply */ }
+  let tasks;
+  const nowTs=Date.now();
+  if(myTasksListCache && (nowTs-myTasksListCache.fetchedAt)<MY_TASKS_LIST_CACHE_TTL_MS){
+    tasks=myTasksListCache.tasks;
+  }else{
+    const {data:myProfile}=await sb.from('profiles').select('section').eq('id',currentUser.id).single();
+    let mySection=myProfile&&myProfile.section?myProfile.section:null;
+    if(!mySection){
+      try{
+        const {data:myMockReport}=await sb.from('mock_reports').select('section').eq('user_id',currentUser.id).not('section','is',null).limit(1).maybeSingle();
+        if(myMockReport&&myMockReport.section) mySection=myMockReport.section;
+      }catch(e){ /* no linked mock report — mySection stays null, task just won't apply */ }
+    }
+    const orParts=[`target_type.eq.class`, `student_id.eq.${currentUser.id}`, `student_ids.cs.{${currentUser.id}}`];
+    if(mySection) orParts.push(`and(target_type.eq.section,section.eq.${mySection})`);
+    const {data:tasksRaw,error}=await sb.from('tasks').select('id,target_type,student_id,student_ids,section,metric,target_count,min_accuracy,created_at,category_ids,mode,label,note,deadline,duration_days,duration_hours,counts_toward_leaderboard,archived')
+      .eq('archived',false)
+      .or(orParts.join(','))
+      .order('deadline',{ascending:true});
+    if(error||!tasksRaw) return {tasks:[], myAttempts:[], completedTaskIds:new Set()};
+    // Belt-and-braces client-side filter using the same taskAppliesToStudent
+    // logic used everywhere else, in case the server-side .or() over-fetches
+    // (e.g. a student_ids/section column that doesn't exist yet on an older
+    // schema, or a section task from before this student had a section set).
+    const myProfileForFilter={id:currentUser.id, section:mySection};
+    tasks=tasksRaw.filter(t=>taskAppliesToStudent(t, myProfileForFilter));
+    myTasksListCache={tasks, fetchedAt:Date.now()};
   }
-  const orParts=[`target_type.eq.class`, `student_id.eq.${currentUser.id}`, `student_ids.cs.{${currentUser.id}}`];
-  if(mySection) orParts.push(`and(target_type.eq.section,section.eq.${mySection})`);
-  const {data:tasksRaw,error}=await sb.from('tasks').select('*')
-    .eq('archived',false)
-    .or(orParts.join(','))
-    .order('deadline',{ascending:true});
-  if(error||!tasksRaw) return {tasks:[], myAttempts:[], completedTaskIds:new Set()};
-  // Belt-and-braces client-side filter using the same taskAppliesToStudent
-  // logic used everywhere else, in case the server-side .or() over-fetches
-  // (e.g. a student_ids/section column that doesn't exist yet on an older
-  // schema, or a section task from before this student had a section set).
-  const myProfileForFilter={id:currentUser.id, section:mySection};
-  const tasks=tasksRaw.filter(t=>taskAppliesToStudent(t, myProfileForFilter));
-  if(error||!tasks) return {tasks:[], myAttempts:[], completedTaskIds:new Set()};
+  if(!tasks) return {tasks:[], myAttempts:[], completedTaskIds:new Set()};
   const {data:myAttempts,error:aErr}=await sb.from('attempts')
     .select('id,category,questions_attempted,percent,score_correct,score_total,task_id,created_at,mode,questions_json,answers_json,created_at')
     .eq('user_id',currentUser.id).eq('hidden_by_student',false).eq('hidden_by_teacher',false);
@@ -13469,6 +13911,12 @@ startTaskCountdownTicker();
 // list, never who hasn't (matching the requirement that missed/incomplete
 // students aren't named to classmates). Reuses the same milestone-achievers
 // modal shell as the rest of the app, showing usernames only.
+// Keyed 3-minute TTL cache, same pattern as milestoneAchieversCache above.
+// Safe: single call site (line ~13486) is a plain "See who completed it"
+// link opened from the task list — no mutation or realtime callback calls
+// this function, so no forceRefresh param is needed (verified via grep).
+let taskCompletersCache={}; // taskId -> {names, fetchedAt}
+const TASK_COMPLETERS_CACHE_TTL_MS=180000; // 3 minutes
 async function openTaskCompletersModal(taskId, taskLabel){
   const overlay=document.getElementById('milestone-achievers-modal-overlay');
   const loadingEl=document.getElementById('milestone-achievers-loading');
@@ -13480,14 +13928,22 @@ async function openTaskCompletersModal(taskId, taskLabel){
   listEl.innerHTML=''; emptyEl.style.display='none'; loadingEl.style.display='block';
   overlay.classList.add('open');
   try{
-    const {data:completions,error}=await sb.from('task_completions').select('user_id,created_at').eq('task_id',taskId);
-    if(error||!completions||!completions.length){ loadingEl.style.display='none'; emptyEl.style.display='block'; return; }
-    const ids=[...new Set(completions.map(c=>c.user_id))];
-    const {data:profiles}=await sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard').in('id',ids);
-    const visible=(profiles||[]).filter(p=>!p.hidden_from_leaderboard);
+    const now=Date.now();
+    const cached=taskCompletersCache[taskId];
+    let names;
+    if(cached && (now-cached.fetchedAt)<TASK_COMPLETERS_CACHE_TTL_MS){
+      names=cached.names;
+    } else {
+      const {data:completions,error}=await sb.from('task_completions').select('user_id,created_at').eq('task_id',taskId);
+      if(error||!completions||!completions.length){ loadingEl.style.display='none'; emptyEl.style.display='block'; taskCompletersCache[taskId]={names:[], fetchedAt:now}; return; }
+      const ids=[...new Set(completions.map(c=>c.user_id))];
+      const {data:profiles}=await sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard').in('id',ids);
+      const visible=(profiles||[]).filter(p=>!p.hidden_from_leaderboard);
+      names=visible.map(p=>p.full_name||p.username||'Student').sort((a,b)=>a.localeCompare(b));
+      taskCompletersCache[taskId]={names, fetchedAt:now};
+    }
     loadingEl.style.display='none';
-    if(!visible.length){ emptyEl.style.display='block'; return; }
-    const names=visible.map(p=>p.full_name||p.username||'Student').sort((a,b)=>a.localeCompare(b));
+    if(!names.length){ emptyEl.style.display='block'; return; }
     listEl.innerHTML=names.map(name=>`
       <div style="display:flex;align-items:center;gap:.7rem;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:9px;">
         <span style="font-size:.9rem;">✅</span>
@@ -13517,6 +13973,8 @@ async function refreshMyTasksBadge(){
 // ±1-level filtering and none of the hidden_from_leaderboard filtering —
 // the teacher sees literally every student who has ever saved an attempt.
 let facultyLeaderboardCache=[];
+let facultyLeaderboardCacheFetchedAt=0;
+const FACULTY_LEADERBOARD_CACHE_TTL_MS=180000; // 3 min — flagging this TTL choice for review
 function openFacultyLeaderboardScreen(){
   if(!requireFacultyKey()) return;
   showScreen('faculty-leaderboard-screen');
@@ -13767,35 +14225,46 @@ async function backfillLeaderboardScores(){
 
 async function loadFacultyLeaderboardData(){
   const sub=document.getElementById('faculty-lb-sub');
+  if(facultyLeaderboardCache.length && (Date.now()-facultyLeaderboardCacheFetchedAt)<FACULTY_LEADERBOARD_CACHE_TTL_MS){
+    renderFacultyLeaderboard();
+    return;
+  }
   sub.textContent='Loading…';
   try{
-    const {profiles, attempts}=await getFacultyProfilesAndAttempts();
-    const liveAttempts=attempts.filter(a=>!a.hidden_by_student&&!a.hidden_by_teacher);
-    const attemptsByUser={};
-    liveAttempts.forEach(a=>{ (attemptsByUser[a.user_id]=attemptsByUser[a.user_id]||[]).push(a); });
-    // Same task-completion top-up as the student-facing Mastery Board (see
-    // computeTaskMasteryTopupQuestionIds) — teacher and student views must
-    // always agree. Fails open to "no top-ups" on an older schema.
-    let allTasks=[], completionsByUser={};
-    try{
-      const tasksRes=await fetch(SUPABASE_URL+'/rest/v1/tasks?select=id,counts_toward_leaderboard,min_accuracy,category_ids,mode,created_at,target_count&archived=eq.false',{headers:facultyAuthHeaders()});
-      if(tasksRes.ok){ const rows=await tasksRes.json(); if(Array.isArray(rows)) allTasks=rows; }
-      const compRes=await fetch(SUPABASE_URL+'/rest/v1/task_completions?select=task_id,user_id',{headers:facultyAuthHeaders()});
-      if(compRes.ok){
-        const compRows=await compRes.json();
-        if(Array.isArray(compRows)) compRows.forEach(c=>{ (completionsByUser[c.user_id]=completionsByUser[c.user_id]||new Set()).add(c.task_id); });
-      }
-    }catch(_){}
+    // IMPORTANT: this now reads the SAME leaderboard_scores table the
+    // student-facing leaderboard reads (see loadLeaderboardData), instead of
+    // independently recomputing mastery from raw attempts. Two separate
+    // implementations of the same score can silently drift apart if the
+    // scoring formula is ever changed in only one place — reading one
+    // shared source guarantees faculty and student always show the same
+    // number for the same student. It also avoids re-pulling every
+    // student's full questions_json/answers_json just to render this
+    // screen (that heavy data is only needed by the OTHER faculty screens
+    // that still call getFacultyProfilesAndAttempts()).
+    // If a student hasn't been backfilled into leaderboard_scores yet, use
+    // backfillLeaderboardScores() (Faculty > Leaderboard > "Fix missing
+    // scores") to populate it — see comment above that function.
+    const [profRes, scoresRes]=await Promise.all([
+      fetch(SUPABASE_URL+'/rest/v1/profiles?select='+FACULTY_PROFILES_SELECT,{headers:facultyAuthHeaders()}),
+      fetch(SUPABASE_URL+'/rest/v1/leaderboard_scores?select=user_id,mastery,attempted_count',{headers:facultyAuthHeaders()})
+    ]);
+    const profiles=await profRes.json().catch(()=>null);
+    const scores=await scoresRes.json().catch(()=>null);
+    if(!Array.isArray(profiles)||!Array.isArray(scores)){
+      throw new Error('Could not load faculty leaderboard — check your service_role key.');
+    }
+    const scoreByUser={};
+    scores.forEach(s=>{ scoreByUser[s.user_id]=s; });
 
     facultyLeaderboardCache=profiles.map(p=>{
-      const rows=attemptsByUser[p.id]||[];
-      const myCompletedTaskIds=completionsByUser[p.id]||new Set();
-      const topupQuestionIds=computeTaskMasteryTopupQuestionIds(allTasks, rows, myCompletedTaskIds);
-      const {mastery,attemptedCount}=rows.length?computeMasteryFromAttempts(rows, topupQuestionIds):{mastery:0,attemptedCount:0};
+      const s=scoreByUser[p.id];
+      const mastery=s?s.mastery:0;
+      const attemptedCount=s?s.attempted_count:0;
       const looksLikeGmail=/@gmail\.com$/i.test(p.username||'');
       const displayName=(looksLikeGmail && p.full_name) ? p.full_name : (p.full_name||p.username||'Student');
       return { userId:p.id, displayName, mastery, level:masteryToLevel(mastery), attemptCount:attemptedCount };
     }).filter(s=>s.attemptCount>0);
+    facultyLeaderboardCacheFetchedAt=Date.now();
 
     renderFacultyLeaderboard();
   }catch(e){ sub.textContent='Could not load — network error.'; }
@@ -13855,14 +14324,20 @@ function renderFacultyLeaderboard(){
 // — sum, per group, of each member's own unique-questions-currently-correct
 // count), but every group is shown, not filtered, with full member breakdowns.
 let facultyGroupsCache=[];
+let facultyGroupsCacheFetchedAt=0;
+const FACULTY_GROUPS_CACHE_TTL_MS=180000; // 3 min — flagging this TTL choice for review
 function openFacultyGroupsScreen(){
   if(!requireFacultyKey()) return;
   showScreen('faculty-groups-screen');
   document.getElementById('faculty-groups-search').value='';
   loadFacultyGroupsData();
 }
-async function loadFacultyGroupsData(){
+async function loadFacultyGroupsData(forceRefresh){
   const sub=document.getElementById('faculty-groups-sub');
+  if(!forceRefresh && facultyGroupsCache.length && (Date.now()-facultyGroupsCacheFetchedAt)<FACULTY_GROUPS_CACHE_TTL_MS){
+    renderFacultyGroups();
+    return;
+  }
   sub.textContent='Loading…';
   try{
     const [groupsRes, membersRes, cached]=await Promise.all([
@@ -13894,6 +14369,7 @@ async function loadFacultyGroupsData(){
       const totalScore=memberRows.reduce((s,m)=>s+m.correct,0);
       return { id:g.id, name:g.name, locked:g.locked, lockRequested:!!g.lock_requested, lockRequestedByName:g.lock_requested_by?(nameById[g.lock_requested_by]||'A member'):null, founderName:nameById[g.founder_id]||'Unknown', memberRows, totalScore, memberCount:rows.length };
     }).sort((a,b)=>b.totalScore-a.totalScore);
+    facultyGroupsCacheFetchedAt=Date.now();
 
     renderFacultyGroups();
   }catch(e){ sub.textContent='Could not load — network error.'; }
@@ -13964,7 +14440,7 @@ async function facultyDeleteGroup(groupId,groupName){
     await fetch(SUPABASE_URL+'/rest/v1/group_members?group_id=eq.'+groupId,{method:'DELETE',headers:facultyAuthHeaders()});
     const res=await fetch(SUPABASE_URL+'/rest/v1/groups?id=eq.'+groupId,{method:'DELETE',headers:facultyAuthHeaders()});
     if(!res.ok){ alert('Could not delete the group — try again.'); return; }
-    await loadFacultyGroupsData();
+    await loadFacultyGroupsData(true);
   }catch(e){ alert('Network error deleting the group.'); }
 }
 async function facultyRemoveGroupMember(groupId,memberRowId,memberName){
@@ -13973,7 +14449,7 @@ async function facultyRemoveGroupMember(groupId,memberRowId,memberName){
   try{
     const res=await fetch(SUPABASE_URL+'/rest/v1/group_members?id=eq.'+memberRowId,{method:'DELETE',headers:facultyAuthHeaders()});
     if(!res.ok){ alert('Could not remove the member — try again.'); return; }
-    await loadFacultyGroupsData();
+    await loadFacultyGroupsData(true);
   }catch(e){ alert('Network error removing the member.'); }
 }
 async function facultyConfirmGroupLock(groupId){
@@ -13995,7 +14471,7 @@ async function facultyConfirmGroupLock(groupId){
       headers:{...facultyAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({status:'expired'})
     });
-    await loadFacultyGroupsData();
+    await loadFacultyGroupsData(true);
   }catch(e){ alert('Network error confirming the lock: '+(e&&e.message?e.message:e)); }
 }
 async function facultyDenyGroupLock(groupId){
@@ -14012,7 +14488,7 @@ async function facultyDenyGroupLock(groupId){
       alert('Could not deny the lock request'+(detail?': '+detail:' — try again.'));
       return;
     }
-    await loadFacultyGroupsData();
+    await loadFacultyGroupsData(true);
   }catch(e){ alert('Network error denying the lock request: '+(e&&e.message?e.message:e)); }
 }
 
@@ -14022,6 +14498,8 @@ async function facultyDenyGroupLock(groupId){
 // a winner). Same battles table the student Battle Hub reads, just with no
 // per-student filtering.
 let facultyBattlesCache=[];
+let facultyBattlesCacheFetchedAt=0;
+const FACULTY_BATTLES_CACHE_TTL_MS=180000; // 3 min — same TTL as facultyLeaderboardCache/facultyGroupsCache
 function openFacultyBattlesScreen(){
   if(!requireFacultyKey()) return;
   showScreen('faculty-battles-screen');
@@ -14030,10 +14508,20 @@ function openFacultyBattlesScreen(){
 }
 async function loadFacultyBattlesData(){
   const sub=document.getElementById('faculty-battles-sub');
+  // NOTE: no forceRefresh param here (unlike loadFacultyGroupsData) — verified
+  // every mutation on this screen (facultyCancelBattle, facultyDismissBattle)
+  // already patches facultyBattlesCache in memory + re-renders instead of
+  // calling this function, so there is no call site that needs a guaranteed
+  // fresh fetch. Both actual callers (openFacultyBattlesScreen,
+  // goHomeFromResults' "back to faculty battles list") are plain screen-opens.
+  if(facultyBattlesCache.length && (Date.now()-facultyBattlesCacheFetchedAt)<FACULTY_BATTLES_CACHE_TTL_MS){
+    renderFacultyBattles();
+    return;
+  }
   sub.textContent='Loading…';
   try{
     const [battlesRes, cached]=await Promise.all([
-      fetch(SUPABASE_URL+'/rest/v1/battles?select=*&order=created_at.desc',{headers:facultyAuthHeaders()}),
+      fetch(SUPABASE_URL+'/rest/v1/battles?select=id,status,player1_id,player2_id,player1_score,player2_score,player1_answers_json,player2_answers_json,category_name,created_at,cancelled_seen_by_faculty,player1_done_at,player2_done_at,question_ids,question_count,time_limit_seconds&order=created_at.desc',{headers:facultyAuthHeaders()}),
       getFacultyProfilesAndAttempts()
     ]);
     const battles=await battlesRes.json();
@@ -14048,6 +14536,7 @@ async function loadFacultyBattlesData(){
       player1Name: nameById[b.player1_id]||'Unknown',
       player2Name: b.player2_id ? (nameById[b.player2_id]||'Unknown') : null
     }));
+    facultyBattlesCacheFetchedAt=Date.now();
     renderFacultyBattles();
   }catch(e){ sub.textContent='Could not load — network error.'; }
 }
@@ -14243,9 +14732,15 @@ function openFacultyDashboard(){
   loadFacultyDashboard();
 }
 
+let dashboardRawRowsFetchedAt=0;
+const FACULTY_DASHBOARD_CACHE_TTL_MS=20000;
 async function loadFacultyDashboard(){
   const subEl=document.getElementById('faculty-dashboard-sub');
   const ringsEl=document.getElementById('faculty-dashboard-rings');
+  if(dashboardRawRows.length && (Date.now()-dashboardRawRowsFetchedAt)<FACULTY_DASHBOARD_CACHE_TTL_MS){
+    renderFacultyDashboard();
+    return;
+  }
   subEl.textContent='Loading attempts…';
   ringsEl.innerHTML='';
   try{
@@ -14253,6 +14748,7 @@ async function loadFacultyDashboard(){
     const rows=await res.json();
     if(!Array.isArray(rows)){ subEl.textContent='Could not load attempts. Check your service_role key.'; return; }
     dashboardRawRows=rows.filter(r=>!r.hidden_by_student);
+    dashboardRawRowsFetchedAt=Date.now();
     if(dashboardRawRows.length===0){ subEl.textContent='No attempts recorded yet.'; return; }
     const sel=document.getElementById('dashboard-student-filter');
     const prevVal=sel.value;
@@ -14691,6 +15187,7 @@ async function facultyDeleteUser(userId, username, cardEl){
         const {deleted,failed}=await facultyDeleteAttemptsForUsers([userId]);
         attemptsNote = failed ? ' (could not delete their attempt records)' : ' (their attempt records were also deleted)';
       }
+      invalidateFacultyAdminUsersCache();
       cardEl.style.opacity='0.4';
       cardEl.querySelector('div div').textContent+=' (deleted)'+attemptsNote;
       cardEl.querySelectorAll('button').forEach(b=>b.disabled=true);
@@ -14810,7 +15307,7 @@ async function loadFacultyUsernameRequests(){
   subEl.textContent='Loading requests…';
   listEl.innerHTML='';
   try{
-    const res=await fetch(SUPABASE_URL+'/rest/v1/username_change_requests?select=*&status=eq.pending&order=created_at.asc',{headers:facultyAuthHeaders()});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/username_change_requests?select=id,user_id,current_username,requested_username,created_at&status=eq.pending&order=created_at.asc',{headers:facultyAuthHeaders()});
     const rows=await res.json();
     if(!Array.isArray(rows)){ subEl.textContent='Could not load requests. Check your service_role key.'; updateUnameReqBadge(0); return; }
     updateUnameReqBadge(rows.length);
@@ -14961,6 +15458,7 @@ async function approveLinkAccount(req, cardEl, shellUserId){
       linkBtn.disabled=false; linkBtn.textContent='🔗 Approve & Link Account';
       return;
     }
+    invalidateFacultyAdminUsersCache();
 
     // 2) Now the gmail is free — rename the student's real account onto it.
     await performUsernameRename(req.user_id, req.requested_username);
@@ -15057,13 +15555,105 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(window.refreshUnameReqBadgeNow, 15000);
 });
 
-// Keep feature-block state fresh in the background: catches auto-timer
-// expiry (a feature unblocking itself) and a teacher blocking/unblocking
-// something while a student is already mid-session, without requiring the
-// student to navigate anywhere. Every 2 minutes is frequent enough to feel
-// live without hammering Supabase. Only runs once currentUser exists —
-// no point polling before login.
-setInterval(()=>{ if(currentUser) refreshAndApplyFeatureBlocks(); }, 120000);
+// ══════════════════════════════════════════════════════════
+// VERSION BANNER — timestamp model. Nothing to edit in this file, ever.
+// platform_maintenance.app_version now holds an ISO timestamp, written
+// only when the teacher clicks "Announce New Version" in Faculty Mode.
+// Each page compares that timestamp against its OWN load time (captured
+// below). If the announcement happened after this page loaded, the
+// student is on an old build → show the banner. Dismiss is sticky per
+// announcement (localStorage), so it never reappears for that same
+// deploy — only a NEW announcement (newer timestamp) will show it again.
+// ══════════════════════════════════════════════════════════
+const PAGE_LOAD_TIME = new Date().toISOString();
+const VERSION_DISMISS_KEY = 'dismissedVersionAnnouncement';
+// Local testing mode: when this file is opened directly in the browser
+// (file://...) instead of served from Netlify, "reload" would just re-open
+// the same local file — there's no deploy to fetch, so the banner is
+// meaningless here. Skip it entirely in this mode.
+const IS_LOCAL_FILE_MODE = (location.protocol === 'file:');
+
+// Have we already force-kicked the student once for the CURRENT active
+// force_kick_practice flip? Prevents re-showing the modal every poll tick
+// while the flag stays on, and resets automatically once the teacher turns
+// it back off (see combinedBackgroundPoll below).
+let forceKickAcknowledgedForThisFlip = false;
+
+// Shows the "reload — new version" banner. Never auto-reloads, never
+// blocks anything underneath it, safe mid-quiz. Only fires when the
+// teacher's last announcement happened AFTER this page was loaded, and
+// only if the student hasn't already dismissed THIS SAME announcement.
+function maybeShowVersionBanner(remoteAnnouncedAt){
+  if(IS_LOCAL_FILE_MODE) return; // never show while testing a local file
+  if(!remoteAnnouncedAt) return;
+  if(new Date(remoteAnnouncedAt) <= new Date(PAGE_LOAD_TIME)) return;
+  if(localStorage.getItem(VERSION_DISMISS_KEY) === String(remoteAnnouncedAt)) return;
+  const el=document.getElementById('new-version-banner');
+  if(el){
+    el.style.display='flex';
+    el.dataset.announcedAt = remoteAnnouncedAt;
+  }
+}
+
+// Dismiss actually sticks now: remembers the exact announcement timestamp
+// so this same deploy never nags this student again. A later, newer
+// announcement will still show (different timestamp = not a match).
+function dismissVersionBanner(){
+  const el=document.getElementById('new-version-banner');
+  const announcedAt = el && el.dataset.announcedAt;
+  if(announcedAt) localStorage.setItem(VERSION_DISMISS_KEY, announcedAt);
+  if(el) el.style.display='none';
+}
+
+// Called by the quiz timer tick (no extra network request — just checks
+// in-memory state already refreshed by the background poll below) to
+// decide whether an emergency force-kick should interrupt an active
+// Practice/Quiz/Test session right now.
+function checkForceKickDuringSession(){
+  if(!window.__forceKickPracticeActive) return;
+  if(forceKickAcknowledgedForThisFlip) return;
+  forceKickAcknowledgedForThisFlip = true;
+  try{ if(typeof autosaveLiveAttempt==='function') autosaveLiveAttempt(); }catch(e){}
+  try{ clearInterval(timerInterval); }catch(e){}
+  const overlay=document.getElementById('force-kick-overlay');
+  if(overlay) overlay.style.display='flex';
+}
+
+// Runs when the student dismisses the force-kick modal — routes them home
+// safely, same landing spot as any normal session exit.
+function acknowledgeForceKick(){
+  const overlay=document.getElementById('force-kick-overlay');
+  if(overlay) overlay.style.display='none';
+  try{ showScreen('home-screen'); }catch(e){ location.reload(); }
+}
+
+// Single combined background poll: refreshes feature-block state (existing
+// behaviour, unchanged) AND reads platform_maintenance once in the same
+// tick for app_version + force_kick_practice — piggybacking onto a query
+// this app already had scheduled, so this adds ZERO extra Supabase
+// requests over what already existed, just slightly more selected columns
+// on an existing lightweight call. 45s feels responsive without meaningfully
+// increasing egress on the free tier (single small row, no join, no auth
+// admin calls).
+async function combinedBackgroundPoll(){
+  if(!currentUser) return;
+  await refreshAndApplyFeatureBlocks();
+  try{
+    const {data,error}=await sb.from('platform_maintenance').select('app_version,force_kick_practice').eq('id',1).maybeSingle();
+    if(!error && data){
+      maybeShowVersionBanner(data.app_version);
+      const active=!!data.force_kick_practice;
+      window.__forceKickPracticeActive = active;
+      if(!active) forceKickAcknowledgedForThisFlip = false; // reset for the next time it's flipped on
+      // If a student is mid-session right now (quiz screen visible, timer
+      // running), interrupt immediately rather than waiting for the next
+      // per-second timer tick's check — belt-and-suspenders, still costs
+      // no extra request since it reuses the state we just fetched.
+      if(active) checkForceKickDuringSession();
+    }
+  }catch(e){ /* fail open — never let this check itself break the app */ }
+}
+setInterval(combinedBackgroundPoll, 45000);
 
 
 // ── STUDENT: SELF-SERVICE PASSWORD CHANGE (no approval needed) ───────────
@@ -15273,8 +15863,13 @@ async function handleLogin(){
 // screen will also flip the DB row to match — this just avoids locking a
 // student out on a technicality if the teacher hasn't reopened that screen).
 async function checkMaintenanceLockout(userId){
-  const {data,error}=await sb.from('platform_maintenance').select('*').eq('id',1).maybeSingle();
+  const {data,error}=await sb.from('platform_maintenance').select('app_version,is_active,auto_off_at,exception_user_ids,notice_text').eq('id',1).maybeSingle();
   if(error||!data) return false; // table missing or unreachable — fail open
+  // Piggyback the version-banner check onto this existing read (app_version
+  // is included in the trimmed column list above) — costs nothing extra,
+  // but means a student sees the "reload" banner right at login instead of
+  // waiting for the first background poll.
+  try{ maybeShowVersionBanner(data.app_version); }catch(e){}
   if(!data.is_active) return false;
   if(data.auto_off_at && new Date(data.auto_off_at).getTime()<=Date.now()) return false;
   const exceptions=data.exception_user_ids||[];
@@ -15580,17 +16175,45 @@ function splitAttemptsForPastAttemptsDisplay(rawAttempts, tasksById, completedTa
     // organic attempts that also counted toward it (e.g. the student
     // practiced the same category on their own before/alongside using
     // "Start Task"), into one combined virtual row.
+    // NOTE: attemptCountsForTask/the completion check above only ever touch
+    // light columns (category, mode, created_at, task_id) — so everything up
+    // to this point works identically whether rawAttempts came from
+    // getMyAttempts() (full rows) or getMyAttemptsLight() (no JSON columns).
+    // The merge itself is the one part that needs actual question/answer
+    // content — deferred to a separate pass below (see
+    // hydrateAndMergeTaskRows) so this function can be called with light-only
+    // data and still correctly identify WHICH pieces need hydrating, without
+    // requiring the whole student history to already carry JSON.
     const organicContributors = normalRows.filter(a=>attemptCountsForTask(task, a) && !a.task_id);
     const allPieces=[...pieces, ...organicContributors];
     allPieces.sort((x,y)=>new Date(x.created_at)-new Date(y.created_at));
+    mergedTaskRows.push({ _pendingMerge:true, taskId, task, allPieces });
+  });
+  return {normalRows, mergedTaskRows};
+}
+
+// Takes the {_pendingMerge:true,...} placeholder rows produced above and
+// turns them into real merged-assignment rows, fetching questions_json/
+// answers_json ONLY for the specific attempt ids involved (getAttemptsJsonByIds)
+// rather than requiring every one of the student's attempts to already carry
+// that payload. This is the only place in the light-data Past Attempts path
+// that pulls question/answer content, and it's bounded to just the pieces
+// that make up completed assignments — never the student's whole history.
+async function hydrateAndMergeTaskRows(pendingRows){
+  if(!pendingRows.length) return [];
+  const allIds=[];
+  pendingRows.forEach(r=>allIds.push(...r.allPieces.map(a=>a.id)));
+  const jsonById = allIds.length ? await getAttemptsJsonByIds([...new Set(allIds)]) : {};
+  return pendingRows.map(({taskId, task, allPieces})=>{
+    const hydratedPieces=allPieces.map(a=>({...a, ...(jsonById[a.id]||{questions_json:[],answers_json:{}})}));
     // Dedupe to only the questions actually ANSWERED across every piece --
     // a quit-mid-session piece's questions_json holds the full loaded set,
     // not just what was answered, so merging that in raw would pad the
     // combined review with unanswered/duplicate questions and inflate
     // totals past what the student really did (see mergeTaskPieceQuestions).
-    const {questions:allQuestions, answers:mergedAnswers, attemptedCount:totalAttempted}=mergeTaskPieceQuestions(allPieces);
+    const {questions:allQuestions, answers:mergedAnswers, attemptedCount:totalAttempted}=mergeTaskPieceQuestions(hydratedPieces);
     let totalCorrect=0, totalMarks=0, totalTime=0;
-    allPieces.forEach(a=>{
+    hydratedPieces.forEach(a=>{
       totalCorrect+=(a.score_correct||0);
       totalMarks+=(a.marks||0);
       totalTime+=(a.time_taken_seconds||0);
@@ -15603,20 +16226,13 @@ function splitAttemptsForPastAttemptsDisplay(rawAttempts, tasksById, completedTa
     const totalMarksAttempted=allQuestions.reduce((s,q)=>s+((q&&q.noMark)?0:((q&&q.marks)||2)),0);
     const scoreTotal=allQuestions.length;
     const pct=scoreTotal>0?Math.round((totalCorrect/scoreTotal)*100):0;
-    const latest=allPieces[allPieces.length-1];
-    mergedTaskRows.push({
+    const latest=hydratedPieces[hydratedPieces.length-1];
+    return {
       id:'task-merged-'+taskId,
       _isMergedTaskRow:true,
       _taskId:taskId,
-      _pieceIds:allPieces.map(a=>a.id),
+      _pieceIds:hydratedPieces.map(a=>a.id),
       mode: latest.mode,
-      // Per spec: every completed assignment lives together under one
-      // dedicated "Assignments" bucket in Past Attempts — NOT scattered as
-      // its own separate category card per task label (which is what this
-      // used to do: category:'📌 '+task.label created a new card for every
-      // single assignment, fragmenting them across the category list
-      // instead of grouping them). The task's own label is preserved on
-      // _taskLabel for display inside the row itself.
       category: 'Assignments',
       _taskLabel: task.label,
       questions_attempted: totalAttempted,
@@ -15631,9 +16247,8 @@ function splitAttemptsForPastAttemptsDisplay(rawAttempts, tasksById, completedTa
       answers_json: mergedAnswers,
       was_partial:false,
       task_id: taskId
-    });
+    };
   });
-  return {normalRows, mergedTaskRows};
 }
 // Fetches this student's tasks + which are completed, keyed by id, for use
 // by splitAttemptsForPastAttemptsDisplay. Reuses fetchMyTasksData's fields
@@ -15675,7 +16290,7 @@ async function loadMyTasksById(rawAttempts){
     const missingIds=[...referencedTaskIds].filter(id=>!tasksById[id]);
     if(missingIds.length){
       try{
-        const {data:extraTasks}=await sb.from('tasks').select('*').in('id', missingIds);
+        const {data:extraTasks}=await sb.from('tasks').select('id,target_type,student_id,student_ids,section,metric,target_count,min_accuracy,created_at,category_ids,mode,label,note,deadline,duration_days,duration_hours,counts_toward_leaderboard,archived').in('id', missingIds);
         if(Array.isArray(extraTasks)) extraTasks.forEach(t=>{ tasksById[t.id]=t; });
       }catch(e){ /* best-effort — if this fails, those specific merged rows just won't resolve, nothing else breaks */ }
     }
@@ -15709,9 +16324,15 @@ async function renderPastAttemptsCategoryList(){
     return;
   }
   try{
-    const rawAttempts=await getMyAttempts();
+    // Light fetch: everything needed for category counts, ordinals, and
+    // normal-row rendering, without pulling questions_json/answers_json for
+    // this student's entire history (see getMyAttemptsLight). Only the
+    // pieces that turn out to belong to a completed assignment get their
+    // JSON hydrated afterward, in hydrateAndMergeTaskRows.
+    const rawAttempts=await getMyAttemptsLight();
     const {tasksById, completedTaskIds}=await loadMyTasksById(rawAttempts);
-    const {normalRows, mergedTaskRows}=splitAttemptsForPastAttemptsDisplay(rawAttempts||[], tasksById, completedTaskIds);
+    const {normalRows, mergedTaskRows:pendingMergeRows}=splitAttemptsForPastAttemptsDisplay(rawAttempts||[], tasksById, completedTaskIds);
+    const mergedTaskRows=await hydrateAndMergeTaskRows(pendingMergeRows);
     myPastAttemptsCache={normalRows, mergedTaskRows};
     const data=[...normalRows, ...mergedTaskRows];
     loadingEl.style.display='none';
@@ -15817,9 +16438,11 @@ async function renderPastAttemptsCategoryDetail(){
   const listEl=document.getElementById('past-attempts-category-list');
   listEl.innerHTML='';
   if(!myPastAttemptsCache){
-    const rawAttempts=await getMyAttempts();
+    const rawAttempts=await getMyAttemptsLight();
     const {tasksById, completedTaskIds}=await loadMyTasksById(rawAttempts);
-    myPastAttemptsCache=splitAttemptsForPastAttemptsDisplay(rawAttempts||[], tasksById, completedTaskIds);
+    const {normalRows, mergedTaskRows:pendingMergeRows}=splitAttemptsForPastAttemptsDisplay(rawAttempts||[], tasksById, completedTaskIds);
+    const mergedTaskRows=await hydrateAndMergeTaskRows(pendingMergeRows);
+    myPastAttemptsCache={normalRows, mergedTaskRows};
   }
   const data=[...myPastAttemptsCache.normalRows, ...myPastAttemptsCache.mergedTaskRows]
     .filter(a=>(a.category||'Sample Mock')===categoryName)
@@ -15843,7 +16466,25 @@ async function renderPastAttemptsCategoryDetail(){
     seenPerCategoryMode[key]=(seenPerCategoryMode[key]||0)+1;
     attemptNumberById[a.id]=seenPerCategoryMode[key];
   });
-  data.forEach(a=>{
+
+  // PAGINATION: only render the 10 most recent rows up front, with a "Load
+  // More" button revealing 10 more at a time. `data` here already only
+  // contains light columns (no questions_json/answers_json — see
+  // getMyAttemptsLight above) and lives entirely in memory, so rendering
+  // more of it is not an extra network call and costs no additional egress;
+  // this purely limits how many DOM rows get built/painted at once. Reviewing
+  // any individual attempt still fetches its questions_json/answers_json
+  // on demand (see reviewPastAttempt), same as before.
+  const PAST_ATTEMPTS_PAGE_SIZE=10;
+  const rowsContainer=document.createElement('div');
+  rowsContainer.style.cssText='display:flex;flex-direction:column;gap:.7rem;';
+  listEl.appendChild(rowsContainer);
+  const loadMoreBar=document.createElement('div');
+  loadMoreBar.style.cssText='display:flex;justify-content:center;margin-top:1rem;';
+  listEl.appendChild(loadMoreBar);
+
+  let renderedCount=0;
+  function renderAttemptRow(a){
     const dt=new Date(a.created_at);
     const dateStr=dt.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
     const timeStr=dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
@@ -15903,8 +16544,23 @@ async function renderPastAttemptsCategoryDetail(){
     `;
     row.querySelector('.btn-ghost').onclick=()=> a._isMergedTaskRow ? reviewMergedTaskAttempt(a) : reviewPastAttempt(a.id);
     row.querySelector('.student-delete-btn').onclick=()=> a._isMergedTaskRow ? studentDeleteMergedTaskAttempt(a, row) : studentDeleteAttempt(a.id, row);
-    listEl.appendChild(row);
-  });
+    rowsContainer.appendChild(row);
+  }
+  function renderNextPage(){
+    const nextSlice=data.slice(renderedCount, renderedCount+PAST_ATTEMPTS_PAGE_SIZE);
+    nextSlice.forEach(renderAttemptRow);
+    renderedCount+=nextSlice.length;
+    loadMoreBar.innerHTML='';
+    if(renderedCount<data.length){
+      const remaining=data.length-renderedCount;
+      const btn=document.createElement('button');
+      btn.textContent=`Load ${Math.min(PAST_ATTEMPTS_PAGE_SIZE,remaining)} More (${remaining} left)`;
+      btn.style.cssText='padding:.6rem 1.2rem;background:#fff;border:2px solid var(--border);border-radius:10px;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer;';
+      btn.onclick=renderNextPage;
+      loadMoreBar.appendChild(btn);
+    }
+  }
+  renderNextPage();
 }
 
 // Student-side "delete": this only HIDES the attempt from the student's own
@@ -15984,9 +16640,14 @@ async function studentDeleteAttempt(attemptId, rowEl){
       rowEl.remove();
       myPastAttemptsCache=null;
       const listEl=document.getElementById('past-attempts-category-list');
-      // If only the "Delete All" bar remains (or the list is empty), go back
-      // to the category list since this category no longer has attempts.
-      if(listEl && listEl.children.length<=1){ await renderPastAttemptsCategoryList(); showScreen('past-attempts-screen'); }
+      // If no attempt rows remain (regardless of already-rendered pages),
+      // go back to the category list since this category no longer has
+      // attempts. Checks for actual .attempt-row elements specifically
+      // rather than listEl's own children, since listEl always has the
+      // "Delete All" bar + rows container + Load More bar as permanent
+      // wrapper elements now, even when zero attempts remain.
+      const stillHasRows = listEl && listEl.querySelectorAll('.attempt-row').length>0;
+      if(listEl && !stillHasRows){ await renderPastAttemptsCategoryList(); showScreen('past-attempts-screen'); }
     },400);
   }catch(err){
     alert('Network error while removing this attempt.');
@@ -16285,31 +16946,81 @@ function showNextMilestoneToast(){
 // Shared by the homepage milestones summary AND the standalone Milestones
 // page — fetches this student's attempts once and returns the full catalog
 // plus streak/earned info, so both callers agree on what's earned.
+// Shared 15-second TTL cache (matching getMyAttempts()'s window, since this
+// is built on top of it) + in-flight de-dupe. computeMilestoneStats() is
+// called multiple times on the same screen-load in practice (e.g.
+// loadHomeSnapshot() and loadMilestonesDashboard() both call it back-to-back
+// from the same batch at line ~15565/19930/etc), and it runs its own
+// task_completions + tasks queries every call with no cache of its own --
+// this was a real duplicated-fetch pattern, not just staleness-over-time.
+// No forceRefresh needed: checkMilestones() and queueTaskCompletionMilestone()
+// write to milestones_seen/task_completions but neither of them calls
+// computeMilestoneStats() afterward, so there's no read-after-write path that
+// needs to bypass the cache.
+// Shared 15-second TTL cache (matching getMyAttempts()'s window, since this
+// is built on top of it) + in-flight de-dupe — but ONLY for the
+// attempts-derived part (streak/category/milestone-progress math from
+// getMyAttempts()). The task_completions + tasks lookup below is
+// deliberately EXCLUDED from the cache and re-run on every call: per rule 3,
+// tasks reads must never gain caching/staleness, and this query filters on
+// tasks.archived, a live tasks-table field controlling whether a milestone
+// entry shows for a task the teacher just archived — caching that would
+// indirectly make a tasks-table read stale.
+// computeMilestoneStats() is called multiple times on the same screen-load
+// in practice (e.g. loadHomeSnapshot() and loadMilestonesDashboard() both
+// call it back-to-back from the same batch at line ~15565/19930/etc) — the
+// attempts-catalog part was a real duplicated-fetch pattern worth caching.
+// No forceRefresh needed on the cached part: checkMilestones() and
+// queueTaskCompletionMilestone() write to milestones_seen/task_completions
+// but neither of them calls computeMilestoneStats() afterward, so there's no
+// read-after-write path that needs to bypass the cache.
+let milestoneCatalogBaseCache=null; // {data, fetchedAt}
+let milestoneCatalogBaseCacheInflight=null;
+const MILESTONE_CATALOG_BASE_CACHE_TTL_MS=15000;
+async function computeMilestoneCatalogBase(){
+  const now=Date.now();
+  if(milestoneCatalogBaseCache && (now-milestoneCatalogBaseCache.fetchedAt)<MILESTONE_CATALOG_BASE_CACHE_TTL_MS){
+    return milestoneCatalogBaseCache.data;
+  }
+  if(milestoneCatalogBaseCacheInflight) return milestoneCatalogBaseCacheInflight;
+  milestoneCatalogBaseCacheInflight=(async()=>{
+    let data;
+    try{
+      const cached=await getMyAttempts(); // cache is newest-first; this function needs oldest-first
+      data=[...cached].reverse();
+    }catch(err){ return null; }
+    if(!data) return null;
+    const dateStrings=data.map(a=>{
+      const d=new Date(a.created_at);
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    });
+    const streak=computeStreakFromDates(dateStrings);
+    const byCategory={};
+    const seenIdsByCategory={};
+    data.forEach(a=>{
+      const cat=a.category||'Sample Mock';
+      if(cat==='🔁 Redo My Mistakes') return;
+      if(!byCategory[cat]) byCategory[cat]={sumPct:0,n:0,attempted:0};
+      byCategory[cat].sumPct+=(a.percent||0);
+      byCategory[cat].n+=1;
+      byCategory[cat].attempted+=(a.questions_attempted||0);
+      if(!seenIdsByCategory[cat]) seenIdsByCategory[cat]=new Set();
+      Object.keys(a.answers_json||{}).forEach(id=>seenIdsByCategory[cat].add(String(id)));
+    });
+    const catalog=buildMilestoneCatalog({streak, totalAttempts:data.length, byCategory, seenIdsByCategory});
+    return {catalog, totalAttempts:data.length};
+  })().finally(()=>{ milestoneCatalogBaseCacheInflight=null; });
+  const result=await milestoneCatalogBaseCacheInflight;
+  milestoneCatalogBaseCache={data:result, fetchedAt:Date.now()};
+  return result;
+}
 async function computeMilestoneStats(){
-  let data;
-  try{
-    const cached=await getMyAttempts(); // cache is newest-first; this function needs oldest-first
-    data=[...cached].reverse();
-  }catch(err){ return null; }
-  if(!data) return null;
-  const dateStrings=data.map(a=>{
-    const d=new Date(a.created_at);
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  });
-  const streak=computeStreakFromDates(dateStrings);
-  const byCategory={};
-  const seenIdsByCategory={};
-  data.forEach(a=>{
-    const cat=a.category||'Sample Mock';
-    if(cat==='🔁 Redo My Mistakes') return;
-    if(!byCategory[cat]) byCategory[cat]={sumPct:0,n:0,attempted:0};
-    byCategory[cat].sumPct+=(a.percent||0);
-    byCategory[cat].n+=1;
-    byCategory[cat].attempted+=(a.questions_attempted||0);
-    if(!seenIdsByCategory[cat]) seenIdsByCategory[cat]=new Set();
-    Object.keys(a.answers_json||{}).forEach(id=>seenIdsByCategory[cat].add(String(id)));
-  });
-  const catalog=buildMilestoneCatalog({streak, totalAttempts:data.length, byCategory, seenIdsByCategory});
+  const base=await computeMilestoneCatalogBase();
+  if(!base) return null;
+  // catalog is cloned (shallow array copy) before task-milestone entries are
+  // pushed onto it below, so those always-fresh task entries never get
+  // written into the cached base and leak into a later cached read.
+  const catalog=[...base.catalog];
   // Append one earned-milestone entry per completed task, so "completing
   // an assignment counts as a milestone" (per spec) shows up consistently
   // everywhere this catalog is consumed — the Milestones page's Earned
@@ -16346,7 +17057,7 @@ async function computeMilestoneStats(){
       }
     }catch(e){ /* best-effort — if this fails, task milestones just don't appear this load, nothing else breaks */ }
   }
-  return {catalog, totalAttempts:data.length};
+  return {catalog, totalAttempts:base.totalAttempts};
 }
 
 // Renders one "almost there" / "further out" progress card. withAchieversBtn
@@ -16504,6 +17215,16 @@ async function loadMilestonesPageDetail(){
 // by reading the same milestones_seen rows the fire-once toast logic writes
 // to, joined with profiles for display names. Respects leaderboard visibility
 // the same way the Leaderboard/Battle/Groups screens already do.
+// Achievers list is a "who else has earned this" view — a few minutes of
+// staleness is imperceptible to students, and no mutation call site calls
+// this function right after writing (milestones_seen inserts happen in
+// separate flows: checkMilestones()/queueTaskCompletionMilestone(), which
+// don't reopen this modal), so a plain per-key TTL is safe with no
+// forceRefresh param needed. Keyed by milestoneKey since each milestone's
+// achiever list is independent.
+let milestoneAchieversCache={}; // milestoneKey -> {rows, fetchedAt}
+const MILESTONE_ACHIEVERS_CACHE_TTL_MS=180000; // 3 minutes
+
 async function openMilestoneAchieversModal(milestoneKey, emoji, label){
   const overlay=document.getElementById('milestone-achievers-modal-overlay');
   const loadingEl=document.getElementById('milestone-achievers-loading');
@@ -16515,15 +17236,23 @@ async function openMilestoneAchieversModal(milestoneKey, emoji, label){
   listEl.innerHTML=''; emptyEl.style.display='none'; loadingEl.style.display='block';
   overlay.classList.add('open');
   try{
-    const {data:seenRows,error}=await sb.from('milestones_seen').select('user_id,created_at').eq('milestone_key',milestoneKey);
-    if(error||!seenRows||seenRows.length===0){ loadingEl.style.display='none'; emptyEl.style.display='block'; return; }
-    const userIds=[...new Set(seenRows.map(r=>r.user_id))];
-    const {data:profiles}=await sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard').in('id',userIds);
-    const profById={}; (profiles||[]).forEach(p=>{ profById[p.id]=p; });
-    const rows=seenRows
-      .filter(r=>{ const p=profById[r.user_id]; return p && !p.hidden_from_leaderboard; })
-      .map(r=>({ name:(profById[r.user_id].full_name||profById[r.user_id].username||'Student'), earnedAt:r.created_at }))
-      .sort((a,b)=>new Date(a.earnedAt)-new Date(b.earnedAt));
+    const now=Date.now();
+    const cached=milestoneAchieversCache[milestoneKey];
+    let rows;
+    if(cached && (now-cached.fetchedAt)<MILESTONE_ACHIEVERS_CACHE_TTL_MS){
+      rows=cached.rows;
+    } else {
+      const {data:seenRows,error}=await sb.from('milestones_seen').select('user_id,created_at').eq('milestone_key',milestoneKey);
+      if(error||!seenRows||seenRows.length===0){ loadingEl.style.display='none'; emptyEl.style.display='block'; milestoneAchieversCache[milestoneKey]={rows:[], fetchedAt:now}; return; }
+      const userIds=[...new Set(seenRows.map(r=>r.user_id))];
+      const {data:profiles}=await sb.from('profiles').select('id,username,full_name,hidden_from_leaderboard').in('id',userIds);
+      const profById={}; (profiles||[]).forEach(p=>{ profById[p.id]=p; });
+      rows=seenRows
+        .filter(r=>{ const p=profById[r.user_id]; return p && !p.hidden_from_leaderboard; })
+        .map(r=>({ name:(profById[r.user_id].full_name||profById[r.user_id].username||'Student'), earnedAt:r.created_at }))
+        .sort((a,b)=>new Date(a.earnedAt)-new Date(b.earnedAt));
+      milestoneAchieversCache[milestoneKey]={rows, fetchedAt:now};
+    }
     loadingEl.style.display='none';
     if(rows.length===0){ emptyEl.style.display='block'; return; }
     listEl.innerHTML=rows.map((r,i)=>`
@@ -16588,14 +17317,19 @@ async function loadMistakesBreakdown(){
     error=null;
   } else {
     try{
-      const res=await sb.from('attempts')
-        .select('questions_json,answers_json,created_at')
-        .eq('user_id', currentUser.id)
-        .eq('hidden_by_student', false)
-        .eq('hidden_by_teacher', false)
-        .order('created_at',{ascending:true}); // oldest first, so later duplicates overwrite with the freshest question snapshot
-      data=res.data; error=res.error;
-      if(!error && data) saveMistakesCache(data); // refresh the offline mirror on every successful online load
+      // Reuse the shared "my own attempts" cache (getMyAttempts()) instead of
+      // running a second, fully separate fetch against the same table with
+      // the same user_id/hidden_by_student/hidden_by_teacher filters --
+      // getMyAttempts() already selects questions_json, answers_json and
+      // created_at among its columns. getMyAttempts() is invalidated via
+      // invalidateMyAttemptsCache() at every write site (save/delete/sync),
+      // so this stays exactly as fresh as the old dedicated query while
+      // removing a redundant round-trip that fired on every login, every
+      // quiz submission, and every open of the mistakes page.
+      const rawAttempts=await getMyAttempts();
+      data=[...rawAttempts].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)); // oldest first, so later duplicates overwrite with the freshest question snapshot
+      error=null;
+      if(data) saveMistakesCache(data); // refresh the offline mirror on every successful online load
     }catch(e){ data=null; error=e; }
   }
   try{
@@ -17017,13 +17751,39 @@ function hashDateStr(s){
   return Math.abs(h);
 }
 
+// Question types the warm-up modal knows how to render, restricted further to
+// ones that are realistically solvable within the 1-minute warm-up window.
+// - mcq / checkbox / checkbox-any: always quick, single screen of options.
+// - true-false-table: quick as long as it's not a huge grid (cap rows).
+// - number-entry: only the short, non-calc-table ones (no multi-line workings).
+let warmupPool=null;
+function getWarmupPool(){
+  if(warmupPool) return warmupPool;
+  warmupPool=QUESTIONS.filter(q=>{
+    if(q.type==='mcq'||q.type==='checkbox'||q.type==='checkbox-any'){
+      return (q.text||'').length<=400;
+    }
+    if(q.type==='true-false-table'){
+      return Array.isArray(q.rows) && q.rows.length<=5 && (q.text||'').length<=400;
+    }
+    if(q.type==='number-entry'){
+      return !q.dataTable && !q.calc && (q.text||'').length<=260;
+    }
+    return false;
+  });
+  if(warmupPool.length===0) warmupPool=QUESTIONS.filter(q=>q.type==='mcq');
+  return warmupPool;
+}
+
 async function checkDailyWarmupStatus(){
   const wrap=document.getElementById('warmup-pill-wrap');
   if(!currentUser || shouldSkipNetwork()){ wrap.style.display='none'; return; }
   const today=todayDateStr();
-  // Pick today's question deterministically — no DB read needed for this part.
-  const idx=hashDateStr(today)%QUESTIONS.length;
-  warmupQuestion=QUESTIONS[idx];
+  // Pick today's question deterministically from the eligible pool — no DB
+  // read needed for this part.
+  const pool=getWarmupPool();
+  const idx=hashDateStr(today)%pool.length;
+  warmupQuestion=pool[idx];
   try{
     const {data,error}=await sb.from('daily_warmup_completions')
       .select('id').eq('user_id',currentUser.id).eq('warmup_date',today).maybeSingle();
@@ -17046,11 +17806,11 @@ async function checkDailyWarmupStatus(){
       text.textContent="Today's warm-up done — see you tomorrow!";
       if(hideBtn) hideBtn.style.display='block';
     }else{
-      pill.style.borderColor='#34d399';
-      pill.style.background='linear-gradient(135deg,#ecfdf5 0%,#fff 100%)';
-      pill.style.color='#065f46';
+      pill.style.borderColor='#fb923c';
+      pill.style.background='linear-gradient(135deg,#fff7ed 0%,#fff 100%)';
+      pill.style.color='#9a3412';
       emoji.textContent='⚡';
-      text.textContent="Today's warm-up waiting — 30 seconds";
+      text.textContent="Today's warm-up waiting — 1 minute";
       if(hideBtn) hideBtn.style.display='none';
     }
   }catch(e){ wrap.style.display='none'; }
@@ -17083,6 +17843,18 @@ function openDailyWarmup(){
     return;
   }
 
+  if(warmupQuestion.type==='true-false-table' && Array.isArray(warmupQuestion.rows)){
+    renderWarmupTable(warmupQuestion, optsList);
+    overlay.style.display='flex';
+    return;
+  }
+
+  if(warmupQuestion.type==='number-entry'){
+    renderWarmupNumberEntry(warmupQuestion, optsList);
+    overlay.style.display='flex';
+    return;
+  }
+
   const letters=['A','B','C','D','E','F'];
   const letterColors=['#6366f1','#f59e0b','#10b981','#ec4899','#06b6d4','#8b5cf6'];
   (warmupQuestion.options||[]).forEach((opt,i)=>{
@@ -17097,6 +17869,112 @@ function openDailyWarmup(){
   overlay.style.display='flex';
 }
 
+// Renders a true-false-table style warm-up question (e.g. "classify each
+// stakeholder / statement into one of N columns") as a compact table inside
+// the warm-up modal, reusing the same .tf-table/.tf-btn styling used by the
+// main quiz view so it looks consistent everywhere.
+function renderWarmupTable(q,optsList){
+  const isCustom=!!q.customOptions;
+  const opts=isCustom?q.customOptions:['True','False'];
+  const headers=isCustom?q.customHeaders:['Statement','True','False'];
+  const picks=new Array(q.rows.length).fill(null);
+
+  const wrap=document.createElement('div');
+  wrap.className='tf-table-wrap';
+  let html='<table class="tf-table"><thead><tr>';
+  headers.forEach(h=>html+=`<th>${escHTML(h)}</th>`);
+  html+='</tr></thead><tbody>';
+  q.rows.forEach((row,ri)=>{
+    html+=`<tr><td>${escHTML(row.statement)}</td>`;
+    opts.forEach(opt=>{
+      html+=`<td class="tf-choice"><button type="button" class="tf-btn" data-row="${ri}" data-opt="${escAttr(opt)}" title="${escAttr(opt)}"><span class="tf-dot"></span></button></td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+  optsList.appendChild(wrap);
+
+  const submitBtn=document.createElement('button');
+  submitBtn.className='btn btn-primary';
+  submitBtn.textContent='✔ Submit Answer';
+  submitBtn.style.cssText='margin-top:.9rem;';
+  optsList.appendChild(submitBtn);
+
+  wrap.querySelectorAll('.tf-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      const ri=Number(btn.dataset.row);
+      picks[ri]=btn.dataset.opt;
+      wrap.querySelectorAll(`.tf-btn[data-row="${ri}"]`).forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+  });
+
+  submitBtn.onclick=()=>{
+    const missing=picks.map((v,i)=>v===null?i+1:null).filter(v=>v!==null);
+    if(missing.length>0){ alert(`Rows unanswered: ${missing.join(', ')}`); return; }
+    submitDailyWarmupTable(picks,wrap,optsList,submitBtn);
+  };
+}
+
+function submitDailyWarmupTable(picks,wrap,optsList,submitBtn){
+  wrap.querySelectorAll('.tf-btn').forEach(b=>b.disabled=true);
+  submitBtn.disabled=true;
+
+  const q=warmupQuestion;
+  const correct=q.rows.every((r,i)=>picks[i]===r.correct);
+  q.rows.forEach((row,ri)=>{
+    wrap.querySelectorAll(`.tf-btn[data-row="${ri}"]`).forEach(b=>{
+      if(b.dataset.opt===row.correct) b.classList.add('correct');
+      else if(b.dataset.opt===picks[ri]) b.classList.add('wrong');
+    });
+  });
+
+  finishDailyWarmup(correct);
+}
+
+// Renders a short number-entry warm-up question: a single text input plus a
+// submit button, matching the style used for the main quiz's number-entry.
+function renderWarmupNumberEntry(q,optsList){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:center;gap:.5rem;';
+  if(q.prefix){
+    const pre=document.createElement('span');
+    pre.textContent=q.prefix;
+    pre.style.cssText='font-weight:700;color:var(--text);font-size:.95rem;';
+    row.appendChild(pre);
+  }
+  const input=document.createElement('input');
+  input.type='text';
+  input.inputMode='numeric';
+  input.placeholder='Enter amount';
+  input.style.cssText='flex:1;padding:.65rem .8rem;border:2px solid var(--border);border-radius:10px;font-size:.9rem;font-family:inherit;';
+  input.oninput=()=>{ input.value=input.value.replace(/[^0-9.]/g,''); };
+  row.appendChild(input);
+  optsList.appendChild(row);
+
+  const submitBtn=document.createElement('button');
+  submitBtn.className='btn btn-primary';
+  submitBtn.textContent='✔ Submit Answer';
+  submitBtn.style.cssText='margin-top:.9rem;';
+  optsList.appendChild(submitBtn);
+
+  submitBtn.onclick=()=>{
+    if(input.value.trim()===''){ alert('Enter an answer first.'); return; }
+    submitDailyWarmupNumber(input.value.trim(),input,submitBtn);
+  };
+}
+
+function submitDailyWarmupNumber(value,input,submitBtn){
+  input.disabled=true;
+  submitBtn.disabled=true;
+  const q=warmupQuestion;
+  const correct=String(value).replace(/,/g,'')===String(q.correct).replace(/,/g,'');
+  input.style.borderColor = correct ? '#22c55e' : '#ef4444';
+  input.style.background = correct ? '#f0fdf4' : '#fef2f2';
+  finishDailyWarmup(correct);
+}
+
 async function submitDailyWarmup(chosenIndex,btnEl,optsList){
   optsList.querySelectorAll('button').forEach(b=>b.disabled=true);
   const correct = warmupQuestion.correctSet
@@ -17106,6 +17984,12 @@ async function submitDailyWarmup(chosenIndex,btnEl,optsList){
   btnEl.style.background = correct ? 'linear-gradient(135deg,#f0fdf4,#fff)' : 'linear-gradient(135deg,#fef2f2,#fff)';
   btnEl.style.boxShadow = correct ? '0 0 0 3px rgba(34,197,94,.15)' : '0 0 0 3px rgba(239,68,68,.15)';
 
+  finishDailyWarmup(correct);
+}
+
+// Shared tail-end of submitting a warm-up answer (of any question type):
+// shows the result banner, records completion, and refreshes UI state.
+async function finishDailyWarmup(correct){
   const resultEl=document.getElementById('warmup-result');
   resultEl.style.display='block';
   resultEl.style.background = correct ? 'linear-gradient(135deg,#dcfce7,#f0fdf4)' : 'linear-gradient(135deg,#fee2e2,#fef2f2)';
@@ -17156,6 +18040,7 @@ const MY_ATTEMPTS_CACHE_TTL_MS=15000;
 
 function invalidateMyAttemptsCache(){
   myAttemptsCache=null;
+  invalidateMyAttemptsLightCache(); // same trigger conditions apply to both caches — see getMyAttemptsLight
 }
 
 async function getMyAttempts(){
@@ -17179,6 +18064,65 @@ async function getMyAttempts(){
     return myAttemptsCache.data;
   })();
   return myAttemptsCacheInflight;
+}
+
+// ── LIGHT (egress-friendly) version of getMyAttempts, for screens that only
+// need per-attempt SUMMARY numbers — category counts, ordinals ("3rd
+// attempt"), dates, percent/score — never the actual question/answer
+// content. Skips questions_json/answers_json entirely, which are almost
+// always the large majority of each row's payload once a student has any
+// meaningful history. Separate cache from myAttemptsCache (different TTL
+// key, different shape) so this never gets confused with the full-data
+// version other features (Redo My Mistakes, streaks, milestones, mastery)
+// still rely on and must keep receiving full rows from.
+// DO NOT read a.questions_json / a.answers_json off rows returned here —
+// they will always be undefined.
+let myAttemptsLightCache=null; // {data, fetchedAt}
+let myAttemptsLightCacheInflight=null;
+const MY_ATTEMPTS_LIGHT_CACHE_TTL_MS=15000;
+
+function invalidateMyAttemptsLightCache(){
+  myAttemptsLightCache=null;
+}
+
+async function getMyAttemptsLight(){
+  if(!currentUser) return [];
+  const now=Date.now();
+  if(myAttemptsLightCache && (now-myAttemptsLightCache.fetchedAt)<MY_ATTEMPTS_LIGHT_CACHE_TTL_MS){
+    return myAttemptsLightCache.data;
+  }
+  if(myAttemptsLightCacheInflight) return myAttemptsLightCacheInflight;
+
+  myAttemptsLightCacheInflight=(async()=>{
+    const {data,error}=await sb.from('attempts')
+      .select('id,mode,category,questions_attempted,score_correct,score_total,marks,marks_attempted,percent,time_taken_seconds,created_at,was_partial,task_id')
+      .eq('user_id', currentUser.id)
+      .eq('hidden_by_student', false)
+      .eq('hidden_by_teacher', false)
+      .order('created_at',{ascending:false});
+    myAttemptsLightCacheInflight=null;
+    if(error) throw error;
+    myAttemptsLightCache={data:data||[], fetchedAt:Date.now()};
+    return myAttemptsLightCache.data;
+  })();
+  return myAttemptsLightCacheInflight;
+}
+
+// Given a list of attempt ids, fetches ONLY questions_json/answers_json (plus
+// id, for matching) for exactly those rows — used to hydrate merged
+// assignment rows, which are the one part of Past Attempts that genuinely
+// needs question-level content for a bounded subset of attempts (the pieces
+// belonging to completed tasks), not the student's entire history.
+async function getAttemptsJsonByIds(ids){
+  if(!ids || !ids.length || !currentUser) return {};
+  const {data,error}=await sb.from('attempts')
+    .select('id,questions_json,answers_json')
+    .eq('user_id', currentUser.id)
+    .in('id', ids);
+  if(error || !Array.isArray(data)) return {};
+  const byId={};
+  data.forEach(r=>{ byId[r.id]={questions_json:r.questions_json, answers_json:r.answers_json}; });
+  return byId;
 }
 
 // --- Shared profiles+attempts cache -----------------------------------
@@ -18720,6 +19664,8 @@ function showLevelUpToast(newLevel){
 const BATTLE_QUESTION_COUNT = 10;
 let activeBattleId=null;        // set while the live quiz session IS a battle; null otherwise
 let battleHubCache=[];          // last-loaded list of all battles involving me
+let battleHubCacheFetchedAt=0;
+const BATTLE_HUB_CACHE_TTL_MS=180000; // 3 min — same TTL as facultyLeaderboardCache/facultyGroupsCache/facultyBattlesCache
 let battleRealtimeChannel=null;
 let viewingBattleResultId=null; // which battle the result screen is currently showing
 let viewingBattleReview=false; // true when results/review screens were opened from reviewBattleAttempt — controls back-nav in goHomeFromResults
@@ -19029,30 +19975,40 @@ async function finishBattleSession(){
     ? { player1_answers_json:answers, player1_score:correct, player1_done_at:new Date().toISOString() }
     : { player2_answers_json:answers, player2_score:correct, player2_done_at:new Date().toISOString() };
   try{
-    const {data:current}=await sb.from('battles').select('*').eq('id',battleId).maybeSingle();
+    const {data:current}=await sb.from('battles').select('player1_done_at,player2_done_at').eq('id',battleId).maybeSingle();
     if(current){
       const otherDone = slot===1 ? !!current.player2_done_at : !!current.player1_done_at;
       if(otherDone) updatePayload.status='complete';
     }
     const {data:updated,error}=await sb.from('battles').update(updatePayload).eq('id',battleId).select().single();
-    if(error||!updated){ showScreen('battle-hub-screen'); loadBattleHubData(); return; }
+    if(error||!updated){ showScreen('battle-hub-screen'); loadBattleHubData(true); return; }
     if(updated.status==='complete') showBattleResult(updated);
     else{
       showScreen('battle-hub-screen');
-      loadBattleHubData();
+      loadBattleHubData(true);
     }
   }catch(e){
     showScreen('battle-hub-screen');
-    loadBattleHubData();
+    loadBattleHubData(true);
   }
 }
 
 // ── BATTLE HUB: list of my battles, bucketed into incoming/outgoing/finished ──
-async function loadBattleHubData(){
+// forceRefresh=true bypasses the TTL cache — required for call sites that need
+// guaranteed-fresh data: finishBattleSession() (my own result was just written)
+// and the realtime-subscription callback (opponent's row just changed). Plain
+// screen-open call sites (openBattleHub, closeBattleResult, goHomeFromResults)
+// use the cached path.
+async function loadBattleHubData(forceRefresh){
   if(!currentUser) return;
+  if(!forceRefresh && battleHubCache.length && (Date.now()-battleHubCacheFetchedAt)<BATTLE_HUB_CACHE_TTL_MS){
+    renderBattleHub();
+    updateBattlePendingBadge();
+    return;
+  }
   try{
     const {data,error}=await sb.from('battles')
-      .select('*')
+      .select('id,status,player1_id,player2_id,player1_done_at,player2_done_at,cancelled_by_faculty,cancelled_seen_by_challenger,category_name,category_id,question_count,question_ids,time_limit_seconds,player1_score,player2_score,player1_answers_json,player2_answers_json,created_at')
       .or(`player1_id.eq.${currentUser.id},player2_id.eq.${currentUser.id}`)
       .order('created_at',{ascending:false});
     if(error){ return; }
@@ -19073,6 +20029,7 @@ async function loadBattleHubData(){
       const opponentId=b.player1_id===currentUser.id?b.player2_id:b.player1_id;
       return { ...b, opponentName: namesById[opponentId]||'a classmate' };
     });
+    battleHubCacheFetchedAt=Date.now();
     renderBattleHub();
     updateBattlePendingBadge();
   }catch(e){ /* non-fatal — hub just stays on last-known state */ }
@@ -19185,7 +20142,7 @@ async function acceptBattle(battleId){
   try{
     const {data:me}=await sb.from('profiles').select('blocked_from_battle').eq('id',currentUser.id).maybeSingle();
     if(me&&me.blocked_from_battle){ alert('Your teacher has blocked you from Battle Mode — you can\'t accept challenges right now.'); return; }
-    const {data,error}=await sb.from('battles').select('*').eq('id',battleId).maybeSingle();
+    const {data,error}=await sb.from('battles').select('id,question_ids,category_name,time_limit_seconds').eq('id',battleId).maybeSingle();
     if(error||!data) return;
     playBattle(data, 2);
   }catch(e){ /* non-fatal */ }
@@ -19353,7 +20310,7 @@ function subscribeBattleRealtime(){
       const row=(payload.new&&payload.new.id)?payload.new:payload.old;
       if(!row||!currentUser) return;
       if(row.player1_id!==currentUser.id && row.player2_id!==currentUser.id) return; // not my battle
-      if(document.getElementById('battle-hub-screen').classList.contains('active')) loadBattleHubData();
+      if(document.getElementById('battle-hub-screen').classList.contains('active')) loadBattleHubData(true);
       else refreshBattleBadgeOnly();
     })
     .subscribe();
@@ -19699,11 +20656,11 @@ async function reviewPastAttempt(attemptId, fromFaculty){
     if(asFaculty){
       if(!requireFacultyKey()) return;
       // Faculty Mode: use service_role key so RLS doesn't block reading another student's attempt.
-      const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=eq.'+encodeURIComponent(attemptId)+'&select=*',{headers:facultyAuthHeaders()});
+      const res=await fetch(SUPABASE_URL+'/rest/v1/attempts?id=eq.'+encodeURIComponent(attemptId)+'&select=questions_json,answers_json,mode,score_total,time_taken_seconds,category,hidden_by_teacher,created_at,was_partial,attempt_number',{headers:facultyAuthHeaders()});
       const rows=await res.json();
       if(!Array.isArray(rows)||rows.length===0){ error=true; } else { data=rows[0]; }
     } else {
-      const res=await sb.from('attempts').select('*').eq('id',attemptId).single();
+      const res=await sb.from('attempts').select('questions_json,answers_json,mode,score_total,time_taken_seconds,category,hidden_by_teacher,created_at,was_partial,attempt_number').eq('id',attemptId).single();
       data=res.data; error=res.error;
     }
     if(error||!data){ alert('Could not load that attempt.'); return; }
@@ -20661,6 +21618,7 @@ function startTimer(){
     if(secondsLeft<=300)wrap.classList.add('warning');
     if(secondsLeft<=60){wrap.classList.remove('warning');wrap.classList.add('danger')}
     if(secondsLeft%5===0) autosaveLiveAttempt(); // periodic snapshot, throttled to every 5s
+    checkForceKickDuringSession(); // in-memory check only, no network call — real state comes from combinedBackgroundPoll
     if(secondsLeft<=0){clearInterval(timerInterval);if(mode==='test')finalizeTestAnswers();showResults()}
   },1000);
 }
