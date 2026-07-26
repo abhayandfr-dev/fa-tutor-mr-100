@@ -717,7 +717,7 @@
      To turn this off before handing the file to students: change `true`
      to `false` below, save, then share/deploy that copy.
      ══════════════════════════════════════════════════════════════════════ -->
-<script>window.PUBLIC_TEST_MODE = false;</script>
+<script>window.PUBLIC_TEST_MODE = true;</script>
 
 <!-- AUTH OVERLAY -->
 <div id="authOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;box-sizing:border-box;">
@@ -12962,6 +12962,391 @@ const QUESTIONS = [
   marks:2,
   options:["All four items","1, 2 and 4 only","1 and 2 only","3 only"],
   correct:3, explanation:"A patent has no physical substance and provides future economic benefits; it is therefore an intangible non-current asset. Computer hardware is a tangible non-current asset as it is physical in substance and provides future economic benefits. Operating software that operates the computer hardware on first glance may appear to be an intangible non-current asset. However, since it is an integral part of the computer hardware (which could not function without it), it is classed as part of the computer hardware. A building extension has physical substance and provides future economic benefits and is therefore a tangible non-current asset.", calc:null
+},
+
+// ── Ch 6, 7 & 8 : study hub activities (ids 956-970) ─────────────────
+// Source: Ch_8_(1).docx study-hub activities, converted to objective
+// format following the Ch4&5/Ch1-3 "Study Hub Activities" house style
+// (noMark:true, descriptive activities rebuilt as mcq/true-false-table/
+// match-list/multi-part). Ids 969-970 are intentional duplicates of the
+// existing id 930 "Camp Co" question (Ch 8 : B-kit questions, position 6
+// of 12) — added anyway per explicit user instruction (cross-category
+// reinforcement), not missed/unflagged.
+// ═══════════════════════════════════════════════════════════
+// New questions for "Ch 6, 7 & 8 : study hub activities"
+// Source: Ch_8_(1).docx — 15 activities, converted to objective format
+// following the platform's existing Study Hub Activities house style.
+// IDs continue from current max (955) → starting at 956.
+// ═══════════════════════════════════════════════════════════
+
+{ id:956, type:"true-false-table", noMark:true,
+  text:"Classify the following items of expenditure as asset expenditure or expenses charged to profit or loss.",
+  req:"Classify the following items of expenditure as asset expenditure or expenses charged to profit or loss.",
+  marks:0,
+  customHeaders:["Item of expenditure","Asset expenditure","Expenses"],
+  customOptions:["Asset expenditure","Expenses"],
+  rows:[
+    {statement:"$27,000 on the purchase of a new car.", correct:"Asset expenditure"},
+    {statement:"$1,800 road tax incorporated in the car's purchase price above.", correct:"Expenses"},
+    {statement:"$10,000 on a second-hand delivery van.", correct:"Asset expenditure"},
+    {statement:"$12,000 on refurbishing the delivery van above.", correct:"Asset expenditure"},
+    {statement:"$1,000 monthly rental of a vehicle.", correct:"Expenses"}
+  ],
+  explanation:"The purchase of the car is asset expenditure. The road tax is an expense, as it is an annual running cost. The second-hand delivery van is asset expenditure — the fact that the asset acquired is second-hand is irrelevant. Refurbishing the van is asset expenditure, since refurbishment is the same as renovation and suggests the useful life of the existing asset is increased, so the expenditure may be incurred to bring the asset into use in the business. The monthly rental of a vehicle is an expense, as a rented asset is not owned and should not be classified as an asset.",
+  calc:null
+},
+
+{ id:957, type:"true-false-table", noMark:true,
+  text:"Rubin owns a business that sells office and computer equipment to corporate customers. His business operates from a warehouse and has a small fleet of delivery vehicles.\n\nDetermine whether the expenditure incurred by Rubin's business should be classified as an expense or asset expenditure.",
+  req:"Determine whether the expenditure incurred by Rubin's business should be classified as an expense or asset expenditure.",
+  marks:0,
+  customHeaders:["Item of expenditure","Asset expenditure","Expenses"],
+  customOptions:["Asset expenditure","Expenses"],
+  rows:[
+    {statement:"Rubin's business has bought some laptops and speakers from its suppliers, which will be sold to its customer.", correct:"Expenses"},
+    {statement:"Rubin's accountant prepares its financial statements. She ordered a photocopier to make copies of her paperwork.", correct:"Asset expenditure"},
+    {statement:"Rubin's business is expanding, and he has rented a new warehouse.", correct:"Expenses"},
+    {statement:"Rubin ensures that all the vehicles have valid insurance. Each time he orders a new vehicle, he insures it immediately.", correct:"Expenses"},
+    {statement:"Goods are delivered to customers using one of the business's delivery vehicles. On the way back to the warehouse, the driver crashes the side of the vehicle into the fence. The vehicle will need to be fixed to be used again.", correct:"Expenses"},
+    {statement:"Rubin's business orders a few new vehicles to keep up with customer orders.", correct:"Asset expenditure"}
+  ],
+  explanation:"The laptops and speakers are purchases made for goods to be resold, so this is an expense. The photocopier is asset expenditure. Rent payment is an expense. Insurance is a yearly running cost, so it is an expense. The repair to the crashed vehicle is an expense, as it is not a renovation and does not increase the useful life of the existing asset. Ordering new vehicles for the fleet is asset expenditure.",
+  calc:null
+},
+
+{ id:958, type:"match-list", noMark:true,
+  text:"Rhocat Co is in the business of manufacturing carpets. The management of Rhocat Co has decided to purchase and install a new carpet-weaving machine. As a result, Rhocat Co incurred several expenditures that need to be accounted for as part of the cost of the tangible non-current asset.\n\nMatch the item of expenditure on the left column to their corresponding description on the right.",
+  req:"Match the item of expenditure on the left column to their corresponding description on the right.",
+  marks:0,
+  leftHeader:"Item of expenditure", rightHeader:"Description",
+  pool:[
+    "This is the purchase cost of the asset, which is always included as part of the asset cost.",
+    "This allows the asset to be used for its intended purpose and is included as part of its cost.",
+    "This is not necessary for the asset's intended purpose so is not included as a cost of the asset.",
+    "Such costs need to be incurred prior to the machine being used but there is no guarantee that staff will remain with the business and hence this cannot be included as part of the cost of the asset."
+  ],
+  rows:[
+    {statement:"$150,000 to purchase the carpet-weaving machine.", correct:"This is the purchase cost of the asset, which is always included as part of the asset cost."},
+    {statement:"$5,000 to install and set up the machine prior to it being able to be used.", correct:"This allows the asset to be used for its intended purpose and is included as part of its cost."},
+    {statement:"$1,500 to insure the machine.", correct:"This is not necessary for the asset's intended purpose so is not included as a cost of the asset."},
+    {statement:"$500 on training the staff to use the machine prior to it being able to be used by the business.", correct:"Such costs need to be incurred prior to the machine being used but there is no guarantee that staff will remain with the business and hence this cannot be included as part of the cost of the asset."}
+  ],
+  explanation:"Under IAS 16, the cost of a tangible non-current asset includes its purchase price and any costs directly attributable to bringing it to the location and condition necessary for it to be capable of operating in the manner intended. The $150,000 purchase price and $5,000 installation cost are both included as part of the asset's cost. Insurance of $1,500 is not necessary for the asset's intended purpose, so it is not included as a cost of the asset. Staff training costs of $500 are not included in the cost of an asset either — this is because it is possible for trained staff to immediately leave their job, so the business does not benefit from the training.",
+  calc:null
+},
+
+{ id:959, type:"true-false-table", noMark:true,
+  text:"For each statement below, state whether they are True or False.",
+  req:"For each statement below, state whether they are True or False.",
+  marks:0,
+  rows:[
+    {statement:"A laptop that is used daily is a current asset.", correct:"False"},
+    {statement:"A machine used to create products is a tangible non-current asset.", correct:"True"},
+    {statement:"A software licence that allows a business to use specific software for a period of three years is a tangible non-current asset.", correct:"False"},
+    {statement:"A truck a business uses to deliver goods to its customers is a tangible non-current asset.", correct:"True"},
+    {statement:"Goods purchased by a business for resale to its customers are tangible non-current assets.", correct:"False"}
+  ],
+  explanation:"1. False — a laptop is not a current asset because it is not expected to be realised, sold or consumed in the business's normal operating cycle, for the purpose of trading, or realised by the business within twelve months. It is therefore a non-current asset, and since it can be touched, it is a tangible non-current asset. 2. True — a machine used to create products is a tangible non-current asset, and the business will use it for more than 12 months. 3. False — a software licence is an intangible non-current asset that cannot be touched but is used by the business for more than 12 months. 4. True — a delivery truck is tangible because it can be touched, and it is a non-current asset because a business will use it for more than 12 months. 5. False — goods purchased for resale is one of the criteria for an asset to be categorised as current.",
+  calc:null
+},
+
+{ id:960, type:"true-false-table", noMark:true,
+  text:"For the below statements, answer if they are True or False.",
+  req:"For the below statements, answer if they are True or False.",
+  marks:0,
+  rows:[
+    {statement:"Depreciation is a measure of the cost to the business of consuming the economic benefits associated with a tangible non-current asset for an accounting period.", correct:"True"},
+    {statement:"Depreciation measures how much the market value of a tangible non-current asset falls during an accounting period.", correct:"False"},
+    {statement:"All tangible non-current assets need to be depreciated.", correct:"False"}
+  ],
+  explanation:"1. True — the consumption of a tangible non-current asset is why depreciation is calculated. 2. False — market values are not relevant to depreciation. A tangible non-current asset is held for its use in the business and not for resale. 3. False — land owned by a business is never depreciated. This is because land is not consumed (unless it is a mine or a quarry, where its resource may be depleted).",
+  calc:null
+},
+
+{ id:961, type:"multi-part", noMark:true,
+  text:"What are the annual depreciation charges for each of the scenarios below, using the straight-line method?",
+  req:"What are the annual depreciation charges for each of the scenarios below, using the straight-line method?",
+  marks:0,
+  parts:[
+    {label:"(1) Tareq purchases a second-hand delivery vehicle for $15,000, which has an estimated useful life of three years and zero residual value. What is the annual depreciation charge?",subtype:"number",prefix:"$",correct:"5000",correctDisplay:"$5,000"},
+    {label:"(2) Tareq purchases a new mixing machine for $22,000. This has an estimated useful life of eight years and a residual value of $2,000. What is the annual depreciation charge?",subtype:"number",prefix:"$",correct:"2500",correctDisplay:"$2,500"},
+    {label:"(3) Tareq purchases new office furniture for $3,400. This has an estimated useful life of six years and a residual value of $340. What is the annual depreciation charge?",subtype:"number",prefix:"$",correct:"510",correctDisplay:"$510"},
+    {label:"(4) Tareq purchases a new printer for $2,500. The depreciation rate for all office equipment is 20%. What is the annual depreciation charge?",subtype:"number",prefix:"$",correct:"500",correctDisplay:"$500"}
+  ],
+  explanation:"(1) Depreciation charge = (Cost $15,000 − RV $0) ÷ EUL 3 years = $5,000.\n\n(2) Depreciation charge = (Cost $22,000 − RV $2,000) ÷ EUL 8 years = $2,500.\n\n(3) Depreciation charge = (Cost $3,400 − RV $340) ÷ EUL 6 years = $510.\n\n(4) Depreciation charge = Cost $2,500 × 20% = $500.",
+  calcTable:{
+    columns:["Scenario","Calculation","Annual charge"],
+    rows:[
+      ["(1)","(Cost $15,000 − RV $0) ÷ EUL 3 years","$5,000"],
+      ["(2)","(Cost $22,000 − RV $2,000) ÷ EUL 8 years","$2,500"],
+      ["(3)","(Cost $3,400 − RV $340) ÷ EUL 6 years","$510"],
+      ["(4)","Cost $2,500 × 20%","$500"]
+    ],
+    note:null
+  }
+},
+
+{ id:962, type:"multi-part", noMark:true,
+  text:"Tareq purchases a new delivery truck for $40,000. The diminishing-balance rate of depreciation is 25%.\n\nTareq also purchases a new industrial freezer unit for $14,000. The diminishing-balance rate of depreciation is 35%.\n\nComplete the depreciation schedule for each asset using the diminishing-balance method.",
+  req:"Complete the depreciation schedule for each asset using the diminishing-balance method.",
+  marks:0,
+  parts:[
+    {label:"Delivery truck ($40,000 cost, 25% diminishing-balance) — Depreciation charge in year 2",subtype:"number",prefix:"$",correct:"7500",correctDisplay:"$7,500"},
+    {label:"Industrial freezer unit ($14,000 cost, 35% diminishing-balance) — Carrying amount after three years",subtype:"number",prefix:"$",correct:"3845",correctDisplay:"$3,845"}
+  ],
+  explanation:"Delivery truck: Cost $40,000. Year 1 depreciation = 25% × $40,000 = $10,000, carrying amount at the end of year 1 = $30,000. Year 2 depreciation = 25% × $30,000 = $7,500. The correct answer is $7,500.\n\nIndustrial freezer unit: Cost $14,000. Year 1 depreciation = 35% × $14,000 = $4,900, carrying amount at end of year 1 = $9,100. Year 2 depreciation = 35% × $9,100 = $3,185, carrying amount at end of year 2 = $5,915. Year 3 depreciation = 35% × $5,915 = $2,070, carrying amount at end of year 3 = $3,845. The correct answer is $3,845.",
+  calcTables:[
+    {
+      caption:"Delivery truck",
+      columns:["","$"],
+      rows:[
+        ["Cost","40,000"],
+        ["Depreciation year 1 (25% × $40,000)","(10,000)"],
+        ["Carrying amount at the end of year 1","30,000"],
+        ["Depreciation year 2 (25% × $30,000)","(7,500)"]
+      ]
+    },
+    {
+      caption:"Industrial freezer unit",
+      columns:["","$"],
+      rows:[
+        ["Cost","14,000"],
+        ["Depreciation year 1 (35% × $14,000)","(4,900)"],
+        ["Carrying amount at the end of year 1","9,100"],
+        ["Depreciation year 2 (35% × $9,100)","(3,185)"],
+        ["Carrying amount at the end of year 2","5,915"],
+        ["Depreciation year 3 (35% × $5,915)","(2,070)"],
+        ["Carrying amount at the end of year 3","3,845"]
+      ]
+    }
+  ],
+  calcTable:null
+},
+
+{ id:963, type:"true-false-table", noMark:true,
+  text:"Determine the most appropriate method of depreciation for each situation below: the straight-line method or the diminishing-balance method.",
+  req:"Determine the most appropriate method of depreciation for each situation below: the straight-line method or the diminishing-balance method.",
+  marks:0,
+  customHeaders:["Situation","Straight-line method","Diminishing-balance method"],
+  customOptions:["Straight-line method","Diminishing-balance method"],
+  rows:[
+    {statement:"Kayla has purchased a radio for her staff. In the earlier years, she expects it will motivate them to work faster, but its effect to diminish over time.", correct:"Diminishing-balance method"},
+    {statement:"Kayla buys a brand-new delivery van. The van is expected to be used most in the early years when it has low mileage and will be used less as its mileage increases.", correct:"Diminishing-balance method"},
+    {statement:"Burton has bought a lawnmower for his gardening company. He expects to get equal benefits from it each year it is used.", correct:"Straight-line method"},
+    {statement:"Burton buys a used delivery van which he expects to travel the same distance yearly.", correct:"Straight-line method"}
+  ],
+  explanation:"The radio and the brand-new delivery van both provide greater benefits in earlier years, so the diminishing-balance method is most appropriate for them. The lawnmower provides equal yearly benefits, and the second-hand van is expected to travel the same distance yearly, so the straight-line method is most appropriate for both.",
+  calc:null
+},
+
+{ id:964, type:"multi-part", noMark:true,
+  text:"Hanna owns a business that manufactures clothing for children. She employs 15 people and operates from a rented workshop. She designs all the apparel and sews garments when she needs to. She has a financial year-end of 30 September.\n\nDuring the year ended 30 September 20X6, she purchased the following tangible non-current assets:\n\n• New sewing machines for $16,900 on 1 May 20X6\n• A delivery van for $24,000 on 1 October 20X5\n• Computer equipment for $3,800 on 1 December 20X5\n\nOn 1 October 20X5, the balances on her tangible non-current asset ledger accounts were:\n\n• Plant and equipment cost $129,780\n• Plant and equipment accumulated depreciation $47,900\n• Motor vehicles cost $24,900\n• Motor vehicles accumulated depreciation $14,396\n\nAll plant and equipment (which includes computer and office equipment) are depreciated at a rate of 20% a year on a straight-line basis, and the residual value is assumed to be zero.\n\nThe motor vehicles are depreciated on a diminishing-balance basis at 25% yearly. Hanna's policy is to depreciate assets on a pro-rata basis in the year of purchase.\n\nCalculate the depreciation charge for the year ended 30 September 20X6 for each asset purchased in the year, for the assets owned at the start of the year, the total depreciation charge, and the closing statement of financial position balances.",
+  req:"Calculate the depreciation charge for the year ended 30 September 20X6 for each asset purchased in the year, for the assets owned at the start of the year, the total depreciation charge, and the closing statement of financial position balances.",
+  marks:0,
+  parts:[
+    {label:"Depreciation charge for the year on the new sewing machines (purchased 1 May 20X6)",subtype:"number",prefix:"$",correct:"1408",correctDisplay:"$1,408"},
+    {label:"Depreciation charge for the year on the delivery van (purchased 1 October 20X5)",subtype:"number",prefix:"$",correct:"6000",correctDisplay:"$6,000"},
+    {label:"Depreciation charge for the year on the computer equipment (purchased 1 December 20X5)",subtype:"number",prefix:"$",correct:"633",correctDisplay:"$633"},
+    {label:"Depreciation charge for the year on plant and equipment owned at the start of the year",subtype:"number",prefix:"$",correct:"25956",correctDisplay:"$25,956"},
+    {label:"Depreciation charge for the year on motor vehicles owned at the start of the year",subtype:"number",prefix:"$",correct:"2626",correctDisplay:"$2,626"},
+    {label:"Total depreciation charge for the year ended 30 September 20X6",subtype:"number",prefix:"$",correct:"36623",correctDisplay:"$36,623"},
+    {label:"Closing balance on Plant and equipment cost account at 30 September 20X6",subtype:"number",prefix:"$",correct:"150480",correctDisplay:"$150,480"},
+    {label:"Closing balance on Plant and equipment accumulated depreciation account at 30 September 20X6",subtype:"number",prefix:"$",correct:"75897",correctDisplay:"$75,897"},
+    {label:"Closing balance on Motor vehicles cost account at 30 September 20X6",subtype:"number",prefix:"$",correct:"48900",correctDisplay:"$48,900"},
+    {label:"Closing balance on Motor vehicles accumulated depreciation account at 30 September 20X6",subtype:"number",prefix:"$",correct:"23022",correctDisplay:"$23,022"}
+  ],
+  explanation:"Sewing machines: part of plant and equipment, depreciated straight line at 20% yearly. Purchased 1 May 20X6, so only five months of depreciation is included. Charge = $16,900 × 20% × 5/12 = $1,408.\n\nDelivery van: part of motor vehicles, depreciated at 25% a year, diminishing-balance. Purchased 1 October 20X5, so one year's depreciation is needed. Charge = $24,000 × 25% = $6,000.\n\nComputer equipment: part of plant and equipment, depreciated straight line at 20% a year. Purchased 1 December 20X5, so 10 months' depreciation is included. Charge = $3,800 × 20% × 10/12 = $633.\n\nPlant and equipment owned at the start of the year: depreciated at 20% straight line yearly. Balance on the cost account at the start of the year is $129,780, so the charge = $129,780 × 20% = $25,956.\n\nMotor vehicles owned at the start of the year: depreciated at 25% a year, diminishing-balance. Because it's diminishing-balance, the carrying amount needs to be established first: $24,900 − $14,396 = $10,504. Charge = $10,504 × 25% = $2,626.\n\nTotal depreciation charge for the year = $25,956 + $2,626 + $1,408 + $6,000 + $633 = $36,623.\n\nClosing balances: Plant and Equipment Cost = $129,780 + $16,900 + $3,800 = $150,480. Plant and Equipment Accumulated Depreciation = $47,900 + $27,997 (= $25,956 + $1,408 + $633) = $75,897. Motor vehicles Cost = $24,900 + $24,000 = $48,900. Motor vehicles Accumulated Depreciation = $14,396 + $8,626 (= $2,626 + $6,000) = $23,022.",
+  calcTables:[
+    {
+      caption:"Total depreciation charge for the year",
+      columns:["","Plant and equipment ($)","Motor vehicles ($)","Total ($)"],
+      rows:[
+        ["Assets owned at the start of the year","25,956","2,626","28,582"],
+        ["Sewing machines","1,408","0","1,408"],
+        ["Van","0","6,000","6,000"],
+        ["Computer equipment","633","0","633"],
+        ["Totals","27,997","8,626","36,623"]
+      ]
+    },
+    {
+      caption:"Journal entry for the depreciation charge",
+      columns:["","Account","$"],
+      rows:[
+        ["DR","Depreciation expense","36,623"],
+        ["CR","Plant and equipment accumulated depreciation","27,997"],
+        ["CR","Motor vehicles accumulated depreciation","8,626"]
+      ]
+    },
+    {
+      caption:"Statement of Financial Position balances",
+      columns:["","Plant and equipment ($)","Motor vehicles ($)"],
+      rows:[
+        ["Cost","150,480","48,900"],
+        ["Accumulated depreciation","(75,897)","(23,022)"],
+        ["Carrying amount","74,583","25,878"]
+      ]
+    }
+  ],
+  calcTable:null
+},
+
+{ id:965, type:"multi-part", noMark:true,
+  text:"What is the profit or loss on disposal of the items sold by Salma below?",
+  req:"What is the profit or loss on disposal of the items sold by Salma below?",
+  marks:0,
+  parts:[
+    {label:"Salma sold some office equipment for $250, which had originally cost $1,000 eight years ago. The estimated useful life of the office equipment was ten years. The office equipment is depreciated using the straight-line method. What is the profit or loss on disposal?",subtype:"mcq",options:["$50 profit","$50 loss","$200 profit","$200 loss"],correct:0},
+    {label:"Salma sold a digger for $10,000 on 30 June 20X5. It had initially cost $45,000 on 1 January 20X0 and was being depreciated using the diminishing-balance method at a rate of 25% a year. Salma's policy is to charge a full year's depreciation in the year of purchase and none in the year of disposal. What is the profit or loss on disposal?",subtype:"mcq",options:["$679 profit","$679 loss","$10,679 profit","$10,679 loss"],correct:1}
+  ],
+  explanation:"Office equipment: Purchase cost = $1,000. Accumulated depreciation = $1,000 × 8/10 years = $800. Carrying amount = $1,000 − $800 = $200. Profit/(loss) on disposal = Sale proceeds $250 − Carrying value $200 = $50 profit.\n\nDigger: The digger was purchased on 1 January 20X0 and sold on 30 June 20X5. Under Salma's policy (full year's depreciation in year of purchase, none in year of disposal), five full years of depreciation have been charged by the disposal date. Carrying amount = $45,000 × 75%^5 = $10,679. Profit/(loss) on disposal = $10,000 − $10,679 = ($679) loss.",
+  calcTable:{
+    columns:["","Office equipment ($)","Digger ($)"],
+    rows:[
+      ["Cost","1,000","45,000"],
+      ["Accumulated depreciation","(800)","—"],
+      ["Carrying amount","200","10,679 (45,000 × 75%^5)"],
+      ["Proceeds","250","10,000"],
+      ["Profit/(loss)","50 profit","(679) loss"]
+    ],
+    note:null
+  }
+},
+
+{ id:966, type:"multi-part", noMark:true,
+  text:"Burton owns a business that operates a few shops that sell home furnishings. The balances on the tangible non-current asset accounts at the start of the year on 1 October 20X3 were:\n\nDuring the year ended 30 September 20X4, the following assets were purchased for cash: a new security alarm system for $15,000 and a new delivery van for $20,000. During the year, a shelving unit was sold for $1,000 that had initially cost $2,000 on 1 October 20X0. During the year, an old electronic till was part exchanged for a new one: the new till cost $2,500, made up of $2,000 cash and $500 for the old till; the old till had initially cost $1,750 and had accumulated depreciation of $750. Burton depreciates shop fixtures and equipment at 20% straight line and motor vehicles at 25% diminishing-balance. A whole year's depreciation is recorded in the year of purchase but none in the year of sale.\n\nCalculate the profit or loss on disposal, the closing cost and accumulated depreciation balances, the depreciation charge for the year, and the profit or loss on disposal of the old electronic till.",
+  req:"Calculate the profit or loss on disposal, the closing cost and accumulated depreciation balances, the depreciation charge for the year, and the profit or loss on disposal of the old electronic till.",
+  dataTable:{
+    columns:["Account","$"],
+    rows:[
+      ["Shop fixtures and equipment: cost","125,900"],
+      ["Shop fixtures and equipment: accumulated depreciation","43,600"],
+      ["Motor vehicles: cost","36,000"],
+      ["Motor vehicles: accumulated depreciation","21,500"]
+    ]
+  },
+  tableAnchor:"Burton owns a business that operates a few shops that sell home furnishings. The balances on the tangible non-current asset accounts at the start of the year on 1 October 20X3 were:",
+  marks:0,
+  parts:[
+    {label:"What is the profit or loss on disposal for the shelving unit sold for cash?",subtype:"mcq",options:["$200 profit","$200 loss","$800 profit","$800 loss"],correct:0},
+    {label:"What is the balance on the Fixtures and equipment — cost account at 30 September 20X4?",subtype:"number",prefix:"$",correct:"139650",correctDisplay:"$139,650"},
+    {label:"What is the balance on the Motor vehicles — cost account at 30 September 20X4?",subtype:"number",prefix:"$",correct:"56000",correctDisplay:"$56,000"},
+    {label:"What is the balance on the Fixtures and equipment accumulated depreciation account after accounting for disposals in the year but before the depreciation charge for the year?",subtype:"number",prefix:"$",correct:"41650",correctDisplay:"$41,650"},
+    {label:"What is the balance on the Motor vehicles accumulated depreciation account after accounting for disposals in the year but before the depreciation charge for the year?",subtype:"number",prefix:"$",correct:"21500",correctDisplay:"$21,500"},
+    {label:"What is the depreciation charge for the year ended 30 September 20X4 on Fixtures and equipment?",subtype:"number",prefix:"$",correct:"27930",correctDisplay:"$27,930"},
+    {label:"What is the depreciation charge for the year ended 30 September 20X4 on Motor vehicles?",subtype:"number",prefix:"$",correct:"8625",correctDisplay:"$8,625"},
+    {label:"What is the profit or loss on the disposal of the old electronic till?",subtype:"mcq",options:["$500 profit","$500 loss","$1,000 profit","$1,000 loss"],correct:1}
+  ],
+  explanation:"Shelving unit disposal: Carrying amount = $2,000 − ($2,000 × 20% × 3 years) = $2,000 − $1,200 = $800. Profit on disposal = Proceeds $1,000 − Carrying amount $800 = $200 profit.\n\nFixtures and equipment cost: $125,900 (b/d) + $15,000 (alarm) + $2,500 (till) − $2,000 (shelving disposed) − $1,750 (old till disposed) = $139,650. Motor vehicles cost: $36,000 (b/d) + $20,000 (van) = $56,000.\n\nFixtures and equipment accumulated depreciation (before the year's charge): $43,600 (b/d) − $1,200 (shelving unit's accumulated depreciation removed on disposal) − $750 (old till's accumulated depreciation removed on disposal) = $41,650. Motor vehicles accumulated depreciation is unchanged at $21,500, as no motor vehicle was disposed of.\n\nThe policy is to record a full year's depreciation in the year of purchase and none in the year of disposal. Depreciation charge for Fixtures and equipment = $139,650 × 20% = $27,930. Depreciation charge for Motor vehicles = ($56,000 − $21,500) × 25% = $8,625.\n\nOld electronic till: it was effectively sold for $500 (the trade-in value). When exchanged, it had a carrying amount of $1,000 ($1,750 − $750). This asset has a loss on disposal of $500 (Proceeds $500 − Carrying amount $1,000).",
+  calcTables:[
+    {
+      caption:"Shelving unit disposal",
+      columns:["","Shelving unit ($)"],
+      rows:[
+        ["Proceeds","1,000"],
+        ["Carrying amount ($2,000 − ($2,000 × 20% × 3 years))","(800)"],
+        ["Profit","200"]
+      ]
+    },
+    {
+      caption:"Cost account movements",
+      columns:["","Shop fixtures and equipment: cost ($)","Motor vehicles: cost ($)"],
+      rows:[
+        ["Balance at 1 October 20X3 (debit balance)","125,900","36,000"],
+        ["Add purchases (debits): Security alarm","15,000",""],
+        ["Add purchases (debits): Delivery van","","20,000"],
+        ["Add purchases (debits): Electronic till","2,500",""],
+        ["Less disposals (credits): Shelving unit","(2,000)",""],
+        ["Less disposals (credits): Old till","(1,750)",""],
+        ["Balance at 30 September 20X4","139,650","56,000"]
+      ]
+    },
+    {
+      caption:"Accumulated depreciation account movements",
+      columns:["","Shop fixtures and equipment: accumulated depreciation ($)","Motor vehicles: accumulated depreciation ($)"],
+      rows:[
+        ["Balance at 1 October 20X3 (credit balance)","43,600","21,500"],
+        ["Less disposals (debits): Shelving unit ($2,000 × 20% × 3 years)","(1,200)",""],
+        ["Less disposals (debits): Old till","(750)",""],
+        ["Balance at 30 September 20X4 before depreciation charge","41,650","21,500"],
+        ["Depreciation charge for the year","27,930","8,625"]
+      ]
+    }
+  ],
+  calcTable:null
+},
+
+{ id:967, type:"match-list", noMark:true,
+  text:"Match the incomplete statement in the left column to the corresponding statement in the right to complete each sentence.",
+  req:"Match the incomplete statement in the left column to the corresponding statement in the right to complete each sentence.",
+  marks:0,
+  leftHeader:"Incomplete statement", rightHeader:"Completion",
+  pool:[
+    "Cannot be capitalised as an intangible asset",
+    "Can be capitalised as an intangible asset",
+    "The amortisation charges is $2,000.",
+    "The balance on the accumulated amortisation ledger account after two years is $3,000",
+    "The amortisation charge is $1,400"
+  ],
+  rows:[
+    {statement:"An internally generated brand", correct:"Cannot be capitalised as an intangible asset"},
+    {statement:"A patent purchased by a business", correct:"Can be capitalised as an intangible asset"},
+    {statement:"A copyright purchased for $10,000 has a five-year UL and no residual value", correct:"The amortisation charges is $2,000."},
+    {statement:"An intangible asset has a cost of $12,000, a UL of eight years and no residual value", correct:"The balance on the accumulated amortisation ledger account after two years is $3,000"},
+    {statement:"A trademark has been capitalised at an amount of $16,000. It has a UL of 10 years after which it will be sold for $2000", correct:"The amortisation charge is $1,400"}
+  ],
+  explanation:"An internally generated brand cannot be capitalised as an intangible asset under IAS 38, as its cost cannot be reliably distinguished from the cost of developing the business as a whole. A purchased patent can be capitalised as an intangible asset, since it has a cost that can be reliably measured. A copyright purchased for $10,000 with a five-year useful life and no residual value gives an amortisation charge of $10,000 ÷ 5 = $2,000 a year. An intangible asset costing $12,000 with an eight-year useful life gives an amortisation charge of $12,000 ÷ 8 = $1,500 a year, so after two years the accumulated amortisation is $1,500 × 2 = $3,000. A trademark capitalised at $16,000 with a 10-year useful life and a $2,000 residual value gives an amortisation charge of ($16,000 − $2,000) ÷ 10 = $1,400 a year.",
+  calc:null
+},
+
+{ id:968, type:"multi-part", noMark:true,
+  text:"In 20X4, Brock Co spent $2m on developing a new line of foods for infant nutrition. On 1 January 20X5, the directors approved to fund the rest of the project and a further $1m was spent in the first quarter of 20X5. On 1 April 20X5, Brock Co's application for an infant food licence was rejected as sugar substitutes in a milk formula did not comply with the standards of the Food Safety Authority (FSA).\n\nBrock Co spent a further $1m in the second quarter of 20X5 and the FSA approved Brock Co's reapplication for a licence on 1 July 20X5. Brock Co then spent a further $1.5m developing the product range before its launch on 1 October 20X5. The new product line is expected to generate revenues in excess of $20m and have a useful life of five years.\n\nExplain how the development expenditure should be accounted for in the financial statements for the year ended 31 December 20X5.",
+  req:"Explain how the development expenditure should be accounted for in the financial statements for the year ended 31 December 20X5.",
+  marks:0,
+  parts:[
+    {label:"From what date do all of the IAS 38 development recognition criteria start to be met for this project?",subtype:"mcq",options:["1 January 20X5","1 April 20X5","1 July 20X5","1 October 20X5"],correct:2},
+    {label:"What amount of expenditure should be recognised as the cost of the intangible asset?",subtype:"number",prefix:"$",correct:"1500000",correctDisplay:"$1.5m"},
+    {label:"What amount of amortisation should be expensed to profit or loss for the year ended 31 December 20X5?",subtype:"number",prefix:"$",correct:"75000",correctDisplay:"$75,000"},
+    {label:"What is the carrying amount of the intangible asset in the statement of financial position at 31 December 20X5?",subtype:"number",prefix:"$",correct:"1425000",correctDisplay:"$1.425m"}
+  ],
+  explanation:"Brock Co should recognise only $1.5m of expenditure as the cost of an intangible asset, as it is only from 1 July 20X5 that all of the development recognition criteria under IAS 38 are met (this is when the FSA licence was secured, removing the earlier commercial/technical feasibility doubt). Even though the asset is likely to generate significant benefit and a total of $5.5m of costs have been incurred, the costs incurred before 1 July 20X5 cannot be capitalised. The $2m expensed in 20X4 cannot subsequently be recognised as part of the cost of the intangible asset, nor can the $2m incurred in the first six months of 20X5 (the $1m in Q1 and $1m in Q2) — this must be expensed during the year.\n\nAs the product range was launched on 1 October, $75,000 amortisation will be expensed to profit or loss (3/12 months × $1.5m/5 years) and the carrying amount of the intangible asset in the statement of financial position will be $1.425m ($1.5m − $0.075m). The intangible asset is unique and cannot be revalued.",
+  calcTable:{
+    columns:["","",""],
+    rows:[
+      ["Cost recognised (from 1 July 20X5)","","$1.5m"],
+      ["Amortisation","3/12 months × $1.5m/5 years","$75,000"],
+      ["Carrying amount at 31 December 20X5","$1.5m − $0.075m","$1.425m"]
+    ],
+    note:"Amounts spent before 1 July 20X5 ($2m in 20X4, $1m in Q1 20X5, $1m in Q2 20X5) are all expensed and cannot later be capitalised."
+  }
+},
+
+{ id:969, type:"mcq", noMark:true,
+  text:"In its first year of trading, which ended 31 July 20X6, Eco-chem incurred the following expenditures on research and development (none related to the cost of property, plant and equipment): $12,000 on successfully devising processes for converting seaweed into chemicals X, Y and Z, and $60,000 on developing a headache pill based on chemical Z. No commercial uses have yet been discovered for chemicals X or Y. Commercial production and sales of the headache pill commenced on 1 April 20X6 and are expected to produce steady, profitable income for five years before being replaced. Adequate resources exist to achieve this.\n\nDetermine the amount of development expenditure which may be carried forward (remain as an amortising asset) at 31 July 20X6 under IAS 38.",
+  req:"Determine the amount of development expenditure which may be carried forward (remain as an amortising asset) at 31 July 20X6 under IAS 38.",
+  marks:0,
+  options:["$48,000","$56,000","$60,000","$72,000"],
+  correct:1,
+  explanation:"The $12,000 spent on converting seaweed into chemicals X, Y and Z is research expenditure and cannot be recognised as an asset — it must be expensed to profit or loss. The $60,000 spent developing the headache pill (chemical Z) is development expenditure that meets the criteria to be capitalised, since commercial production and sales began and adequate resources exist to achieve steady profitable income for five years.\n\nAmortise from 1 April 20X6 over five years. With a year-end of 31 July, four months of amortisation is taken: $60,000 ÷ 5 years × 4/12 months = $4,000. The carry-forward amount is $60,000 − $4,000 = $56,000.",
+  calc:null,
+  calcTable:{
+    columns:["","Explanation","$"],
+    rows:[
+      ["Capitalise:","Item (2) meets the criteria to be capitalised.","60,000"],
+      ["Amortisation:","Amortise from 1 April 20X6 over five years. With a year-end of 31 July, four months of amortisation will be taken: $60,000 ÷ 5 years × 4/12 months.","4,000"],
+      ["Carry forward amount:","","56,000"]
+    ],
+    note:null
+  }
+},
+
+{ id:970, type:"mcq", noMark:true,
+  text:"In its first year of trading to 31 December, Eco-chem incurred the following expenditure on research and development, none of which related to the purchase of property, plant and equipment: $12,000 on successfully devising processes to convert the sap extracted from mangroves into chemicals X, Y and Z, and $60,000 on developing an analgesic medication based on chemical Z. No commercial uses have yet been discovered for chemicals X and Y. Commercial production and sales of the analgesic commenced on 1 September, and are expected to produce steady profitable income during a five-year period before being replaced. Adequate resources exist for the company to achieve this.\n\nAssuming no impairment, determine the maximum amount of development expenditure which may be carried forward at 31 December under IAS 38.",
+  req:"Assuming no impairment, determine the maximum amount of development expenditure which may be carried forward at 31 December under IAS 38.",
+  marks:0,
+  options:["$48,000","$56,000","$60,000","$72,000"],
+  correct:1,
+  explanation:"The $12,000 spent on converting mangrove sap into chemicals X, Y and Z is research expenditure, which cannot be capitalised under any circumstances and must therefore be expensed to profit or loss. The $60,000 spent developing the analgesic (chemical Z) is initially recognised at cost, with residual value presumed to be zero, since it meets the IAS 38 development recognition criteria.\n\nAmortise from 1 September for a period of 5 years. Expense for 4 months = 4/60 × $60,000 = $4,000. This is the maximum amount that may be carried forward, assuming no impairment: $60,000 − $4,000 = $56,000.",
+  calc:"Cost: $60,000\nAmortisation (4 months, from 1 September): 4/60 × $60,000 = $4,000\nCarrying amount (maximum carry forward): $60,000 − $4,000 = $56,000"
 }
 
 ];
@@ -13024,7 +13409,8 @@ const CATEGORIES = [
   { id:'ch8_past_questions', name:'Ch 8 : past questions', group:'Chapter 8', ids:[892, 893, 894, 895, 896, 897, 898, 899, 900, 901, 902, 903, 904, 905, 906, 907] },
   { id:'ch8_kkit_questions', name:'Ch 8 : K-kit questions', group:'Chapter 8', ids:[908, 909, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923, 924] },
   { id:'ch8_bkit_questions', name:'Ch 8 : B-kit questions', group:'Chapter 8', ids:[925, 926, 927, 928, 929, 930, 931, 932, 933, 934, 935, 936] },
-  { id:'ch6_7_8_ckit_unique_questions', name:'Ch 6, 7 & 8 : C-kit unique questions', group:'Combined / Mocks', ids:[937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955] }
+  { id:'ch6_7_8_ckit_unique_questions', name:'Ch 6, 7 & 8 : C-kit unique questions', group:'Combined / Mocks', ids:[937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955] },
+  { id:'ch6_7_8_study_hub_activities', name:'Ch 6, 7 & 8 : study hub activities', group:'Combined / Mocks', ids:[956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970] }
 ];
 // Ordered list of group names for the accordion dropdown — controls the order
 // chapters appear in, independent of CATEGORIES array order.
