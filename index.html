@@ -12046,28 +12046,6 @@ const QUESTIONS = [
   correct:3, explanation:"Only capital expenditure can be recognised as an asset under IAS 16 (i.e. to acquire physical assets). Others are examples of revenue expenditure.", calc:null
 },
 
-  { id:777, type:"mcq",
-  text:"An invoice showed a plant purchased:\n\nModifications to the factory building costing $2,200 were necessary to enable the plant to be installed.\n\nWhich of the following are true?",
-  req:"Which of the following are true?",
-  marks:2,
-  dataTable:{
-    columns:["",{v:"$",num:true}],
-    rows:[
-      ["Cost of plant",{v:"48,000",num:true}],
-      ["Delivery to factory",{v:"400",num:true}],
-      ["1 year warranty covering breakdown",{v:"800",num:true}]
-    ]
-  },
-  tableAnchor:"An invoice showed a plant purchased:",
-  options:[
-    "$48,000 is capitalised in accordance with IAS 16 Property, Plant and Equipment",
-    "$50,600 is capitalised in accordance with IAS 16 Property, Plant and Equipment",
-    "$48,400 is capitalised in accordance with IAS 16 Property, Plant and Equipment",
-    "$51,400 is capitalised in accordance with IAS 16 Property, Plant and Equipment"
-  ],
-  correct:1, explanation:"$48,000 (cost of plant) + $400 (delivery to factory) + $2,200 (modifications necessary to install the plant) = $50,600. The 1-year warranty ($800) is not capitalised, as it is not directly attributable to bringing the asset to its working condition.", calc:null
-},
-
 // NOTE: source Q18 and Q36 are treated as two separate questions per user
 // instruction (both "add"), even though the same "Groomers" scenario is
 // reused — Q18 differs from Q36 in stated maintenance duration/framing and
@@ -13040,7 +13018,7 @@ const CATEGORIES = [
   { id:'ch5_bkit_questions', name:'Ch 5 : B-kit questions', group:'Chapter 5', ids:[644, 645, 646, 5, 647, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 659] },
   { id:'ch6_7_bkit_questions', name:'Ch 6 & 7 : B-kit questions', group:'Chapter 6 & 7', ids:[688, 689, 6, 690, 691, 692, 693, 694, 696, 698, 699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716, 717, 718, 719, 720, 721, 722, 723, 724, 725, 726, 727] },
   { id:'ch6_7_kkit_questions', name:'Ch 6 & 7 : K-kit questions', group:'Chapter 6 & 7', ids:[728, 729, 730, 731, 732, 733, 734, 735, 736, 737, 738, 739, 740, 741, 742, 743, 744, 745, 746, 747, 748, 749, 750, 751, 752, 753, 754, 755, 756, 757, 758, 759, 760, 761, 762] },
-  { id:'ch6_7_past_questions', name:'Ch 6 & 7 : past questions', group:'Chapter 6 & 7', ids:[697, 763, 801, 764, 765, 766, 767, 768, 769, 770, 771, 772, 695, 773, 774, 775, 776, 777, 779, 780, 781, 782, 783, 784, 785, 786, 787, 788, 789, 790, 791, 792, 793, 778, 795, 796, 797, 798, 802, 799, 800] },
+  { id:'ch6_7_past_questions', name:'Ch 6 & 7 : past questions', group:'Chapter 6 & 7', ids:[697, 763, 801, 764, 765, 766, 767, 768, 769, 770, 771, 772, 695, 773, 774, 775, 776, 779, 780, 781, 782, 783, 784, 785, 786, 787, 788, 789, 790, 791, 792, 793, 778, 795, 796, 797, 798, 802, 799, 800] },
   { id:'ch6_7_study_hub_questions', name:'Ch 6 & 7 : study hub questions', group:'Chapter 6 & 7', ids:[803, 804, 805, 806, 807, 808, 809, 810, 811, 812, 813, 814, 815, 816, 817, 818, 819, 820, 821, 822, 823, 824, 825, 826, 827, 828, 829, 830, 831, 832, 833, 834, 835, 836, 837, 838, 839, 840, 841, 842, 843, 844, 845, 846, 847, 848, 849, 850, 851, 852, 853, 854, 855, 856, 857, 858, 859, 860, 861, 862, 863, 864, 865, 866, 867, 868, 869, 870, 871, 872, 873] },
   { id:'ch8_study_hub_questions', name:'Ch 8 : study hub questions', group:'Chapter 8', ids:[874, 875, 876, 877, 878, 879, 880, 881, 882, 883, 884, 885, 886, 887, 888, 889, 890, 891] },
   { id:'ch8_past_questions', name:'Ch 8 : past questions', group:'Chapter 8', ids:[892, 893, 894, 895, 896, 897, 898, 899, 900, 901, 902, 903, 904, 905, 906, 907] },
@@ -13082,6 +13060,10 @@ let lockedCategoryExceptions = {}; // categoryId -> Set<userId> exempted from th
 // error, exactly like every other best-effort read on this platform: a
 // broken lock check must never itself block students from practicing.
 async function refreshLockedCategories(){
+  // Test Mode is a pure-offline, no-login preview — it must never make a
+  // network request, and (per isCategoryLocked above) treats every category
+  // as unlocked anyway, so there's nothing for this fetch to accomplish here.
+  if(testModeActive) return;
   try{
     const {data,error}=await sb.from('category_maintenance').select('category_id,auto_off_at,notice_text,exception_user_ids').eq('is_active',true);
     if(error||!Array.isArray(data)){ lockedCategoryIds=new Set(); lockedCategoryNotices={}; lockedCategoryExceptions={}; return; }
@@ -13100,7 +13082,15 @@ async function refreshLockedCategories(){
     lockedCategoryExceptions=exceptions;
   }catch(e){ lockedCategoryIds=new Set(); lockedCategoryNotices={}; lockedCategoryExceptions={}; /* fail open */ }
 }
-function isCategoryLocked(catId){ return lockedCategoryIds.has(catId); }
+// Public Test Mode is a pure-offline, no-login preview: it must show every
+// category (blocked or not) and must never be affected by maintenance state,
+// since maintenance mode is a live/online concept (Faculty locks categories
+// for real students via Supabase) that has no meaning for an anonymous,
+// nothing-is-saved, no-network practice session. So this always reports
+// "not locked" whenever Test Mode is active, regardless of whatever
+// lockedCategoryIds happens to hold in memory (e.g. left over from the
+// Faculty session Test Mode was entered from).
+function isCategoryLocked(catId){ return !testModeActive && lockedCategoryIds.has(catId); }
 // A category-maintenance EXCEPTION means the student can still see, select,
 // attempt, and review questions in that locked category exactly like normal
 // — the only difference is their attempt is never saved (see
@@ -13238,6 +13228,7 @@ let blockedFeatureExceptions = {}; // featureKey -> Set<userId>
 // fail-open behaviour as refreshLockedCategories(): any read error leaves
 // every feature unblocked rather than accidentally locking students out.
 async function refreshBlockedFeatures(){
+  if(testModeActive) return; // pure-offline preview — never hits the network, and isFeatureBlocked ignores this state anyway
   try{
     const {data,error}=await sb.from('feature_maintenance').select('feature_key,auto_off_at,notice_text,exception_user_ids').eq('is_active',true);
     if(error||!Array.isArray(data)){ blockedFeatureKeys=new Set(); blockedFeatureNotices={}; blockedFeatureExceptions={}; return; }
@@ -13252,7 +13243,10 @@ async function refreshBlockedFeatures(){
     blockedFeatureKeys=keys; blockedFeatureNotices=notices; blockedFeatureExceptions=exceptions;
   }catch(e){ blockedFeatureKeys=new Set(); blockedFeatureNotices={}; blockedFeatureExceptions={}; /* fail open */ }
 }
-function isFeatureBlocked(key){ return blockedFeatureKeys.has(key); }
+// Same reasoning as isCategoryLocked above: Test Mode is a pure-offline,
+// no-login preview and must never be affected by (live, Supabase-backed)
+// Feature Maintenance either.
+function isFeatureBlocked(key){ return !testModeActive && blockedFeatureKeys.has(key); }
 function isFeatureExempt(key){
   if(!currentUser) return false;
   const set=blockedFeatureExceptions[key];
