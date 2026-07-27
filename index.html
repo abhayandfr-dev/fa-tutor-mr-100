@@ -1,3 +1,30 @@
+<!--
+  ══════════════════════════════════════════════════════════════════════
+  TERMINOLOGY NOTE FOR AI ASSISTANTS (Claude or any other chatbot editing
+  this file on the developer's behalf):
+
+  When the developer refers to "public view test mode" (or similar phrasing
+  like "public test mode", "the test mode button on the login page", "try
+  test mode button", etc), they mean EXACTLY this feature:
+
+    - Config flag: `window.PUBLIC_TEST_MODE` (search for "PUBLIC_TEST_MODE").
+      Currently set near the top of <body>, just before the auth overlay.
+    - It controls whether a button reading "🧪 Try Test Mode — no login
+      needed" (id="public-test-mode-btn") is rendered on the LOGIN PAGE
+      (inside #authOverlay), letting a visitor enter Test Mode without any
+      login/key.
+    - Set `window.PUBLIC_TEST_MODE = true;` to show that button to visitors,
+      or `= false;` to hide it. This is the ONLY thing this flag/button
+      controls.
+    - Do NOT confuse this with Faculty Mode's own "🧪 Test Mode" sidebar
+      link (onclick="enterTestMode()" inside the faculty nav) — that one is
+      always available to logged-in teachers regardless of this flag, and
+      is a separate, unrelated control from "public view test mode".
+
+  In short: "public view test mode" = window.PUBLIC_TEST_MODE = the visitor-
+  facing "Try Test Mode — no login needed" button on the login screen.
+  ══════════════════════════════════════════════════════════════════════
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,12 +118,34 @@
      Shows Practice(home)/Leaderboard/Battle/Groups/Tasks as permanent icons so students
      can't miss them by not scrolling. Badges mirror the existing badge elements via a tiny
      JS observer (see script near end of file) so no existing badge-update function changes. */
+  /* Scrollable bar: flex items no longer wrap/shrink to fit — each button
+     gets a fixed share of the viewport width so exactly ~5 fit on a phone
+     screen by default, with the 6th (and anything pushed off by browser
+     zoom on wider screens) reachable by scrolling the bar horizontally.
+     On PC-width screens all 6 fit without any scrolling needed, unless the
+     page is zoomed in enough to shrink the effective viewport below what 6
+     buttons need — at that point the bar itself becomes scrollable instead
+     of the icons shrinking or wrapping. */
   #mobile-bottom-nav{
     display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5000;
     background:#fff;border-top:1.5px solid var(--border);
     box-shadow:0 -4px 18px rgba(15,31,61,.12);
     padding:.5rem .3rem calc(.5rem + env(safe-area-inset-bottom,0px));
-    justify-content:center;gap:.2rem;
+    gap:.2rem;
+    overflow-x:auto;overflow-y:hidden;
+    justify-content:flex-start;
+    scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+  }
+  /* Center the whole row on wide screens where all 6 buttons comfortably
+     fit with room to spare, so it doesn't look left-aligned/lopsided on a
+     big monitor. On narrower widths (see max-width:760px below) this is
+     overridden back to flex-start so the row starts scrolled to the left
+     edge (Practice first) rather than centering a row that's wider than
+     the viewport. */
+  @media (min-width:761px){
+    #mobile-bottom-nav{justify-content:center;}
   }
   /* Hide the student bottom nav entirely while Faculty Mode is active — it must
      never show, and its buttons (Practice/Board/Battle/Groups/Tasks) must never
@@ -147,7 +196,13 @@
     position:relative;display:flex;flex-direction:column;align-items:center;
     justify-content:center;gap:.15rem;background:none;border:none;cursor:pointer;
     font-family:inherit;color:var(--slate);padding:.3rem .1rem;border-radius:10px;
-    flex:1 1 0;max-width:120px;
+    /* Fixed width (not flex-grow/shrink) is what makes "~5 visible on mobile,
+       scroll for the 6th" work: on a ~380px-wide phone, 5 buttons at 20vw
+       each fill the screen exactly, pushing the 6th just off the right edge
+       where it's reachable by scrolling. On desktop, the same 20vw math just
+       produces bigger buttons since the viewport is wider, and all 6 (120vw
+       worth) still comfortably fit within typical desktop widths. */
+    flex:0 0 auto;width:20vw;min-width:64px;max-width:120px;
   }
   #mobile-bottom-nav button:hover{background:var(--slate-light);}
   #mobile-bottom-nav .mbn-icon{font-size:1.25rem;line-height:1;}
@@ -158,8 +213,10 @@
     box-shadow:0 0 0 2px #fff;
   }
   @media (max-width:760px){
-    #mobile-bottom-nav{justify-content:space-between;}
-    #mobile-bottom-nav button{max-width:none;}
+    /* Left-aligned (not centered/space-between) so the bar always starts
+       scrolled to Practice on the left, with later icons reachable by
+       scrolling right — matches the "first 5 visible by default" spec. */
+    #mobile-bottom-nav{justify-content:flex-start;}
   }
 
   /* Reserve space at the bottom of EVERY screen (not just home) so the fixed nav bar never
@@ -898,6 +955,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.7rem;">
       <button onclick="openFacultyDashboard()" style="padding:.8rem;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;">📊 Progress Dashboard</button>
       <button onclick="openFacultyGoalScreen()" style="padding:.8rem;background:#ea580c;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;">📌 Tasks &amp; Goals</button>
+      <button onclick="openFacultyNotesScreen()" style="padding:.8rem;background:#0d9488;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;">📝 Notes</button>
       <button onclick="openFacultyLeaderboardScreen()" style="padding:.8rem;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;">🏆 Full Leaderboard</button>
       <button onclick="openFacultyGroupsScreen()" style="padding:.8rem;background:#4338ca;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;">👥 All Study Groups</button>
       <button onclick="openFacultyBattlesScreen()" style="padding:.8rem;background:#b91c1c;color:#fff;border:none;border-radius:10px;font-size:.87rem;font-weight:700;cursor:pointer;">⚔️ All Battles</button>
@@ -1117,6 +1175,126 @@
         <div id="faculty-goal-deleted-tasks-empty" style="display:none;text-align:center;padding:1.5rem 1rem;color:#94a3b8;font-size:.82rem;">No deleted tasks.</div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- FACULTY: NOTES (create/edit/delete note cards with a name, description,
+     link, and notice; students see these from their own bottom-nav Notes
+     icon). Load-on-tap list, same lazy-load pattern as Tasks & Goals, to
+     keep egress low.
+     REQUIRES a one-time Supabase migration to add targeting columns to the
+     existing "notes" table, matching the "tasks" table's shape exactly:
+       ALTER TABLE notes ADD COLUMN target_type text NOT NULL DEFAULT 'class';
+       ALTER TABLE notes ADD COLUMN student_id uuid NULL;
+       ALTER TABLE notes ADD COLUMN student_ids uuid[] NULL;
+       ALTER TABLE notes ADD COLUMN section text NULL;
+       ALTER TABLE notes ADD CONSTRAINT notes_target_type_check CHECK (target_type IN ('class','student','students','section'));
+     Without this migration, createOrSaveNote()'s PATCH/POST will still
+     succeed (Supabase silently ignores unknown-but-nonexistent columns only
+     if PostgREST is configured to reject them — in the more common
+     default config it will instead error with "column does not exist";
+     ask your developer to run the migration above before relying on this
+     feature). -->
+<div id="faculty-notes-screen" class="screen">
+  <div style="max-width:760px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">📝 Notes</span>
+      <button onclick="showScreen('faculty-categories-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.2rem;">Create notes with a link (e.g. to a Google Doc) for students to open. Choose who it's visible to — the whole class, one student, several students, or a whole section. Mark the ones you want highlighted as "Current" — students can load just those, or load everything.</div>
+
+    <div style="background:var(--white);border:2px solid var(--border);border-radius:14px;padding:1.2rem 1.3rem;margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">
+        <div style="font-size:.85rem;font-weight:700;color:var(--navy);" id="faculty-note-form-heading">Create a new note</div>
+        <button type="button" onclick="cancelNoteEdit()" id="faculty-note-cancel-edit-btn" style="display:none;background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.3rem .7rem;font-size:.72rem;font-weight:700;color:#64748b;cursor:pointer;">✕ Cancel edit</button>
+      </div>
+      <div id="faculty-note-edit-banner" style="display:none;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:.6rem .8rem;font-size:.76rem;color:#1d4ed8;font-weight:600;margin-bottom:.9rem;">✏️ Editing an existing note — changes save to this note instead of creating a new one.</div>
+
+      <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Visible to</label>
+      <select id="faculty-note-target-type" onchange="onNoteTargetTypeChange()" style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:.6rem;box-sizing:border-box;">
+        <option value="class">Whole class</option>
+        <option value="student">One student</option>
+        <option value="students">Multiple students</option>
+        <option value="section">Section</option>
+      </select>
+      <div id="faculty-note-student-wrap" style="display:none;margin-bottom:1rem;">
+        <div id="faculty-note-student-picked-chip" style="display:none;"></div>
+        <input type="text" id="faculty-note-student-search" placeholder="Type a student's name to search, or scroll the full list below…" autocomplete="off"
+          oninput="onFacultyNoteSingleStudentSearchInput()"
+          onkeydown="onFacultyNoteSingleStudentSearchKeydown(event)"
+          style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;box-sizing:border-box;">
+        <div id="faculty-note-student-search-results" style="display:none;border:2px solid var(--border);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;margin-top:-2px;"></div>
+        <div id="faculty-note-student-browse-label" style="font-size:.7rem;font-weight:700;color:#94a3b8;margin-top:.6rem;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em;">Or browse the full list</div>
+        <!-- Same real-radio-buttons-as-source-of-truth pattern as the task
+             creation picker (see faculty-goal-student-browse) — kept as a
+             separate set of DOM ids/functions from the task picker so the
+             two forms' selections never interfere with each other, while
+             reusing the already-fetched facultyGoalStudentsCache/
+             facultyGoalSectionsCache roster data (no extra network call). -->
+        <div id="faculty-note-student-browse" style="border:2px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;padding:.4rem .6rem;"></div>
+      </div>
+      <input type="hidden" id="faculty-note-student" value="">
+      <div id="faculty-note-students-multi" style="display:none;margin-bottom:1rem;">
+        <div id="faculty-note-students-multi-chips" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.5rem;"></div>
+        <input type="text" id="faculty-note-students-multi-search" placeholder="Type a student's name to search, or scroll the full list below…" autocomplete="off"
+          oninput="onFacultyNoteStudentSearchInput()"
+          onkeydown="onFacultyNoteStudentSearchKeydown(event)"
+          style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;box-sizing:border-box;">
+        <div id="faculty-note-students-multi-results" style="display:none;border:2px solid var(--border);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;margin-top:-2px;"></div>
+        <div id="faculty-note-students-multi-browse-label" style="font-size:.7rem;font-weight:700;color:#94a3b8;margin-top:.6rem;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em;">Or browse the full list</div>
+        <div id="faculty-note-students-multi-browse" style="border:2px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;padding:.4rem .6rem;"></div>
+      </div>
+      <select id="faculty-note-section" style="display:none;width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;">
+        <option value="">Loading sections…</option>
+      </select>
+
+      <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Note name</label>
+      <input id="faculty-note-title" type="text" maxlength="120" placeholder="e.g. Chapter 6 — Revaluation Summary" style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;">
+
+      <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Description</label>
+      <textarea id="faculty-note-description" maxlength="500" rows="3" placeholder="What this note covers…" style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;font-family:inherit;resize:vertical;"></textarea>
+
+      <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Link (Google Doc URL)</label>
+      <input id="faculty-note-link" type="url" placeholder="https://docs.google.com/…" style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;">
+
+      <label style="font-size:.78rem;font-weight:700;color:#475569;display:block;margin-bottom:.35rem;">Notice <span style="font-weight:600;color:#94a3b8;">— optional, shown to students as a highlighted callout above the link</span></label>
+      <textarea id="faculty-note-notice" maxlength="300" rows="2" placeholder="e.g. Make sure you're logged in with your student email before opening this link." style="width:100%;padding:.6rem .7rem;border:2px solid var(--border);border-radius:8px;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;font-family:inherit;resize:vertical;"></textarea>
+
+      <label style="display:flex;align-items:flex-start;gap:.5rem;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:.75rem .9rem;margin-bottom:.8rem;cursor:pointer;">
+        <input id="faculty-note-is-current" type="checkbox" style="margin-top:.15rem;flex:0 0 auto;">
+        <span style="font-size:.8rem;color:#9a3412;line-height:1.4;">
+          <b>Mark as Current</b><br>
+          <span style="font-weight:600;color:#c2410c;">Current notes are the ones shown when a student taps "Load Current Notes" — use this for whatever's most relevant right now. All notes (current or not) still show up when a student taps "Load All Notes".</span>
+        </span>
+      </label>
+
+      <label style="display:flex;align-items:flex-start;gap:.5rem;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:.75rem .9rem;margin-bottom:1.1rem;cursor:pointer;">
+        <input id="faculty-note-is-active" type="checkbox" checked style="margin-top:.15rem;flex:0 0 auto;">
+        <span style="font-size:.8rem;color:#166534;line-height:1.4;">
+          <b>Active (visible to students)</b><br>
+          <span style="font-weight:600;color:#15803d;">Uncheck this to hide the note from both student load buttons without deleting it — useful for retiring a note temporarily. It stays on this faculty list (greyed out) so you can reactivate it later.</span>
+        </span>
+      </label>
+
+      <div id="faculty-note-error" style="display:none;font-size:.78rem;color:var(--red,#dc2626);margin-bottom:.8rem;"></div>
+      <button class="start-btn" style="width:100%;margin:0;" onclick="createOrSaveNote()" id="faculty-note-create-btn">Create Note →</button>
+    </div>
+
+    <!-- Hidden field carrying the id of the note currently being edited. Empty
+         string = normal "create" mode (createOrSaveNote() does a POST); a
+         note id here switches createOrSaveNote() into "save edit" mode
+         (PATCH) — same pattern as faculty-goal-edit-task-id. -->
+    <input type="hidden" id="faculty-note-edit-id" value="">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
+      <div style="font-size:.85rem;font-weight:700;color:var(--navy);">All Notes</div>
+      <button onclick="loadFacultyNotesList()" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.35rem .8rem;font-size:.74rem;font-weight:600;color:#64748b;cursor:pointer;">↻ Refresh</button>
+    </div>
+    <div id="faculty-notes-list" style="display:flex;flex-direction:column;gap:.8rem;"></div>
+    <div id="faculty-notes-empty" style="display:none;text-align:center;padding:2rem 1rem;color:#94a3b8;font-size:.85rem;">No notes yet — create one above.</div>
+    <!-- First-visit lazy-load placeholder: shown until the teacher taps
+         "Load Notes" (see openFacultyNotesScreen()/facultyLoadNotesList()). -->
+    <div id="faculty-notes-load-placeholder"></div>
   </div>
 </div>
 
@@ -2471,6 +2649,31 @@
 
     <div id="student-tasks-list" style="display:flex;flex-direction:column;gap:.9rem;"></div>
     <div id="student-tasks-empty" style="display:none;text-align:center;padding:2rem 1rem;color:#94a3b8;font-size:.85rem;">Nothing here yet.</div>
+  </div>
+</div>
+
+<!-- STUDENT: NOTES — standalone page, reached from its own bottom-nav icon
+     (previously a tab inside Tasks & Goals; moved out per spec so Notes is
+     never nested inside Tasks & Goals on either PC or mobile). Single
+     unified list: tapping "Load Current Notes" shows just the notes marked
+     Current; tapping "Load All Notes" (shown below that list) replaces the
+     view with every active note, with a "Current" tag on the ones that are
+     marked as such — so nothing is ever shown twice. -->
+<div id="student-notes-screen" class="screen">
+  <div style="max-width:760px;width:100%;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;">
+      <span style="font-size:1.15rem;font-weight:800;color:var(--navy);">📝 Notes</span>
+      <button onclick="showScreen('home-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
+    </div>
+    <div style="font-size:.82rem;color:#64748b;margin-bottom:1.1rem;">Notes your teacher has shared — some just for you, some for your section, some for everyone.</div>
+
+    <div id="student-notes-load-placeholder"></div>
+    <div id="student-notes-list" style="display:flex;flex-direction:column;gap:.9rem;"></div>
+    <div id="student-notes-empty" style="display:none;text-align:center;padding:1.2rem 1rem;color:#94a3b8;font-size:.85rem;">No notes yet.</div>
+    <!-- Second load button, shown only after Current Notes has loaded and
+         only until All Notes is loaded — see initStudentNotesTab/
+         loadStudentCurrentNotes/loadStudentAllNotes. -->
+    <div id="student-notes-load-all-wrap" style="display:none;margin-top:1rem;text-align:center;"></div>
   </div>
 </div>
 
@@ -13587,6 +13790,7 @@ const BATTLE_META_CATEGORIES = buildBattleMetaCategories();
 const FEATURE_REGISTRY = [
   { key:'practice_session', label:'📖 Practice Session (Practice/Quiz/Test modes)' },
   { key:'tasks_goals',      label:'🎯 Tasks & Goals' },
+  { key:'notes',            label:'📝 Notes' },
   { key:'study_groups',     label:'👥 Study Groups' },
   { key:'battle_mode',      label:'⚔️ Battle Mode' },
   { key:'leaderboards',     label:'🏆 Leaderboards' },
@@ -14034,6 +14238,7 @@ const FACULTY_NAV_ITEMS_DEFAULT=[
   {id:'faculty-mockdata-screen', icon:'🧾', label:"View Mock Data", action:'openFacultyMockDataScreen()'},
   {id:'faculty-dashboard-screen', icon:'📊', label:'Progress Dashboard', action:'openFacultyDashboard()'},
   {id:'faculty-goal-screen', icon:'📌', label:'Tasks & Goals', action:'openFacultyGoalScreen()'},
+  {id:'faculty-notes-screen', icon:'📝', label:'Notes', action:'openFacultyNotesScreen()'},
   {id:'faculty-leaderboard-screen', icon:'🏆', label:'Leaderboard', action:'openFacultyLeaderboardScreen()'},
   {id:'faculty-groups-screen', icon:'👥', label:'Study Groups', action:'openFacultyGroupsScreen()'},
   {id:'faculty-battles-screen', icon:'⚔️', label:'Battles', action:'openFacultyBattlesScreen()'},
@@ -17401,18 +17606,35 @@ function onFacultyGoalStudentSearchKeydown(ev){
 let facultyGoalSectionsCache=null;
 async function loadFacultyGoalSectionDropdown(){
   const sel=document.getElementById('faculty-goal-section');
+  const noteSel=document.getElementById('faculty-note-section');
   try{
     const [res, fallbackMap]=await Promise.all([
       fetch(SUPABASE_URL+'/rest/v1/profiles?select=id,username,section',{headers:facultyAuthHeaders()}),
       loadSectionFallbackMap()
     ]);
     const rows=await res.json();
-    if(!Array.isArray(rows)){ sel.innerHTML='<option value="">Could not load sections</option>'; return; }
+    if(!Array.isArray(rows)){
+      sel.innerHTML='<option value="">Could not load sections</option>';
+      if(noteSel) noteSel.innerHTML='<option value="">Could not load sections</option>';
+      return;
+    }
     const sections=[...new Set(rows.map(r=>resolveStudentSection(r,fallbackMap)).filter(Boolean))].sort();
     facultyGoalSectionsCache=sections;
-    if(!sections.length){ sel.innerHTML='<option value="">No sections found on any student profile</option>'; return; }
+    if(!sections.length){
+      sel.innerHTML='<option value="">No sections found on any student profile</option>';
+      if(noteSel) noteSel.innerHTML='<option value="">No sections found on any student profile</option>';
+      return;
+    }
     sel.innerHTML=sections.map(s=>`<option value="${escAttr(s)}">${escHTML(s)}</option>`).join('');
-  }catch(e){ sel.innerHTML='<option value="">Network error loading sections</option>'; }
+    // Shared cache with the Note creation form's section picker (see
+    // renderFacultyNoteSectionOptions/onNoteTargetTypeChange) — populate it
+    // here too so it isn't left showing "Loading sections…" forever when
+    // this fetch was kicked off from the note form.
+    if(noteSel) renderFacultyNoteSectionOptions();
+  }catch(e){
+    sel.innerHTML='<option value="">Network error loading sections</option>';
+    if(noteSel) noteSel.innerHTML='<option value="">Network error loading sections</option>';
+  }
 }
 function onGoalMetricChange(){
   const metric=document.getElementById('faculty-goal-metric').value;
@@ -17436,15 +17658,30 @@ async function loadFacultyGoalStudentDropdown(){
     if(!Array.isArray(rows)){
       const browseWrap=document.getElementById('faculty-goal-student-browse');
       if(browseWrap) browseWrap.innerHTML='<div style="font-size:.78rem;color:#dc2626;padding:.3rem;">Could not load students.</div>';
+      const noteBrowseWrap=document.getElementById('faculty-note-student-browse');
+      if(noteBrowseWrap) noteBrowseWrap.innerHTML='<div style="font-size:.78rem;color:#dc2626;padding:.3rem;">Could not load students.</div>';
       return;
     }
     facultyGoalStudentsCache=rows;
     renderFacultyGoalStudentSingleBrowse();
     renderFacultyGoalStudentSinglePickedChip();
     if(document.getElementById('faculty-goal-target-type').value==='students') renderFacultyGoalStudentsMulti();
+    // This cache is shared with the Note creation form's "Visible to" picker
+    // (see onNoteTargetTypeChange) — whichever screen triggered this load,
+    // also refresh the note picker's browse list/chips if it's the one
+    // currently on-screen, otherwise its browse list stays permanently
+    // empty ("no students showing") since only the task picker was ever
+    // re-rendered here before.
+    const noteTargetTypeEl=document.getElementById('faculty-note-target-type');
+    if(noteTargetTypeEl){
+      if(noteTargetTypeEl.value==='student'){ renderFacultyNoteStudentSingleBrowse(); renderFacultyNoteStudentSinglePickedChip(); }
+      if(noteTargetTypeEl.value==='students'){ renderFacultyNoteStudentsMulti(); }
+    }
   }catch(e){
     const browseWrap=document.getElementById('faculty-goal-student-browse');
     if(browseWrap) browseWrap.innerHTML='<div style="font-size:.78rem;color:#dc2626;padding:.3rem;">Network error loading students.</div>';
+    const noteBrowseWrap=document.getElementById('faculty-note-student-browse');
+    if(noteBrowseWrap) noteBrowseWrap.innerHTML='<div style="font-size:.78rem;color:#dc2626;padding:.3rem;">Network error loading students.</div>';
   }
 }
 function populateFacultyGoalCategoryPicker(){
@@ -17492,6 +17729,450 @@ function updateFacultyGoalCategoryTotal(){
     : `${total} questions available (any category — nothing selected)`;
   facultyGoalCategoryTotalCount=total;
 }
+// ══════════════════════════════════════════════════════════════════
+// FACULTY: NOTES — create/edit/delete note cards (name, description,
+// link, notice, is_current). Mirrors the Tasks & Goals create-form +
+// lazy-load-list pattern for consistency and to keep egress low.
+// ══════════════════════════════════════════════════════════════════
+function openFacultyNotesScreen(){
+  if(!requireFacultyKey()) return;
+  cancelNoteEdit();
+  showScreen('faculty-notes-screen');
+  if(!facultyIsLoaded('faculty_notes')){
+    facultyRenderLoadButton(document.getElementById('faculty-notes-load-placeholder'), 'facultyLoadNotesList', 'Load Notes');
+    document.getElementById('faculty-notes-list').innerHTML='';
+    document.getElementById('faculty-notes-empty').style.display='none';
+  }
+}
+async function facultyLoadNotesList(){
+  facultyMarkLoaded('faculty_notes');
+  document.getElementById('faculty-notes-load-placeholder').innerHTML='';
+  await loadFacultyNotesList();
+}
+async function loadFacultyNotesList(){
+  const listEl=document.getElementById('faculty-notes-list');
+  const emptyEl=document.getElementById('faculty-notes-empty');
+  listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">Loading…</div>';
+  emptyEl.style.display='none';
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/notes?select=id,title,description,link_url,notice_text,is_current,is_active,created_at,target_type,student_id,student_ids,section&order=created_at.desc',{headers:facultyAuthHeaders()});
+    const notes=await res.json();
+    if(!Array.isArray(notes)) throw new Error('bad response');
+    if(!notes.length){
+      listEl.innerHTML='';
+      emptyEl.textContent='No notes yet — create one above.';
+      emptyEl.style.display='block';
+      return;
+    }
+    emptyEl.style.display='none';
+    listEl.innerHTML=notes.map(n=>renderFacultyNoteCard(n)).join('');
+  }catch(e){
+    listEl.innerHTML='';
+    emptyEl.textContent='Could not load notes — try again.';
+    emptyEl.style.display='block';
+  }
+}
+function facultyNoteScopeLabel(n){
+  const t=n.target_type||'class';
+  if(t==='student') return '👤 One student';
+  if(t==='students') return `👥 ${(n.student_ids||[]).length} student${(n.student_ids||[]).length===1?'':'s'}`;
+  if(t==='section') return `🏷️ Section: ${n.section||'—'}`;
+  return '🌐 Whole class';
+}
+function renderFacultyNoteCard(n){
+  const currentBadge = n.is_current
+    ? '<span style="background:#dcfce7;color:#166534;font-size:.68rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;">🟢 Current</span>'
+    : '<span style="background:#f1f5f9;color:#64748b;font-size:.68rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;">Not current</span>';
+  const activeBadge = n.is_active
+    ? '<span style="background:#dbeafe;color:#1e40af;font-size:.68rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;">👁️ Active</span>'
+    : '<span style="background:#fee2e2;color:#991b1b;font-size:.68rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;">🚫 Archived</span>';
+  const scopeBadge = `<span style="background:#f5f3ff;color:#6d28d9;font-size:.68rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;">${facultyNoteScopeLabel(n)}</span>`;
+  const cardOpacity = n.is_active ? '1' : '.62';
+  return `<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:1rem 1.1rem;opacity:${cardOpacity};">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.9rem;font-weight:700;color:#0f1f3d;">${escHTML(n.title)}</div>
+        ${n.description?`<div style="font-size:.8rem;color:#475569;margin-top:.35rem;line-height:1.5;white-space:pre-wrap;">${escHTML(n.description)}</div>`:''}
+        ${n.notice_text?`<div style="margin-top:.5rem;padding:.5rem .7rem;background:#fef3c7;border:1.5px solid #fde68a;border-radius:8px;font-size:.75rem;color:#92400e;font-weight:600;line-height:1.4;">⚠️ ${escHTML(n.notice_text)}</div>`:''}
+        <div style="font-size:.74rem;color:#0369a1;margin-top:.5rem;word-break:break-all;">🔗 ${escHTML(n.link_url)}</div>
+        <div style="margin-top:.5rem;display:flex;gap:.4rem;flex-wrap:wrap;">${currentBadge}${activeBadge}${scopeBadge}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:.8rem;">
+      <button onclick="editNote('${escAttr(n.id)}')" style="flex:1;padding:.5rem;background:#fff;border:2px solid var(--border);border-radius:8px;font-size:.78rem;font-weight:700;color:var(--navy);cursor:pointer;">✏️ Edit</button>
+      <button onclick="toggleNoteActive('${escAttr(n.id)}',${n.is_active?'false':'true'})" style="flex:1;padding:.5rem;background:#fff;border:2px solid ${n.is_active?'#fde68a':'#bbf7d0'};border-radius:8px;font-size:.78rem;font-weight:700;color:${n.is_active?'#b45309':'#15803d'};cursor:pointer;">${n.is_active?'🚫 Archive':'👁️ Reactivate'}</button>
+      <button onclick="confirmDeleteNote('${escAttr(n.id)}','${escAttr(n.title).replace(/'/g,"\\'")}')" style="flex:1;padding:.5rem;background:#fff;border:2px solid #fecaca;border-radius:8px;font-size:.78rem;font-weight:700;color:#dc2626;cursor:pointer;">🗑️ Delete</button>
+    </div>
+  </div>`;
+}
+function resetNoteForm(){
+  document.getElementById('faculty-note-title').value='';
+  document.getElementById('faculty-note-description').value='';
+  document.getElementById('faculty-note-link').value='';
+  document.getElementById('faculty-note-notice').value='';
+  document.getElementById('faculty-note-is-current').checked=false;
+  document.getElementById('faculty-note-is-active').checked=true;
+  document.getElementById('faculty-note-error').style.display='none';
+  resetNoteTargetPicker();
+}
+function cancelNoteEdit(){
+  document.getElementById('faculty-note-edit-id').value='';
+  document.getElementById('faculty-note-form-heading').textContent='Create a new note';
+  document.getElementById('faculty-note-cancel-edit-btn').style.display='none';
+  document.getElementById('faculty-note-edit-banner').style.display='none';
+  document.getElementById('faculty-note-create-btn').textContent='Create Note →';
+  resetNoteForm();
+}
+async function editNote(id){
+  if(!requireFacultyKey()) return;
+  const errEl=document.getElementById('faculty-note-error');
+  errEl.style.display='none';
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/notes?select=id,title,description,link_url,notice_text,is_current,is_active,target_type,student_id,student_ids,section&id=eq.'+encodeURIComponent(id),{headers:facultyAuthHeaders()});
+    const rows=await res.json();
+    const note=Array.isArray(rows)?rows[0]:null;
+    if(!note){ errEl.textContent='Could not load this note to edit.'; errEl.style.display='block'; return; }
+    document.getElementById('faculty-note-edit-id').value=note.id;
+    document.getElementById('faculty-note-title').value=note.title||'';
+    document.getElementById('faculty-note-description').value=note.description||'';
+    document.getElementById('faculty-note-link').value=note.link_url||'';
+    document.getElementById('faculty-note-notice').value=note.notice_text||'';
+    document.getElementById('faculty-note-is-current').checked=!!note.is_current;
+    document.getElementById('faculty-note-is-active').checked=note.is_active!==false;
+    // Restore "Visible to" targeting — mirrors editGoalTask()'s handling of
+    // target_type/student_id/student_ids/section for tasks.
+    resetNoteTargetPicker();
+    const targetType=note.target_type||'class';
+    document.getElementById('faculty-note-target-type').value=targetType;
+    if((targetType==='student'||targetType==='students') && !facultyGoalStudentsCache){
+      await loadFacultyGoalStudentDropdown();
+    }
+    if(targetType==='section' && !facultyGoalSectionsCache){
+      await loadFacultyGoalSectionDropdown();
+    }
+    onNoteTargetTypeChange();
+    if(targetType==='student' && note.student_id){
+      pickFacultyNoteSingleStudent(note.student_id);
+    } else if(targetType==='students' && Array.isArray(note.student_ids)){
+      note.student_ids.forEach(sid=>{
+        const cb=document.querySelector(`.faculty-note-student-cb[value="${CSS.escape(sid)}"]`);
+        if(cb) cb.checked=true;
+      });
+      renderFacultyNoteStudentChips();
+    } else if(targetType==='section' && note.section){
+      document.getElementById('faculty-note-section').value=note.section;
+    }
+    document.getElementById('faculty-note-form-heading').textContent='Edit note';
+    document.getElementById('faculty-note-cancel-edit-btn').style.display='inline-block';
+    document.getElementById('faculty-note-edit-banner').style.display='block';
+    document.getElementById('faculty-note-create-btn').textContent='Save Changes →';
+    document.getElementById('faculty-note-title').scrollIntoView({behavior:'smooth',block:'center'});
+  }catch(e){ errEl.textContent='Could not load this note: '+e.message; errEl.style.display='block'; }
+}
+async function createOrSaveNote(){
+  if(!requireFacultyKey()) return;
+  const errEl=document.getElementById('faculty-note-error');
+  errEl.style.display='none';
+  const title=document.getElementById('faculty-note-title').value.trim();
+  const description=document.getElementById('faculty-note-description').value.trim();
+  const link_url=document.getElementById('faculty-note-link').value.trim();
+  const notice_text=document.getElementById('faculty-note-notice').value.trim();
+  const is_current=document.getElementById('faculty-note-is-current').checked;
+  const is_active=document.getElementById('faculty-note-is-active').checked;
+  if(!title){ errEl.textContent='Note name is required.'; errEl.style.display='block'; return; }
+  if(!link_url){ errEl.textContent='Link is required.'; errEl.style.display='block'; return; }
+  try{ new URL(link_url); }catch(e){ errEl.textContent='Please enter a valid link (starting with https://).'; errEl.style.display='block'; return; }
+  // "Visible to" targeting — same shape/validation as task creation
+  // (target_type: class|student|students|section, plus the matching field).
+  const targetType=document.getElementById('faculty-note-target-type').value;
+  const studentId=targetType==='student'?document.getElementById('faculty-note-student').value:null;
+  const studentIds=targetType==='students'?[...document.querySelectorAll('.faculty-note-student-cb:checked')].map(cb=>cb.value):null;
+  const section=targetType==='section'?document.getElementById('faculty-note-section').value:null;
+  if(targetType==='student' && !studentId){ errEl.textContent='Pick a student.'; errEl.style.display='block'; return; }
+  if(targetType==='students' && (!studentIds||!studentIds.length)){ errEl.textContent='Pick at least one student.'; errEl.style.display='block'; return; }
+  if(targetType==='section' && !section){ errEl.textContent='Pick a section.'; errEl.style.display='block'; return; }
+  const editId=document.getElementById('faculty-note-edit-id').value;
+  const payload={ title, description: description||null, link_url, notice_text: notice_text||null, is_current, is_active,
+    target_type: targetType, student_id: studentId, student_ids: studentIds, section: section,
+    updated_at: new Date().toISOString() };
+  try{
+    if(editId){
+      const res=await fetch(SUPABASE_URL+'/rest/v1/notes?id=eq.'+encodeURIComponent(editId),{
+        method:'PATCH',
+        headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error('Save failed ('+res.status+')');
+    }else{
+      const res=await fetch(SUPABASE_URL+'/rest/v1/notes',{
+        method:'POST',
+        headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error('Create failed ('+res.status+')');
+    }
+    cancelNoteEdit();
+    facultyMarkLoaded('faculty_notes'); // so the list below reflects the change without needing a manual "Load Notes" tap first
+    await loadFacultyNotesList();
+  }catch(e){ errEl.textContent='Could not save note: '+e.message; errEl.style.display='block'; }
+}
+// Confirm-before-delete: notes are hard-deleted (no recycle bin for these,
+// per spec — "delete" here really means delete), so a lightweight confirm
+// dialog guards against an accidental tap.
+// Quick archive/reactivate toggle — doesn't touch any other field, doesn't
+// open the edit form, just flips is_active and re-renders the list. Lets a
+// teacher retire a note (hide it from students) without going through Edit.
+async function toggleNoteActive(id, newValue){
+  if(!requireFacultyKey()) return;
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/notes?id=eq.'+encodeURIComponent(id),{
+      method:'PATCH',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal','Content-Type':'application/json'},
+      body:JSON.stringify({ is_active: newValue==='true'||newValue===true, updated_at: new Date().toISOString() })
+    });
+    if(!res.ok) throw new Error('Update failed ('+res.status+')');
+    await loadFacultyNotesList();
+  }catch(e){ alert('Could not update note: '+e.message); }
+}
+function confirmDeleteNote(id, title){
+  if(!confirm(`Delete the note "${title}"? This cannot be undone.`)) return;
+  deleteNote(id);
+}
+async function deleteNote(id){
+  if(!requireFacultyKey()) return;
+  try{
+    const res=await fetch(SUPABASE_URL+'/rest/v1/notes?id=eq.'+encodeURIComponent(id),{
+      method:'DELETE',
+      headers:{...facultyAuthHeaders(),'Prefer':'return=minimal'}
+    });
+    if(!res.ok) throw new Error('Delete failed ('+res.status+')');
+    await loadFacultyNotesList();
+  }catch(e){ alert('Could not delete note: '+e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NOTE TARGETING — "Visible to" picker for the note creation form.
+// Exact same UX/logic as the Task creation "Assign to" picker
+// (onGoalTargetTypeChange / renderFacultyGoalStudentsMulti / etc): Whole
+// class, One student, Multiple students, or Section. Kept as its own set
+// of DOM ids/functions (faculty-note-* instead of faculty-goal-*) so the
+// two forms' selections never interfere with each other, but reuses the
+// already-fetched facultyGoalStudentsCache/facultyGoalSectionsCache roster
+// data — no extra network call just because this picker exists twice.
+// ══════════════════════════════════════════════════════════════════
+function onNoteTargetTypeChange(){
+  const type=document.getElementById('faculty-note-target-type').value;
+  document.getElementById('faculty-note-student-wrap').style.display=(type==='student')?'block':'none';
+  document.getElementById('faculty-note-students-multi').style.display=(type==='students')?'block':'none';
+  document.getElementById('faculty-note-section').style.display=(type==='section')?'block':'none';
+  if((type==='student'||type==='students') && !facultyGoalStudentsCache) loadFacultyGoalStudentDropdown();
+  if(type==='student' && facultyGoalStudentsCache){ renderFacultyNoteStudentSingleBrowse(); renderFacultyNoteStudentSinglePickedChip(); }
+  if(type==='students' && facultyGoalStudentsCache) renderFacultyNoteStudentsMulti();
+  if(type==='section' && !facultyGoalSectionsCache) loadFacultyGoalSectionDropdown();
+  else if(type==='section' && facultyGoalSectionsCache) renderFacultyNoteSectionOptions();
+}
+function renderFacultyNoteSectionOptions(){
+  const sel=document.getElementById('faculty-note-section');
+  if(!sel||!facultyGoalSectionsCache) return;
+  if(!facultyGoalSectionsCache.length){ sel.innerHTML='<option value="">No sections found on any student profile</option>'; return; }
+  const current=sel.value;
+  sel.innerHTML=facultyGoalSectionsCache.map(s=>`<option value="${escAttr(s)}">${escHTML(s)}</option>`).join('');
+  if(current && facultyGoalSectionsCache.includes(current)) sel.value=current;
+}
+function renderFacultyNoteStudentSingleBrowse(){
+  const browseWrap=document.getElementById('faculty-note-student-browse');
+  if(!browseWrap) return;
+  if(!facultyGoalStudentsCache||!facultyGoalStudentsCache.length){
+    browseWrap.innerHTML='<div style="font-size:.78rem;color:#94a3b8;padding:.3rem;">No students found.</div>';
+    return;
+  }
+  const currentId=document.getElementById('faculty-note-student').value;
+  browseWrap.innerHTML=facultyGoalStudentsCache.map(p=>{
+    const name=p.full_name||p.username||'Student';
+    return `<label style="display:flex;align-items:center;gap:.55rem;padding:.4rem .2rem;font-size:.83rem;color:var(--text);cursor:pointer;">
+      <input type="radio" name="faculty-note-student-radio" class="faculty-note-student-radio" value="${escAttr(p.id)}" ${currentId===p.id?'checked':''} onchange="pickFacultyNoteSingleStudent('${escAttr(p.id)}')" style="width:15px;height:15px;cursor:pointer;flex:0 0 auto;">
+      <span>${escHTML(name)}</span>
+    </label>`;
+  }).join('');
+}
+function renderFacultyNoteStudentSinglePickedChip(){
+  const chipWrap=document.getElementById('faculty-note-student-picked-chip');
+  const searchEl=document.getElementById('faculty-note-student-search');
+  const resultsWrap=document.getElementById('faculty-note-student-search-results');
+  const browseWrap=document.getElementById('faculty-note-student-browse');
+  const browseLabel=document.getElementById('faculty-note-student-browse-label');
+  const id=document.getElementById('faculty-note-student').value;
+  if(!id){
+    chipWrap.style.display='none';
+    chipWrap.innerHTML='';
+    searchEl.style.display='';
+    searchEl.disabled=false;
+    browseWrap.style.display='';
+    browseLabel.style.display='';
+    return;
+  }
+  const p=(facultyGoalStudentsCache||[]).find(s=>s.id===id);
+  const name=p?(p.full_name||p.username||'Student'):'Student';
+  chipWrap.style.display='block';
+  chipWrap.innerHTML=`<span style="display:inline-flex;align-items:center;gap:.35rem;background:#eff6ff;border:1.5px solid #bfdbfe;color:#1d4ed8;border-radius:999px;padding:.25rem .5rem .25rem .7rem;font-size:.78rem;font-weight:600;margin-bottom:.5rem;">
+    ${escHTML(name)}
+    <button type="button" onclick="clearFacultyNoteSingleStudent()" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-size:.9rem;line-height:1;padding:0;font-weight:700;">×</button>
+  </span>`;
+  searchEl.style.display='none';
+  searchEl.disabled=true;
+  resultsWrap.style.display='none';
+  resultsWrap.innerHTML='';
+  browseWrap.style.display='none';
+  browseLabel.style.display='none';
+}
+function onFacultyNoteSingleStudentSearchInput(){
+  const searchEl=document.getElementById('faculty-note-student-search');
+  const resultsWrap=document.getElementById('faculty-note-student-search-results');
+  const q=(searchEl.value||'').trim().toLowerCase();
+  if(!q){ resultsWrap.style.display='none'; resultsWrap.innerHTML=''; return; }
+  const matches=(facultyGoalStudentsCache||[]).filter(p=>{
+    const name=(p.full_name||'').toLowerCase();
+    const uname=(p.username||'').toLowerCase();
+    return name.includes(q)||uname.includes(q);
+  }).slice(0,8);
+  if(!matches.length){
+    resultsWrap.style.display='block';
+    resultsWrap.innerHTML='<div style="padding:.6rem .7rem;font-size:.78rem;color:#94a3b8;">No matching students.</div>';
+    return;
+  }
+  resultsWrap.style.display='block';
+  resultsWrap.innerHTML=matches.map(p=>
+    `<div onclick="pickFacultyNoteSingleStudent('${escAttr(p.id)}')" style="padding:.5rem .7rem;font-size:.82rem;color:var(--text);cursor:pointer;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      ${escHTML(p.full_name||p.username||'Student')}
+    </div>`
+  ).join('');
+}
+function onFacultyNoteSingleStudentSearchKeydown(ev){
+  if(ev.key!=='Enter') return;
+  ev.preventDefault();
+  const firstResult=document.querySelector('#faculty-note-student-search-results > div[onclick]');
+  if(firstResult) firstResult.click();
+}
+function pickFacultyNoteSingleStudent(id){
+  document.getElementById('faculty-note-student').value=id;
+  const searchEl=document.getElementById('faculty-note-student-search');
+  if(searchEl) searchEl.value='';
+  renderFacultyNoteStudentSinglePickedChip();
+}
+function clearFacultyNoteSingleStudent(){
+  document.getElementById('faculty-note-student').value='';
+  document.querySelectorAll('.faculty-note-student-radio').forEach(r=>{ r.checked=false; });
+  renderFacultyNoteStudentSinglePickedChip();
+  const searchEl=document.getElementById('faculty-note-student-search');
+  if(searchEl) searchEl.focus();
+}
+function renderFacultyNoteStudentsMulti(){
+  const browseWrap=document.getElementById('faculty-note-students-multi-browse');
+  const resultsWrap=document.getElementById('faculty-note-students-multi-results');
+  const searchEl=document.getElementById('faculty-note-students-multi-search');
+  if(!facultyGoalStudentsCache||!facultyGoalStudentsCache.length){
+    browseWrap.innerHTML='';
+    resultsWrap.style.display='none';
+    document.getElementById('faculty-note-students-multi-chips').innerHTML='<div style="font-size:.78rem;color:#94a3b8;">No students found.</div>';
+    return;
+  }
+  const alreadyChecked=new Set([...browseWrap.querySelectorAll('.faculty-note-student-cb:checked')].map(cb=>cb.value));
+  browseWrap.innerHTML=facultyGoalStudentsCache.map(p=>{
+    const name=p.full_name||p.username||'Student';
+    return `<label style="display:flex;align-items:center;gap:.55rem;padding:.4rem .2rem;font-size:.83rem;color:var(--text);cursor:pointer;">
+      <input type="checkbox" class="faculty-note-student-cb" value="${escAttr(p.id)}" ${alreadyChecked.has(p.id)?'checked':''} onchange="renderFacultyNoteStudentChips()" style="width:15px;height:15px;cursor:pointer;flex:0 0 auto;">
+      <span>${escHTML(name)}</span>
+    </label>`;
+  }).join('');
+  if(searchEl) searchEl.value='';
+  resultsWrap.style.display='none';
+  resultsWrap.innerHTML='';
+  renderFacultyNoteStudentChips();
+}
+function renderFacultyNoteStudentChips(){
+  const chipsWrap=document.getElementById('faculty-note-students-multi-chips');
+  const checked=[...document.querySelectorAll('.faculty-note-student-cb:checked')];
+  if(!checked.length){ chipsWrap.innerHTML=''; return; }
+  chipsWrap.innerHTML=checked.map(cb=>{
+    const p=(facultyGoalStudentsCache||[]).find(s=>s.id===cb.value);
+    const name=p?(p.full_name||p.username||'Student'):'Student';
+    return `<span style="display:inline-flex;align-items:center;gap:.35rem;background:#eff6ff;border:1.5px solid #bfdbfe;color:#1d4ed8;border-radius:999px;padding:.25rem .5rem .25rem .7rem;font-size:.78rem;font-weight:600;">
+      ${escHTML(name)}
+      <button type="button" onclick="removeFacultyNoteStudentChip('${escAttr(cb.value)}')" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-size:.9rem;line-height:1;padding:0;font-weight:700;">×</button>
+    </span>`;
+  }).join('');
+}
+function removeFacultyNoteStudentChip(id){
+  const cb=document.querySelector(`.faculty-note-student-cb[value="${CSS.escape(id)}"]`);
+  if(cb) cb.checked=false;
+  renderFacultyNoteStudentChips();
+  onFacultyNoteStudentSearchInput();
+}
+function onFacultyNoteStudentSearchInput(){
+  const searchEl=document.getElementById('faculty-note-students-multi-search');
+  const resultsWrap=document.getElementById('faculty-note-students-multi-results');
+  const q=(searchEl.value||'').trim().toLowerCase();
+  if(!q){ resultsWrap.style.display='none'; resultsWrap.innerHTML=''; return; }
+  const checkedIds=new Set([...document.querySelectorAll('.faculty-note-student-cb:checked')].map(cb=>cb.value));
+  const matches=(facultyGoalStudentsCache||[]).filter(p=>{
+    const name=(p.full_name||'').toLowerCase();
+    const uname=(p.username||'').toLowerCase();
+    return name.includes(q)||uname.includes(q);
+  }).slice(0,8);
+  if(!matches.length){
+    resultsWrap.style.display='block';
+    resultsWrap.innerHTML='<div style="padding:.6rem .7rem;font-size:.78rem;color:#94a3b8;">No matching students.</div>';
+    return;
+  }
+  resultsWrap.style.display='block';
+  resultsWrap.innerHTML=matches.map(p=>{
+    const isSelected=checkedIds.has(p.id);
+    return `<div onclick="pickFacultyNoteStudent('${escAttr(p.id)}')" style="padding:.5rem .7rem;font-size:.82rem;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.5rem;${isSelected?'background:#f0fdf4;':''}" onmouseover="this.style.background='${isSelected?'#dcfce7':'#f8fafc'}'" onmouseout="this.style.background='${isSelected?'#f0fdf4':''}'">
+      <span>${escHTML(p.full_name||p.username||'Student')}</span>
+      ${isSelected?'<span style="color:#16a34a;font-weight:700;font-size:.78rem;">✓ added</span>':''}
+    </div>`;
+  }).join('');
+}
+function pickFacultyNoteStudent(id){
+  const cb=document.querySelector(`.faculty-note-student-cb[value="${CSS.escape(id)}"]`);
+  if(!cb) return;
+  cb.checked=!cb.checked;
+  renderFacultyNoteStudentChips();
+  const searchEl=document.getElementById('faculty-note-students-multi-search');
+  searchEl.value='';
+  document.getElementById('faculty-note-students-multi-results').style.display='none';
+  document.getElementById('faculty-note-students-multi-results').innerHTML='';
+  searchEl.focus();
+}
+function onFacultyNoteStudentSearchKeydown(ev){
+  if(ev.key!=='Enter') return;
+  ev.preventDefault();
+  const firstResult=document.querySelector('#faculty-note-students-multi-results > div[onclick]');
+  if(firstResult) firstResult.click();
+}
+// Resets the "Visible to" picker back to its default (Whole class, nothing
+// picked) — called from resetNoteForm()/cancelNoteEdit() so a fresh note
+// never inherits the previous note's targeting.
+function resetNoteTargetPicker(){
+  document.getElementById('faculty-note-target-type').value='class';
+  document.getElementById('faculty-note-student-wrap').style.display='none';
+  document.getElementById('faculty-note-students-multi').style.display='none';
+  document.getElementById('faculty-note-section').style.display='none';
+  document.getElementById('faculty-note-student').value='';
+  document.querySelectorAll('.faculty-note-student-radio').forEach(r=>{ r.checked=false; });
+  document.querySelectorAll('.faculty-note-student-cb').forEach(cb=>{ cb.checked=false; });
+  const chipWrap=document.getElementById('faculty-note-student-picked-chip');
+  if(chipWrap){ chipWrap.style.display='none'; chipWrap.innerHTML=''; }
+  const multiChips=document.getElementById('faculty-note-students-multi-chips');
+  if(multiChips) multiChips.innerHTML='';
+  const searchEl=document.getElementById('faculty-note-student-search');
+  if(searchEl){ searchEl.style.display=''; searchEl.disabled=false; searchEl.value=''; }
+  const browseWrap=document.getElementById('faculty-note-student-browse');
+  const browseLabel=document.getElementById('faculty-note-student-browse-label');
+  if(browseWrap) browseWrap.style.display='';
+  if(browseLabel) browseLabel.style.display='';
+}
+
 function openFacultyGoalScreen(){
   if(!requireFacultyKey()) return;
   // Entering this screen via normal navigation (nav menu, etc) always starts
@@ -19585,6 +20266,12 @@ function refreshStudentTasks(btnEl){
   loadStudentTasksPage();
 }
 let studentTasksActiveTab='open';
+// Notes tab lazy-load flags — once true for this page session, re-entering
+// the tab renders from what's already in the DOM instead of re-fetching
+// (mirrors the faculty facultyLoadedBuckets pattern, just two flags since
+// there are only two load buttons here).
+let studentNotesCurrentLoaded=false;
+let studentNotesAllLoaded=false;
 function openStudentTasksPage(){
   if(!gateFeature('tasks_goals')) return;
   showScreen('student-tasks-screen');
@@ -19595,7 +20282,15 @@ function openStudentTasksPage(){
     b.style.color=on?'#fff':'var(--navy)';
     b.classList.toggle('active',on);
   });
+  document.getElementById('student-tasks-list').style.display='flex';
   loadStudentTasksPage();
+}
+// Notes now lives on its own bottom-nav page (was previously a tab inside
+// Tasks & Goals) — opened directly from #mobile-bottom-nav's Notes button.
+function openStudentNotesPage(){
+  if(!gateFeature('notes')) return;
+  showScreen('student-notes-screen');
+  initStudentNotesTab();
 }
 async function loadStudentTasksPage(){
   const listEl=document.getElementById('student-tasks-list');
@@ -19634,6 +20329,155 @@ function switchStudentTasksTab(tab){
     b.classList.toggle('active',on);
   });
   renderStudentTasksTab();
+}
+// ══════════════════════════════════════════════════════════════════
+// STUDENT: NOTES PAGE — two independent lazy-load buttons ("Load Current
+// Notes" / "Load All Notes") so opening this page costs zero egress until
+// the student actually taps something, per spec. Reached from its own
+// bottom-nav Notes icon (previously a tab inside Tasks & Goals).
+// ══════════════════════════════════════════════════════════════════
+function initStudentNotesTab(){
+  const placeholder=document.getElementById('student-notes-load-placeholder');
+  const loadAllWrap=document.getElementById('student-notes-load-all-wrap');
+  if(!studentNotesCurrentLoaded && !studentNotesAllLoaded){
+    placeholder.innerHTML='';
+    renderStudentLoadButton(placeholder,'loadStudentCurrentNotes','⬇️ Load Current Notes');
+    document.getElementById('student-notes-list').innerHTML='';
+    document.getElementById('student-notes-empty').style.display='none';
+    loadAllWrap.style.display='none';
+    loadAllWrap.innerHTML='';
+  }
+  // If the student already loaded notes earlier this session (re-entering
+  // the page), just show whatever's already in the DOM instead of
+  // re-fetching or resetting the load buttons back to their initial state.
+}
+// Small local equivalent of facultyRenderLoadButton (that one lives in the
+// faculty-only code path and assumes facultyAuthHeaders(); this is the
+// public/student equivalent using the anon key via sb, so it's kept
+// separate rather than reused across the faculty/student boundary).
+function renderStudentLoadButton(containerEl, onClickFnName, label){
+  if(!containerEl) return;
+  containerEl.innerHTML=`
+    <div style="text-align:center;padding:1.5rem 1rem;">
+      <button onclick="${onClickFnName}()" style="background:var(--navy);color:#fff;border:none;border-radius:10px;padding:.7rem 1.4rem;font-size:.85rem;font-weight:700;cursor:pointer;">${label}</button>
+    </div>`;
+}
+// Builds the same "does this row target me" OR-filter clause tasks use
+// (target_type.eq.class OR student_id.eq.me OR student_ids contains me OR
+// (target_type.eq.section AND section = my section)) so any targetable
+// table (tasks, notes, …) can reuse identical scoping logic instead of each
+// call site re-deriving the student's section from scratch.
+let myTargetingSectionCache=undefined; // undefined = not yet resolved this session
+async function resolveMyTargetingOrFilter(){
+  if(!currentUser) return `target_type.eq.class`;
+  if(myTargetingSectionCache===undefined){
+    let mySection=null;
+    try{
+      const {data:myProfile}=await sb.from('profiles').select('section').eq('id',currentUser.id).single();
+      mySection=myProfile&&myProfile.section?myProfile.section:null;
+      if(!mySection){
+        const {data:myMockReport}=await sb.from('mock_reports').select('section').eq('user_id',currentUser.id).not('section','is',null).limit(1).maybeSingle();
+        if(myMockReport&&myMockReport.section) mySection=myMockReport.section;
+      }
+    }catch(e){ mySection=null; }
+    myTargetingSectionCache=mySection;
+  }
+  const orParts=[`target_type.eq.class`, `student_id.eq.${currentUser.id}`, `student_ids.cs.{${currentUser.id}}`];
+  if(myTargetingSectionCache) orParts.push(`and(target_type.eq.section,section.eq.${myTargetingSectionCache})`);
+  return orParts.join(',');
+}
+// Single unified notes list — per spec, tapping "Load Current Notes" shows
+// ONLY the notes marked Current; tapping "Load All Notes" afterwards
+// REPLACES that view with every active note (current ones included, tagged
+// with a "Current" badge) rather than appending a second list underneath,
+// which previously made currently-marked notes appear twice on screen.
+async function loadStudentCurrentNotes(){
+  const listEl=document.getElementById('student-notes-list');
+  const emptyEl=document.getElementById('student-notes-empty');
+  const placeholder=document.getElementById('student-notes-load-placeholder');
+  const loadAllWrap=document.getElementById('student-notes-load-all-wrap');
+  placeholder.innerHTML='';
+  loadAllWrap.style.display='none';
+  loadAllWrap.innerHTML='';
+  listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">Loading…</div>';
+  emptyEl.style.display='none';
+  if(shouldSkipNetwork()){
+    listEl.innerHTML='';
+    emptyEl.textContent='📴 Offline — notes will load once you\'re back online.';
+    emptyEl.style.display='block';
+    renderStudentLoadButton(placeholder,'loadStudentCurrentNotes','⬇️ Load Current Notes');
+    return;
+  }
+  try{
+    const orFilter=await resolveMyTargetingOrFilter();
+    const {data,error}=await sb.from('notes').select('id,title,description,link_url,notice_text,is_current,target_type,student_id,student_ids,section').eq('is_current',true).eq('is_active',true).or(orFilter).order('created_at',{ascending:false});
+    if(error) throw error;
+    studentNotesCurrentLoaded=true;
+    if(!data || !data.length){
+      listEl.innerHTML='';
+      emptyEl.textContent='No current notes right now.';
+      emptyEl.style.display='block';
+    }else{
+      emptyEl.style.display='none';
+      listEl.innerHTML=data.map(n=>renderStudentNoteCard(n)).join('');
+    }
+    // Only offer "Load All Notes" once Current Notes has successfully
+    // loaded, and only if it hasn't already been loaded this session.
+    if(!studentNotesAllLoaded){
+      loadAllWrap.style.display='block';
+      renderStudentLoadButton(loadAllWrap,'loadStudentAllNotes','⬇️ Load All Notes');
+    }
+  }catch(e){
+    listEl.innerHTML='';
+    renderStudentLoadButton(placeholder,'loadStudentCurrentNotes','⬇️ Load Current Notes (retry)');
+  }
+}
+async function loadStudentAllNotes(){
+  const listEl=document.getElementById('student-notes-list');
+  const emptyEl=document.getElementById('student-notes-empty');
+  const placeholder=document.getElementById('student-notes-load-placeholder');
+  const loadAllWrap=document.getElementById('student-notes-load-all-wrap');
+  listEl.innerHTML='<div style="font-size:.85rem;color:#64748b;">Loading…</div>';
+  emptyEl.style.display='none';
+  if(shouldSkipNetwork()){
+    listEl.innerHTML='';
+    emptyEl.textContent='📴 Offline — notes will load once you\'re back online.';
+    emptyEl.style.display='block';
+    renderStudentLoadButton(loadAllWrap,'loadStudentAllNotes','⬇️ Load All Notes (retry)');
+    return;
+  }
+  try{
+    const orFilter=await resolveMyTargetingOrFilter();
+    const {data,error}=await sb.from('notes').select('id,title,description,link_url,notice_text,is_current,target_type,student_id,student_ids,section').eq('is_active',true).or(orFilter).order('created_at',{ascending:false});
+    if(error) throw error;
+    studentNotesAllLoaded=true;
+    // This REPLACES the current-only list (rather than appending) — the
+    // "Load Current Notes" button is also gone at this point, so there is
+    // exactly one list on screen, ever, and each note (current or not)
+    // appears in it exactly once.
+    placeholder.innerHTML='';
+    loadAllWrap.style.display='none';
+    loadAllWrap.innerHTML='';
+    if(!data || !data.length){
+      listEl.innerHTML='';
+      emptyEl.textContent='No notes yet.';
+      emptyEl.style.display='block';
+      return;
+    }
+    emptyEl.style.display='none';
+    listEl.innerHTML=data.map(n=>renderStudentNoteCard(n)).join('');
+  }catch(e){
+    renderStudentLoadButton(loadAllWrap,'loadStudentAllNotes','⬇️ Load All Notes (retry)');
+  }
+}
+function renderStudentNoteCard(n){
+  const currentTag=n.is_current?'<span style="background:#dcfce7;color:#166534;font-size:.68rem;font-weight:800;padding:.2rem .55rem;border-radius:999px;margin-left:.5rem;vertical-align:middle;">🟢 Current</span>':'';
+  return `<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:1rem 1.1rem;">
+    <div style="font-size:.9rem;font-weight:700;color:#0f1f3d;">${escHTML(n.title)}${currentTag}</div>
+    ${n.description?`<div style="font-size:.8rem;color:#475569;margin-top:.4rem;line-height:1.5;white-space:pre-wrap;">${escHTML(n.description)}</div>`:''}
+    ${n.notice_text?`<div style="margin-top:.6rem;padding:.55rem .7rem;background:#fef3c7;border:1.5px solid #fde68a;border-radius:8px;font-size:.78rem;color:#92400e;font-weight:700;line-height:1.4;">⚠️ ${escHTML(n.notice_text)}</div>`:''}
+    <a href="${escAttr(n.link_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:.7rem;background:var(--navy);color:#fff;text-decoration:none;border-radius:8px;padding:.55rem 1rem;font-size:.8rem;font-weight:700;">Open Link ↗</a>
+  </div>`;
 }
 // Opens the combined "review the whole assignment" record for a completed
 // task directly from the student's Tasks & Goals > Completed tab -- per
@@ -30589,9 +31433,13 @@ function appConfirm({title='Are you sure?',message='',icon='❓',confirmText='Co
 })();
 </script>
 
-<!-- MOBILE BOTTOM NAV BAR (phones only — see #mobile-bottom-nav CSS). Fixed to the
-     viewport so Practice/Leaderboard/Battle/Groups/Tasks are always visible, on
-     every screen, with zero scrolling required. -->
+<!-- BOTTOM NAV BAR — horizontally scrollable, fixed to the viewport, on every
+     screen size. Order: Practice, Board, Battle, Notes, Tasks, Groups. On PC-
+     width screens all 6 icons are visible at once (unless zoomed in far
+     enough to shrink the effective viewport, at which point the bar scrolls
+     instead of the icons shrinking/wrapping). On mobile, the first 5 icons
+     (through Tasks) are visible by default and the 6th (Groups) is reached
+     by scrolling the bar right — see #mobile-bottom-nav CSS. -->
 <div id="mobile-bottom-nav">
   <button onclick="showScreen('home-screen')" title="Practice">
     <span class="mbn-icon">🏠</span><span class="mbn-label">Practice</span>
@@ -30603,13 +31451,16 @@ function appConfirm({title='Are you sure?',message='',icon='❓',confirmText='Co
     <span class="mbn-icon">⚔️</span><span class="mbn-label">Battle</span>
     <span class="mbn-badge" id="mbn-battle-badge">0</span>
   </button>
-  <button data-feature="study_groups" onclick="openGroupsHub()" title="Study Groups">
-    <span class="mbn-icon">👥</span><span class="mbn-label">Groups</span>
-    <span class="mbn-badge" id="mbn-groups-badge">0</span>
+  <button data-feature="notes" onclick="openStudentNotesPage()" title="Notes">
+    <span class="mbn-icon">📝</span><span class="mbn-label">Notes</span>
   </button>
   <button data-feature="tasks_goals" onclick="openStudentTasksPage()" title="Tasks & Goals">
     <span class="mbn-icon">📌</span><span class="mbn-label">Tasks</span>
     <span class="mbn-badge" id="mbn-tasks-badge">0</span>
+  </button>
+  <button data-feature="study_groups" onclick="openGroupsHub()" title="Study Groups">
+    <span class="mbn-icon">👥</span><span class="mbn-label">Groups</span>
+    <span class="mbn-badge" id="mbn-groups-badge">0</span>
   </button>
 </div>
 <script>
