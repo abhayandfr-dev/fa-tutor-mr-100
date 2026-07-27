@@ -24,6 +24,18 @@
   In short: "public view test mode" = window.PUBLIC_TEST_MODE = the visitor-
   facing "Try Test Mode — no login needed" button on the login screen.
   ══════════════════════════════════════════════════════════════════════
+
+  SIGNUP BUTTON VISIBILITY:
+    - Config flag: `window.PUBLIC_SIGNUP_ENABLED` (search for
+      "PUBLIC_SIGNUP_ENABLED"). Set near the top of <body>, right next to
+      PUBLIC_TEST_MODE.
+    - It controls whether the "Sign up" link ("Don't have an account?
+      Sign up") is rendered on the LOGIN PAGE (inside #authOverlay). The
+      underlying signup feature/form/JS is untouched either way — this
+      flag only hides or shows the entry-point link.
+    - Set `window.PUBLIC_SIGNUP_ENABLED = true;` to show the link, or
+      `= false;` to hide it.
+  ══════════════════════════════════════════════════════════════════════
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -776,6 +788,13 @@
      ══════════════════════════════════════════════════════════════════════ -->
 <script>window.PUBLIC_TEST_MODE = false;</script>
 
+<!-- SIGNUP BUTTON VISIBILITY FLAG — controls whether the "Sign up" link on
+     the login screen is rendered at all. The signup feature itself (form,
+     handleSignup(), Supabase call, etc.) is untouched — only this
+     entry-point link is gated. See the terminology note near the top of
+     this file. Currently hidden (false); to re-enable, change to true. -->
+<script>window.PUBLIC_SIGNUP_ENABLED = false;</script>
+
 <!-- AUTH OVERLAY -->
 <div id="authOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;box-sizing:border-box;">
   <div style="background:#fff;border-radius:16px;padding:2.5rem 2rem;width:100%;max-width:480px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.25);box-sizing:border-box;">
@@ -801,9 +820,14 @@
         style="width:100%;padding:.75rem 1rem;border:2px solid #e2e8f0;border-radius:10px;font-size:.95rem;margin-bottom:.75rem;outline:none;box-sizing:border-box;">
       <button onclick="handleLogin()" id="login-btn" style="width:100%;padding:.8rem;background:#1a3260;color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;">Log In →</button>
       <div id="login-error" style="color:#ef4444;font-size:.8rem;margin-top:.6rem;display:none;"></div>
-      <div style="font-size:.82rem;color:#64748b;margin-top:1.2rem;">
-        Don't have an account? <a href="#" onclick="showSignupForm();return false;" style="color:#00b4a0;font-weight:600;text-decoration:none;">Sign up</a>
-      </div>
+      <!-- SIGN UP LINK — only rendered when window.PUBLIC_SIGNUP_ENABLED is
+           true; see the config flag + comment near the top of <body>. The
+           signup feature/form/JS itself is unaffected either way. -->
+      <script>
+        if(window.PUBLIC_SIGNUP_ENABLED){
+          document.write('<div style="font-size:.82rem;color:#64748b;margin-top:1.2rem;">Don\'t have an account? <a href="#" onclick="showSignupForm();return false;" style="color:#00b4a0;font-weight:600;text-decoration:none;">Sign up</a></div>');
+        }
+      </script>
       <div style="margin-top:1rem;border-top:1px solid #eee;padding-top:.8rem;">
         <a href="#" onclick="openFacultyKeyDialog(event)" style="font-size:.75rem;color:#1a3260;text-decoration:none;font-weight:600;">🎓 Faculty Mode (Teachers)</a>
       </div>
