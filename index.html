@@ -2249,7 +2249,12 @@
       <span style="font-size:1.1rem;font-weight:700;color:#0f1f3d;">📊 Mock-1 Report</span>
       <button onclick="showScreen('home-screen')" style="background:none;border:2px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;font-size:.78rem;font-weight:600;color:#64748b;cursor:pointer;">← Back</button>
     </div>
-    <div id="student-mock1-report-body">Loading…</div>
+    <div id="student-mock1-report-body">
+      <div style="text-align:center;padding:2.5rem 1rem;">
+        <div style="font-size:.88rem;color:#64748b;margin-bottom:1.2rem;line-height:1.5;">Your report is ready to view. It's only fetched from our server once you tap the button below — nothing loads automatically.</div>
+        <button onclick="loadStudentMockReport()" style="padding:.85rem 1.6rem;background:linear-gradient(135deg,#9d174d 0%,#831843 100%);color:#fff;border:none;border-radius:12px;font-size:.92rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(131,24,67,.25);">📥 Load Report</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -15714,9 +15719,29 @@ async function checkMock1ReportAvailable(){
   if(changeUnameBtn) changeUnameBtn.style.display = hasReport ? 'none' : '';
 }
 
-async function openStudentMockReport(){
+// Opening the screen no longer fetches anything from Supabase — it just
+// shows the screen with a "Load Report" button (see the placeholder markup
+// in #student-mock1-report-body). This avoids firing a request every time a
+// student merely navigates to/away from this screen; the actual row is only
+// pulled once they explicitly tap the button, via loadStudentMockReport().
+function openStudentMockReport(){
   if(!gateFeature('mock_report')) return;
   showScreen('student-mock1-report-screen');
+  const bodyEl=document.getElementById('student-mock1-report-body');
+  bodyEl.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;">'
+    + '<div style="font-size:.88rem;color:#64748b;margin-bottom:1.2rem;line-height:1.5;">Your report is ready to view. It\'s only fetched from our server once you tap the button below — nothing loads automatically.</div>'
+    + '<button onclick="loadStudentMockReport()" style="padding:.85rem 1.6rem;background:linear-gradient(135deg,#9d174d 0%,#831843 100%);color:#fff;border:none;border-radius:12px;font-size:.92rem;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(131,24,67,.25);">📥 Load Report</button>'
+    + '</div>';
+}
+
+// Fires only when the student explicitly clicks "Load Report". Fetches a
+// single row (this student's own, by user_id + mock_id) with an explicit,
+// narrow column list — via the Supabase JS client, so Postgres RLS still
+// restricts it to user_id = auth.uid() even if this code were ever tampered
+// with client-side. This is already the minimal possible read: one row, one
+// student, only the columns the report UI actually renders — not the whole
+// mock_reports table.
+async function loadStudentMockReport(){
   const bodyEl=document.getElementById('student-mock1-report-body');
   bodyEl.innerHTML='Loading…';
   try{
