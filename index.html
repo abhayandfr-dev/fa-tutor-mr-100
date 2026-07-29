@@ -2578,12 +2578,12 @@
   </div>
   <!-- QUICK-ACCESS ENTRY CARDS: mistakes / past attempts / ghost now live on their own pages -->
   <div id="quick-access-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:1.5rem;box-sizing:border-box;">
-    <button id="mistakes-entry-btn" data-feature="redo_mistakes" onclick="openMistakesPage()" style="display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;text-align:left;background:linear-gradient(135deg,#eff6ff 0%,#fff 100%);border:2px solid #93c5fd;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;font-family:inherit;">
+    <button id="mistakes-entry-btn" data-offline-hide="1" data-testmode-hide="1" data-feature="redo_mistakes" onclick="openMistakesPage()" style="display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;text-align:left;background:linear-gradient(135deg,#eff6ff 0%,#fff 100%);border:2px solid #93c5fd;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;font-family:inherit;">
       <span style="font-size:1.3rem;">🔁</span>
       <span style="font-size:.88rem;font-weight:700;color:var(--navy);">Redo My Mistakes</span>
       <span id="mistakes-entry-sub" style="font-size:.72rem;color:var(--text-muted);">See what needs work</span>
     </button>
-    <button id="ghost-entry-btn" data-feature="ghosts" onclick="openGhostPage()" style="display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;text-align:left;background:linear-gradient(135deg,#faf5ff 0%,#fff 100%);border:2px solid #c4b5fd;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;font-family:inherit;">
+    <button id="ghost-entry-btn" data-offline-hide="1" data-testmode-hide="1" data-feature="ghosts" onclick="openGhostPage()" style="display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;text-align:left;background:linear-gradient(135deg,#faf5ff 0%,#fff 100%);border:2px solid #c4b5fd;border-radius:14px;padding:1rem 1.1rem;cursor:pointer;font-family:inherit;">
       <span style="font-size:1.3rem;">👻</span>
       <span style="font-size:.88rem;font-weight:700;color:var(--navy);">Ghost of Past You</span>
       <span style="font-size:.72rem;color:var(--text-muted);">Track your progress by topic</span>
@@ -14030,9 +14030,17 @@ const SUPABASE_ANON_KEY = 'sb_publishable_1ZldFZVWNjrsABf-5gvtTw_uzg_6kV3';
 // persistSession:false ensures every fresh open of this file (new tab, fresh load,
 // etc.) always lands on the login screen instead of silently reusing another tab's
 // or a previous session's stored login.
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false }
-});
+let sb = null;
+try {
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false }
+  });
+} catch(e) {
+  // No internet (or Supabase CDN failed to load) — don't let this crash the
+  // whole script. Public Test Mode is fully offline and doesn't use `sb`,
+  // so it must keep working even when this fails.
+  console.warn('Supabase client could not be created (likely offline). Continuing without it.', e);
+}
 
 // ── EGRESS-SAVING CACHE LAYER ────────────────────────────
 // Generic "is this cached data stale?" helper used by every feature that
