@@ -7403,11 +7403,11 @@ const QUESTIONS = [
   correct:2, explanation:"As some goods have been taken by the owner the purchases figure should be reduced (credited) which will increase profit. There is no effect on assets or liabilities (the debit entry is to drawings which is a reduction in capital).", calc:null
 },
 { id:361, type:"mcq",
-  text:"At 1 May 20X5, Y Co had 700 engines valued at $190 each in stock. On 1 Jul, 500 engines at $220 each purchased; on 1 Nov, 400 engines sold for $160,000. On 1 Feb 20X6, 300 engines bought at $230 each and on 15 Apr, it sold 250 engines for $125,000.\n\nWhat is the value of Y Co's closing inventory of engines at 30 April 20X6?",
-  req:"What is the value of Y Co's closing inventory of engines at 30 April 20X6?",
+  text:"At 1 May 20X5, Y Co had 700 engines valued at $190 each in stock, using the FIFO (first in, first out) method of inventory valuation. On 1 Jul, 500 engines at $220 each purchased; on 1 Nov, 400 engines sold for $160,000. On 1 Feb 20X6, 300 engines bought at $230 each and on 15 Apr, it sold 250 engines for $125,000.\n\nUsing the FIFO method, what is the value of Y Co's closing inventory of engines at 30 April 20X6?",
+  req:"Using the FIFO method, what is the value of Y Co's closing inventory of engines at 30 April 20X6?",
   marks:2,
-  options:["The value of Y Co's closing inventory of engines at 30 April 20X6 is $188,50","The value of Y Co's closing inventory of engines at 30 April 20X6 is $195,500","The value of Y Co's closing inventory of engines at 30 April 20X6 is $166,000","The value of Y Co's closing inventory of engines at 30 April 20X6 is $106,000"],
-  correct:0, explanation:"Under FIFO, sales are matched against the earliest inventory first. Total sold across the year (400 + 250 = 650) is matched against the opening 700 engines, leaving 50 opening engines plus all later purchases in closing inventory.",
+  options:["The value of Y Co's closing inventory of engines at 30 April 20X6 is $188,500","The value of Y Co's closing inventory of engines at 30 April 20X6 is $195,500","The value of Y Co's closing inventory of engines at 30 April 20X6 is $178,500","The value of Y Co's closing inventory of engines at 30 April 20X6 is $106,000"],
+  correct:0, explanation:"Under FIFO, units are issued in the order they were purchased, leaving the most recently purchased units in closing inventory.\n\n1 Nov sale (400 units): issued from the opening 700 @ $190 → 300 @ $190 remain.\n15 Apr sale (250 units): issued from the remaining 300 @ $190 → 50 @ $190 remain.\n\nClosing inventory therefore consists of: 50 units × $190 = $9,500; 500 units × $220 = $110,000; 300 units × $230 = $69,000.",
   calcTable:{
     columns:["","Units","$/unit","$"],
     rows:[
@@ -9124,7 +9124,7 @@ const QUESTIONS = [
     calc:"Cost (settlement discount NOT deducted): $7.00 × 5,000 = $35,000\nNRV: ($7.00 − $0.25) × 5,000 = $33,750\n\nLower of cost and NRV = $33,750"
   },
   { id:512, type:"multi-part", noMark:true,
-    text:"Aarav is a sole trader who sells office supplies to businesses. His inventory schedule of issues and purchases of pens for June 20X3 is:\n\nAarav uses the FIFO method, since he is confident the pens will be sold for more than he paid (so inventory is measured at cost).\n\nCalculate the missing unit costs (a), (b), (c); the cost of sales for June 20X3; and record the double entry of the closing inventory in the general ledger.",
+    text:"Aarav is a sole trader who sells office supplies to businesses. His inventory schedule of issues and purchases of pens for June 20X3 is:\n\nAarav is confident that the pens will be sold for more than he paid. This means that the inventory will be measured at cost. Use FIFO.\n\nCalculate the missing unit costs (a), (b), (c); the cost of sales for June 20X3; and record the double entry of the closing inventory in the general ledger.",
     req:"Calculate the missing unit costs (a), (b), (c); the cost of sales for June 20X3; and record the double entry of the closing inventory in the general ledger.",
     dataTable:{
       columns:["Date","Quantity in units",{v:"Unit cost $",num:true},{v:"Total cost $",num:true}],
@@ -9183,38 +9183,38 @@ const QUESTIONS = [
     calc:null
   },
   { id:518, type:"multi-part", noMark:true,
-    text:"Kavita oversees buying jewellery in small batches for Emeralds and Diamonds Co. She buys the jewellery from different suppliers to take advantage of the lowest prices available. Kavita puts the inventory on display in the order of when it was purchased. All the inventory is sold at a profit; therefore, the NRV is greater than the cost.\n\nKavita's jewellery inventory schedule for a period is:\n\nShould Kavita use the FIFO or AVCO system to calculate the inventory value? Complete the inventory schedule by calculating the total cost of the 4 June issue (a), the 6 June issue (b), and the 7 June closing inventory (c). Then calculate the cost of sales for the period.",
-    req:"Should Kavita use the FIFO or AVCO system to calculate the inventory value? Complete the inventory schedule by calculating the total cost of the 4 June issue (a), the 6 June issue (b), and the 7 June closing inventory (c). Then calculate the cost of sales for the period.",
+    text:"Kavita oversees buying jewellery in small batches for Emeralds and Diamonds Co. She buys the jewellery from different suppliers to take advantage of the lowest prices available. Kavita puts the inventory on display in the order of when it was purchased. All the inventory is sold at a profit; therefore, the NRV is greater than the cost.\n\nKavita's inventory schedule for a period is:\n\nShould Kavita use the FIFO or AVCO system to calculate the inventory value? Complete the inventory schedule below by calculating the missing figures at note (a), note (b), and note (c). Then calculate the cost of sales for the period.",
+    req:"Should Kavita use the FIFO or AVCO system to calculate the inventory value? Complete the inventory schedule below by calculating the missing figures at note (a), note (b), and note (c). Then calculate the cost of sales for the period.",
     dataTable:{
       columns:["Date","Quantity in units",{v:"Unit cost $",num:true},{v:"Total cost $",num:true}],
       rows:[
         ["1 June Opening inventory",{v:"500",num:true},{v:"50.00",num:true},{v:"25,000",num:true}],
         ["2 June Purchase",{v:"250",num:true},{v:"50.10",num:true},{v:"12,525",num:true}],
         ["3 June Purchase",{v:"300",num:true},{v:"50.20",num:true},{v:"15,060",num:true}],
-        ["4 June Issue",{v:"400",num:true},"",{v:"(a)",num:true}],
+        ["4 June Issue",{v:"400",num:true},"note (a)",{v:"note (a)",num:true}],
         ["5 June Purchase",{v:"200",num:true},{v:"50.30",num:true},{v:"10,060",num:true}],
-        ["6 June Issue",{v:"500",num:true},"",{v:"(b)",num:true}],
-        ["7 June Closing inventory",{v:"350",num:true},"",{v:"(c)",num:true}]
+        ["6 June Issue",{v:"500",num:true},"note (b)",{v:"note (b)",num:true}],
+        ["7 June Closing inventory",{v:"350",num:true},"note (c)",{v:"note (c)",num:true}]
       ]
     },
-    tableAnchor:"Kavita's jewellery inventory schedule for a period is:",
+    tableAnchor:"Kavita's inventory schedule for a period is:",
     marks:0,
     parts:[
       {label:"Should Kavita use the FIFO or AVCO system to calculate the inventory value?",subtype:"mcq",options:["FIFO","AVCO"],correct:0},
-      {label:"(a) Total cost of the 4 June issue of 400 units",subtype:"number",prefix:"$",correct:"20000",correctDisplay:"$20,000"},
-      {label:"(b) Total cost of the 6 June issue of 500 units",subtype:"number",prefix:"$",correct:"25055",correctDisplay:"$25,055"},
-      {label:"(c) Total cost of the 7 June closing inventory of 350 units",subtype:"number",prefix:"$",correct:"17590",correctDisplay:"$17,590"},
+      {label:"Note (a) Total cost of the 4 June issue of 400 units",subtype:"number",prefix:"$",correct:"20000",correctDisplay:"$20,000"},
+      {label:"Note (b) Total cost of the 6 June issue of 500 units",subtype:"number",prefix:"$",correct:"25055",correctDisplay:"$25,055"},
+      {label:"Note (c) Total cost of the 7 June closing inventory of 350 units",subtype:"number",prefix:"$",correct:"17590",correctDisplay:"$17,590"},
       {label:"Cost of sales for the period",subtype:"number",prefix:"$",correct:"45055",correctDisplay:"$45,055"}
     ],
-    explanation:"Kavita should use FIFO, as she issues (displays and sells) the inventory in the order in which it was purchased.\n\n(a) The 400 units issued on 4 June are all deemed to come from the 1 June opening inventory (500 units available), valued at $50.00 each. Cost = 400 × $50.00 = $20,000.\n\n(b) Of the 500 units issued on 6 June: 100 are deemed from the remaining opening inventory ($50.00 each), 250 from the 2 June purchase ($50.10 each), and 150 from the 3 June purchase ($50.20 each). Total = (100 × $50.00) + (250 × $50.10) + (150 × $50.20) = $25,055.\n\n(c) The closing inventory of 350 units comprises 150 units from 3 June (150 × $50.20 = $7,530) and 200 units from 5 June (200 × $50.30 = $10,060). Total = $17,590. Since NRV is greater than cost, the inventory is valued at cost.\n\nCost of sales = Opening inventory + Purchases − Closing inventory = $25,000 + $37,645 − $17,590 = $45,055. Note that the same figure is reached by taking the cost of the two issues: $20,000 + $25,055 = $45,055.",
+    explanation:"Kavita should use FIFO, as she issues the inventory in order of when it was purchased.\n\nNote (a) The 400 units issued on 4 June are all deemed to come from the 1 June opening inventory, valued at $50.00 each. Cost of the issue = 400 × $50.00 = $20,000.\n\nNote (b) Of the 500 units issued on 6 June: 100 units are deemed from the remaining opening inventory (100 × $50.00 = $5,000), 250 units are from the 2 June purchase (250 × $50.10 = $12,525), and 150 units are from the 3 June purchase (150 × $50.20 = $7,530). Total cost of the issue = $5,000 + $12,525 + $7,530 = $25,055.\n\nNote (c) The closing inventory of 350 units comprises the remaining 150 units purchased on 3 June (150 × $50.20 = $7,530) and 200 units purchased on 5 June (200 × $50.30 = $10,060). Total = $17,590.\n\nFrom Kavita's inventory schedule, the value of the closing inventory is $17,590. The NRV figure is greater than this cost; therefore, the inventory is valued at $17,590.\n\nThe cost of sales is calculated as opening inventory + purchases − closing inventory value. This is $45,055 ($25,000 + $12,525 + $15,060 + $10,060 − $17,590). This is treated as an expense in the statement of profit or loss and would reduce the profit. Notice that the same figure would be arrived at by taking the cost of issues: $45,055 (= $20,000 + $25,055).",
     calcTable:{
       columns:["","",""],
       rows:[
         ["FIFO/AVCO","Kavita issues in order of purchase",""],
-        ["(a)","400 × $50.00","$20,000"],
-        ["(b)","(100 × $50.00) + (250 × $50.10) + (150 × $50.20)","$25,055"],
-        ["(c)","(150 × $50.20) + (200 × $50.30)","$17,590"],
-        ["Cost of sales","$25,000 + $37,645 − $17,590","$45,055"]
+        ["Note (a)","400 × $50.00","$20,000"],
+        ["Note (b)","(100 × $50.00) + (250 × $50.10) + (150 × $50.20)","$25,055"],
+        ["Note (c)","(150 × $50.20) + (200 × $50.30)","$17,590"],
+        ["Cost of sales","$25,000 + $12,525 + $15,060 + $10,060 − $17,590","$45,055"]
       ],
       note:null
     }
@@ -12744,7 +12744,7 @@ const QUESTIONS = [
   req:"Which TWO of the following statements concerning research and development costs are true?",
   marks:2, selectCount:2,
   options:["Research costs may be capitalised if certain criteria are met","Development costs may be treated as an expense if certain criteria are met","Research costs must be treated as an expense","Development costs must be capitalised if certain criteria are met"],
-  correctSet:[3,4], explanation:"IAS 38 Intangible assets says that research costs must be treated as an expense and development costs must be capitalised if certain criteria are met.", calc:null
+  correctSet:[2,3], explanation:"IAS 38 Intangible assets says that research costs must be treated as an expense and development costs must be capitalised if certain criteria are met.", calc:null
 },
 { id:882, type:"number-entry",
   text:"Joe incurred the following costs when researching and developing a new product for his business.\n\nAssuming the criteria in IAS 38 Intangible assets are met, what value can be capitalised?",
@@ -12769,7 +12769,7 @@ const QUESTIONS = [
   req:"Which TWO of the following costs would be capitalised as intangible non-current assets?",
   marks:2, selectCount:2,
   options:["Goodwill arising from the purchase of a business","Specialist computer software purchased for a six-month project","10-year licence to manufacture a patented product","25-year lease of property"],
-  correctSet:[1,3], explanation:"Option (A) and option (C) are both intangible because neither have a physical form and both have an economic value to the business.\n\nOption (B) is an expense because it will be used within six months, whereas assets are used in the business for over a year.\n\nOption (D) relates to a tangible asset, property, not an intangible asset.", calc:null
+  correctSet:[0,2], explanation:"Option (A) and option (C) are both intangible because neither have a physical form and both have an economic value to the business.\n\nOption (B) is an expense because it will be used within six months, whereas assets are used in the business for over a year.\n\nOption (D) relates to a tangible asset, property, not an intangible asset.", calc:null
 },
 { id:884, type:"mcq",
   text:"Tech Co have been developing a new method of manufacturing which they are sure they can patent and sell to other companies. They have incurred the following costs:\n\nWhat amount should be initially capitalised as an intangible asset?",
@@ -12794,7 +12794,7 @@ const QUESTIONS = [
   req:"Which TWO of the following items would be classed as an intangible asset in a statement of financial position?",
   marks:2, selectCount:2,
   options:["Research","Franchise agreements","Internally generated goodwill","Staff expertise","Computer software"],
-  correctSet:[2,5], explanation:"Research is specifically disallowed by IAS 38 because an asset should be capable of bringing economic benefit and be reliably measured. Uncertainty exists as to whether the research will bring future economic benefit.\n\nA franchise agreement gives the company the right to operate under a recognised name selling a recognised product and there is a definite life of the contract over which the intangible asset can be amortised. The right to use the franchise will have been paid for, so it has a reliable cost. Therefore this answer is correct.\n\nOnly purchased goodwill can be recognised. Therefore the answer internally generated goodwill is incorrect.\n\nA company cannot control staff nor can a value be reliably measured. Therefore the answer 'staff expertise' is incorrect.\n\nComputer software contains a licence for use on a number of computers, often for a number of years. If the right allows use of the software for an infinite period, it almost certainly has a finite useful life, after which the software will have no use. The cost is identifiable and the time period or useful life is known.", calc:null
+  correctSet:[1,4], explanation:"Research is specifically disallowed by IAS 38 because an asset should be capable of bringing economic benefit and be reliably measured. Uncertainty exists as to whether the research will bring future economic benefit.\n\nA franchise agreement gives the company the right to operate under a recognised name selling a recognised product and there is a definite life of the contract over which the intangible asset can be amortised. The right to use the franchise will have been paid for, so it has a reliable cost. Therefore this answer is correct.\n\nOnly purchased goodwill can be recognised. Therefore the answer internally generated goodwill is incorrect.\n\nA company cannot control staff nor can a value be reliably measured. Therefore the answer 'staff expertise' is incorrect.\n\nComputer software contains a licence for use on a number of computers, often for a number of years. If the right allows use of the software for an infinite period, it almost certainly has a finite useful life, after which the software will have no use. The cost is identifiable and the time period or useful life is known.", calc:null
 },
 { id:886, type:"mcq-table",
   text:"Which of the following correctly state the accounting treatment for research costs and development expenditure, assuming that all relevant criteria are met?",
@@ -12891,14 +12891,14 @@ const QUESTIONS = [
   req:"According to IAS 38 Intangible Assets, which TWO of the following are intangible non-current assets of the airline that could be capitalised by Michael Airways?",
   marks:2, selectCount:2,
   options:["A patent for the design of an airline seat that only Michael Airways can use","Expenditure on staff costs of training pilots","Research project into non-combustible fuel","Licence for Michael Airways to take off from a specific airport"],
-  correctSet:[1,4], explanation:"A patent and an operating licence are both identifiable, controlled intangible assets from which future economic benefits will flow, so they can be capitalised. Staff training costs must be expensed as incurred, as an entity cannot control the expected future economic benefits from a trained workforce. Research expenditure must always be expensed as incurred.", calc:null
+  correctSet:[0,3], explanation:"A patent and an operating licence are both identifiable, controlled intangible assets from which future economic benefits will flow, so they can be capitalised. Staff training costs must be expensed as incurred, as an entity cannot control the expected future economic benefits from a trained workforce. Research expenditure must always be expensed as incurred.", calc:null
 },
 { id:895, type:"checkbox",
   text:"Which TWO of the following are examples of 'intangible assets\"?",
   req:"Which TWO of the following are examples of 'intangible assets\"?",
   marks:2, selectCount:2,
   options:["Revalued property","Capitalised development costs","Advertising expenditure","Goodwill"],
-  correctSet:[2,4], explanation:"Capitalised development costs and goodwill are both intangible assets. Revalued property is a tangible non-current asset, and advertising expenditure must be expensed as incurred rather than capitalised.", calc:null
+  correctSet:[1,3], explanation:"Capitalised development costs and goodwill are both intangible assets. Revalued property is a tangible non-current asset, and advertising expenditure must be expensed as incurred rather than capitalised.", calc:null
 },
 { id:896, type:"mcq",
   text:"Which of the following statements about research and development expenditure are correct?\n\n1. Research expenditure, other than capital expenditure on research facilities, should be recognised as an expense as incurred.\n2. In deciding whether development expenditure qualifies to be recognised as an asset, it is necessary to consider whether there will be adequate finance available to complete the project.\n3. Development expenditure recognised as an asset must be amortised over a period not exceeding five years.",
@@ -12929,18 +12929,18 @@ const QUESTIONS = [
   correct:2, explanation:"Research costs are always an expense.", calc:null
 },
 { id:900, type:"checkbox",
-  text:"Which of the following statements about research and development are correct? (select all that apply)\n\nA. Research expenditure, other than capital expenditure on research facilities, should be recognised as an expense incurred\nB. In deciding whether development expenditure qualifies to be recognised as an asset, one of the factors it is necessary to consider is whether there will be adequate finance to complete the project\nC. Development expenditure recognised as an asset must be amortised over a period not exceeding 5 years",
+  text:"Which of the following statements about research and development are correct? (select all that apply)",
   req:"Which of the following statements about research and development are correct? (select all that apply)",
   marks:2, selectCount:2,
   options:["Research expenditure, other than capital expenditure on research facilities, should be recognised as an expense incurred","In deciding whether development expenditure qualifies to be recognised as an asset, one of the factors it is necessary to consider is whether there will be adequate finance to complete the project","Development expenditure recognised as an asset must be amortised over a period not exceeding 5 years"],
-  correctSet:[1,2], explanation:"There is no requirement that development expenditure should be amortised over a period not exceeding 5 years.", calc:null
+  correctSet:[0,1], explanation:"There is no requirement that development expenditure should be amortised over a period not exceeding 5 years.", calc:null
 },
 { id:901, type:"checkbox",
-  text:"According to IAS 38 Intangible Assets, which of the following statements concerning the treatment of research and development expenditure are true? (Select all that apply)\n\n1. Intangible assets must be amortised if they have a definite useful life\n2. If certain criteria are met, research expenditure must be recognised as an intangible asset\n3. If certain criteria are met, development expenditure must be capitalised",
+  text:"According to IAS 38 Intangible Assets, which of the following statements concerning the treatment of research and development expenditure are true? (Select all that apply)",
   req:"According to IAS 38 Intangible Assets, which of the following statements concerning the treatment of research and development expenditure are true? (Select all that apply)",
   marks:2, selectCount:2,
   options:["Intangible assets must be amortised if they have a definite useful life","If certain criteria are met, research expenditure must be recognised as an intangible asset","If certain criteria are met, development expenditure must be capitalised"],
-  correctSet:[1,3], explanation:"Research expenditure must not be capitalised. The other two statements are correct.", calc:null
+  correctSet:[0,2], explanation:"Research expenditure must not be capitalised. The other two statements are correct.", calc:null
 },
 { id:902, type:"mcq",
   text:"Which of the following statements are correct?\n\n(1) Capitalised development expenditure must be amortised over a period not exceeding five years\n(2) Capitalised development costs are shown in the statement of financial position under the heading of non-current assets\n(3) If certain criteria are met, research expenditure must be recognised as an intangible asset",
@@ -12977,11 +12977,11 @@ const QUESTIONS = [
   correct:3, explanation:"All research expenditure must be expensed to profit or loss as incurred. If relevant criteria are met development expenditure must be capitalised.", calc:null
 },
 { id:906, type:"checkbox",
-  text:"According to IAS 38 Intangible Assets, which of the following statements concerning the treatment of research and development expenditure are true? (Select all that apply)\n\n1. If certain criteria are met, research expenditure must be recognised as an intangible asset\n2. If certain criteria are met, development expenditure must be capitalised\n3. Intangible assets must be amortised if they have a definite useful life",
+  text:"According to IAS 38 Intangible Assets, which of the following statements concerning the treatment of research and development expenditure are true? (Select all that apply)",
   req:"According to IAS 38 Intangible Assets, which of the following statements concerning the treatment of research and development expenditure are true? (Select all that apply)",
   marks:2, selectCount:2,
   options:["If certain criteria are met, research expenditure must be recognised as an intangible asset","If certain criteria are met, development expenditure must be capitalised","Intangible assets must be amortised if they have a definite useful life"],
-  correctSet:[2,3], explanation:"Research expenditure must not be capitalised.", calc:null
+  correctSet:[1,2], explanation:"Research expenditure must not be capitalised.", calc:null
 },
 { id:907, type:"mcq",
   text:"Which of the following would be classed as intangible non-current assets?",
@@ -28832,7 +28832,7 @@ async function saveAttemptToSupabase(wasPartial){
       // Fire-and-forget: keeps profiles.current_streak/last_streak_date up to
       // date server-side. Non-fatal if it errors — never block the results
       // screen over this.
-      sb.rpc('update_my_streak').catch(()=>{});
+      try{ Promise.resolve(sb.rpc('update_my_streak')).catch(()=>{}); }catch(streakErr){ /* never let this break the save flow */ }
       invalidateMyAttemptsCache();
       invalidateProfilesAttemptsCache();
       // Weekly Prize board reads from its own separate raw-attempts cache
@@ -29054,7 +29054,7 @@ async function flushPendingAttemptQueue(){
       if(!error){
         // Fire-and-forget: keeps profiles.current_streak/last_streak_date up
         // to date server-side. Non-fatal if it errors.
-        sb.rpc('update_my_streak').catch(()=>{});
+        try{ Promise.resolve(sb.rpc('update_my_streak')).catch(()=>{}); }catch(streakErr){ /* never let this break sync */ }
         invalidateMyAttemptsCache();
         invalidateProfilesAttemptsCache();
         invalidateWeeklyAttemptsCache();
