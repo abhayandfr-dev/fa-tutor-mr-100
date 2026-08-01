@@ -14036,9 +14036,32 @@ const SUPABASE_ANON_KEY = 'sb_publishable_1ZldFZVWNjrsABf-5gvtTw_uzg_6kV3';
 // etc.) always lands on the login screen instead of silently reusing another tab's
 // or a previous session's stored login.
 let sb = null;
+// Tracks whether Supabase's own auth session is currently believed valid.
+// This is updated ONLY by onAuthStateChange below — a free, push-based
+// notification from the supabase-js library itself (it makes no network
+// calls of its own; it just reports on the background token refresh that
+// autoRefreshToken:true was already doing regardless). We use this instead
+// of trusting `currentUser` alone, because currentUser is plain JS state
+// that has no way of knowing if the real session behind it quietly expired
+// or failed to refresh — which is exactly what let attempts get saved with
+// no valid session, and get silently rejected by the attempts RLS policy.
+let sessionIsValid = false;
 try {
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false }
+  });
+  sb.auth.onAuthStateChange((event, session)=>{
+    sessionIsValid = !!session;
+    // TOKEN_REFRESHED = the background renewal Supabase already does
+    // succeeded — nothing to do, just note it's still valid.
+    // SIGNED_OUT / other loss-of-session events while the app still
+    // thinks a student is logged in means currentUser is now stale.
+    // Don't yank the student out mid-quiz; just flag it so the next
+    // save attempt can recover cleanly instead of hitting a raw RLS
+    // error with no explanation.
+    if(!session && currentUser){
+      console.warn('Supabase session was lost in the background (event: '+event+'). Will prompt re-login on next save.');
+    }
   });
 } catch(e) {
   // No internet (or Supabase CDN failed to load) — don't let this crash the
@@ -23332,9 +23355,17 @@ async function checkExistingSession(){
     await completeLogin(marker.userId, marker.username, true);
     resumeLiveAttemptIfAny(); // put them back exactly where they were, if mid-quiz
   }catch(e){
-    if(looksLikeOfflineError(e)){
-      // Real disconnection mid-check (not the toggle) — same reasoning as
-      // above: don't strand the student, just trust the marker.
+    // IMPORTANT: only trust the marker without a confirmed Supabase session
+    // when the browser itself reports zero connectivity (navigator.onLine
+    // is false). Do NOT use looksLikeOfflineError()'s message-sniffing here —
+    // a slow/flaky-but-connected network can throw a "Failed to fetch"-style
+    // error from getSession() even though the device is online. If we trust
+    // that and log the student in locally, sb has no real auth.uid(), and
+    // every later attempts insert gets silently rejected by RLS (the student
+    // sees "This attempt could not be saved" with no obvious cause). Instead,
+    // fall through to a normal login screen so re-authenticating restores a
+    // real session before any writes are attempted.
+    if(!navigator.onLine){
       await completeLogin(marker.userId, marker.username, true);
       resumeLiveAttemptIfAny();
       return;
@@ -28818,6 +28849,24 @@ async function saveAttemptToSupabase(wasPartial){
     showOfflineSaveNotice();
     return null;
   }
+  // sessionIsValid is kept up to date for free by the onAuthStateChange
+  // listener set up alongside the Supabase client — no extra network calls.
+  // If it's already flagged false, the background token refresh has failed
+  // or the session otherwise dropped since login, and an insert would just
+  // be silently rejected by RLS. Try ONE cheap getSession() call to confirm
+  // (this reads Supabase's already-in-memory session state; it does not
+  // itself always hit the network) before giving up and queuing locally.
+  if(!sessionIsValid){
+    try{
+      const {data:{session}}=await sb.auth.getSession();
+      sessionIsValid=!!session;
+    }catch(e){ /* leave sessionIsValid as-is */ }
+    if(!sessionIsValid){
+      queuePendingAttempt(insertPayload);
+      showRlsSaveError('Your login session expired in the background.');
+      return null;
+    }
+  }
   try{
     // Determine this attempt's frequency number for this category (any mode),
     // so it can be shown immediately on the results screen too.
@@ -28852,6 +28901,18 @@ async function saveAttemptToSupabase(wasPartial){
         return null;
       }
       console.error('Failed to save attempt (Supabase error):', error.message, error);
+      // RLS-rejection is a specific, known failure mode: the local
+      // currentUser exists but sb's actual auth session doesn't (or doesn't
+      // match), typically because checkExistingSession() resumed from a
+      // sessionStorage marker without a live Supabase session behind it
+      // (e.g. after a reload on a flaky connection). Queue the attempt
+      // locally so nothing is lost, and tell the student plainly what to do,
+      // instead of dumping a raw Postgres error at them.
+      if(/row-level security policy/i.test(error.message||'')){
+        queuePendingAttempt(insertPayload);
+        showRlsSaveError(error.message);
+        return null;
+      }
       showSaveAttemptError(error.message||'Unknown Supabase error');
       return null;
     }
@@ -28881,6 +28942,23 @@ function showSaveAttemptError(msg){
     inner.insertBefore(banner, inner.firstChild);
   }
   banner.innerHTML=`⚠️ <strong>This attempt could not be saved to your account.</strong><br>Error: ${escHTML(msg)}<br><span style="font-size:.78rem;">This usually means a Supabase table/policy issue — copy this exact message to fix it.</span>`;
+  banner.style.display='block';
+}
+// Shown specifically for RLS-rejection saves: the attempt is safely queued
+// locally (same as the offline path), but the cause is a stale/broken login
+// session rather than no internet, so the fix is different — log out and
+// back in — and we say so directly rather than showing the raw Postgres
+// error, which looked scary and unactionable to students.
+function showRlsSaveError(msg){
+  let banner=document.getElementById('rls-save-error-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='rls-save-error-banner';
+    banner.style.cssText='background:var(--amber-light,#fef3c7);color:#92400e;border:2px solid var(--amber,#f59e0b);border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1rem;font-size:.85rem;line-height:1.5;';
+    const inner=document.querySelector('#results-screen .inner');
+    inner.insertBefore(banner, inner.firstChild);
+  }
+  banner.innerHTML=`⚠️ <strong>Your session needs a refresh.</strong> This attempt is saved on this device so no progress is lost — but to sync it to your account, please log out and log back in, then it will sync automatically.`;
   banner.style.display='block';
 }
 // Calm, non-alarming notice for the expected/routine case: no internet right
